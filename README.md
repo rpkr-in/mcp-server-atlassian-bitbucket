@@ -1,7 +1,5 @@
 # Atlassian Jira MCP Server
 
-[![smithery badge](https://smithery.ai/badge/@aashari/mcp-server-atlassian-jira)](https://smithery.ai/server/@aashari/mcp-server-atlassian-jira)
-
 ## About
 
 This project is a customizable Model Context Protocol (MCP) server written in TypeScript, designed to extend AI assistants like Claude or Cursor with access to Atlassian Jira data. MCP is an open-source protocol by Anthropic for connecting AI systems to external capabilities securely and efficiently. For more details on MCP, see [https://modelcontextprotocol.io/docs/](https://modelcontextprotocol.io/docs/). This server allows AI assistants to access projects and issues directly from your organization's Jira instance.
