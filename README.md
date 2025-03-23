@@ -1,14 +1,14 @@
-# Atlassian Confluence MCP Server
+# Atlassian Jira MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@aashari/boilerplate-mcp-server)](https://smithery.ai/server/@aashari/boilerplate-mcp-server)
 
 ## About MCP
 
-The Model Context Protocol (MCP) is an open standard developed by Anthropic to simplify how AI systems connect to external data sources and tools. This implementation provides an MCP server for connecting Claude Desktop and other MCP-compatible AI systems to Atlassian Confluence.
+The Model Context Protocol (MCP) is an open standard developed by Anthropic to simplify how AI systems connect to external data sources and tools. This implementation provides an MCP server for connecting Claude Desktop and other MCP-compatible AI systems to Atlassian Jira.
 
 ## Overview
 
-A TypeScript-based Model Context Protocol (MCP) server for integrating with Atlassian Confluence. This server provides tools for searching and accessing Confluence spaces, pages, and content, allowing Claude/Anthropic AI systems to retrieve information directly from your organization's Confluence knowledge base.
+A TypeScript-based Model Context Protocol (MCP) server for integrating with Atlassian Jira. This server provides tools for accessing Jira projects and issues, allowing Claude/Anthropic AI systems to retrieve information directly from your organization's Jira instance.
 
 ## Configuration Options
 
@@ -30,7 +30,7 @@ You can configure the server in two ways:
 Pass configuration directly as environment variables before the start command:
 
 ```bash
-DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token npx -y @aashari/mcp-server-atlassian-confluence
+DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token npx -y @aashari/mcp-server-atlassian-jira
 ```
 
 #### Option 2: Global Configuration File (Recommended)
@@ -39,7 +39,7 @@ Create a global configuration file at `$HOME/.mcp/configs.json`:
 
 ```json
 {
-	"@aashari/mcp-server-atlassian-confluence": {
+	"@aashari/mcp-server-atlassian-jira": {
 		"environments": {
 			"DEBUG": "true",
 			"ATLASSIAN_SITE_NAME": "your-instance",
@@ -83,7 +83,7 @@ This approach keeps your configuration in one secure location and simplifies you
 
 ## Setting Up with Claude Desktop
 
-To use this Confluence MCP server with Claude Desktop:
+To use this Jira MCP server with Claude Desktop:
 
 1. **Open Claude Desktop Settings**:
 
@@ -107,9 +107,9 @@ To use this Confluence MCP server with Claude Desktop:
     ```json
     {
     	"mcpServers": {
-    		"aashari/mcp-server-atlassian-confluence": {
+    		"aashari/mcp-server-atlassian-jira": {
     			"command": "npx",
-    			"args": ["-y", "@aashari/mcp-server-atlassian-confluence"]
+    			"args": ["-y", "@aashari/mcp-server-atlassian-jira"]
     		}
     	}
     }
@@ -122,7 +122,7 @@ To use this Confluence MCP server with Claude Desktop:
     ```json
     {
     	"mcpServers": {
-    		"aashari/mcp-server-atlassian-confluence": {
+    		"aashari/mcp-server-atlassian-jira": {
     			"command": "npx",
     			"args": [
     				"-y",
@@ -130,7 +130,7 @@ To use this Confluence MCP server with Claude Desktop:
     				"ATLASSIAN_SITE_NAME=your-instance",
     				"ATLASSIAN_USER_EMAIL=your-email@example.com",
     				"ATLASSIAN_API_TOKEN=your_api_token",
-    				"@aashari/mcp-server-atlassian-confluence"
+    				"@aashari/mcp-server-atlassian-jira"
     			]
     		}
     	}
@@ -145,11 +145,11 @@ To use this Confluence MCP server with Claude Desktop:
 
     - On the Claude home page, look for the hammer icon on the right side
     - Click it to see available tools
-    - Ensure the Confluence tools are listed
+    - Ensure the Jira tools are listed
 
 6. **Test the Tool**:
-    - Try asking Claude: "search Confluence for information about project X" or "get the contents of the Confluence page with title Y"
-    - Claude will use the MCP tool to fetch and display the requested information from your Confluence instance
+    - Try asking Claude: "list projects in Jira" or "get details for issue PROJ-123"
+    - Claude will use the MCP tool to fetch and display the requested information from your Jira instance
 
 ## Setting Up with Cursor AI
 
@@ -169,7 +169,7 @@ To use this MCP server with Cursor AI:
 
 3. **Configure MCP Server**:
 
-    - **Name**: Enter `aashari/mcp-server-atlassian-confluence`
+    - **Name**: Enter `aashari/mcp-server-atlassian-jira`
     - **Type**: Select `command` from the dropdown
     - **Command**: Choose one of the following configuration methods:
 
@@ -178,7 +178,7 @@ To use this MCP server with Cursor AI:
     First, create the global config file at `$HOME/.mcp/configs.json` as described in the "Configuration Options" section, then use this command:
 
     ```
-    npx -y @aashari/mcp-server-atlassian-confluence
+    npx -y @aashari/mcp-server-atlassian-jira
     ```
 
     #### Method 2: Direct Configuration with Environment Variables
@@ -186,7 +186,7 @@ To use this MCP server with Cursor AI:
     Pass configuration directly in the command:
 
     ```
-    DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token npx -y @aashari/mcp-server-atlassian-confluence
+    DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token npx -y @aashari/mcp-server-atlassian-jira
     ```
 
     - Click "Add"
@@ -194,12 +194,12 @@ To use this MCP server with Cursor AI:
 4. **Verify Server Configuration**:
 
     - The server should now be listed with a green indicator
-    - You should see the Confluence tools listed under the server
+    - You should see the Jira tools listed under the server
 
 5. **Test the Tool**:
     - In the chat sidebar, ensure Agent mode is active
-    - Try asking: "search Confluence for information about project X" or "show me the Confluence page with title Y"
-    - Cursor AI will use the MCP tool to fetch and display the requested information from your Confluence instance
+    - Try asking: "list projects in Jira" or "get details for issue PROJ-123"
+    - Cursor AI will use the MCP tool to fetch and display the requested information from your Jira instance
 
 ## Using as a CLI Tool
 
@@ -210,29 +210,26 @@ This package can also be used as a command-line tool:
 You can install this package globally to use as a CLI tool:
 
 ```bash
-npm install -g @aashari/mcp-server-atlassian-confluence
+npm install -g @aashari/mcp-server-atlassian-jira
 ```
 
 After global installation, you can run the CLI commands directly:
 
 ```bash
 # Get help
-mcp-confluence --help
+mcp-jira --help
 
-# Search for content in Confluence using CQL
-mcp-confluence search "type=page AND space=DOCS"
+# List projects with optional filtering
+mcp-jira list-projects --limit 10
 
-# Get a specific page by ID
-mcp-confluence get-page 123456789
+# Get a specific project by ID or key
+mcp-jira get-project PROJ
 
-# List pages with optional filtering
-mcp-confluence list-pages --space-id 123456789 --limit 10
+# List issues with optional JQL filtering
+mcp-jira list-issues --jql "project = PROJ AND status = Open" --limit 10
 
-# List all spaces
-mcp-confluence list-spaces
-
-# Get a specific space by ID
-mcp-confluence get-space 123456789
+# Get a specific issue by ID or key
+mcp-jira get-issue PROJ-123
 ```
 
 ### CLI Configuration
@@ -248,35 +245,30 @@ Create a global configuration file at `$HOME/.mcp/configs.json` as described abo
 Run commands with environment variables:
 
 ```bash
-DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token mcp-confluence list-spaces
+DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@example.com ATLASSIAN_API_TOKEN=your_token mcp-jira list-projects
 ```
 
 ## Core Features
 
-- **STDIO MCP Server**: Designed for AI clients like Claude Desktop, providing Confluence tools and resources via the Model Context Protocol.
+- **STDIO MCP Server**: Designed for AI clients like Claude Desktop, providing Jira tools and resources via the Model Context Protocol.
 - **CLI Support**: Human-friendly command-line interface for the same functionality, making it easy to test and use directly.
-- **Confluence Integration**: Three main modules for complete Confluence access:
-    - **Spaces**: List and retrieve detailed information about Confluence spaces.
-    - **Pages**: Access and retrieve page content with Markdown conversion for better readability.
-    - **Search**: Powerful search capabilities using Confluence Query Language (CQL).
+- **Jira Integration**: Two main modules for comprehensive Jira access:
+    - **Projects**: List and retrieve detailed information about Jira projects.
+    - **Issues**: Access and retrieve issue details with powerful JQL filtering.
 - **Flexible Configuration**: Support for environment variables, .env files, and global config files.
 - **Testing & Development Tools**: Built-in inspection, testing, and development utilities.
 
 ## Available Tools
 
-### Confluence Spaces
+### Jira Projects
 
-- **list_spaces**: List Confluence spaces with filtering options for type, status, and pagination support.
-- **get_space**: Get detailed information about a specific Confluence space by ID.
+- **list_projects**: List Jira projects with filtering options and pagination support.
+- **get_project**: Get detailed information about a specific Jira project by ID or key.
 
-### Confluence Pages
+### Jira Issues
 
-- **list_pages**: List Confluence pages with filtering options for space, status, sorting, and pagination.
-- **get_page**: Get detailed information about a specific Confluence page by ID, including content converted to Markdown.
-
-### Confluence Search
-
-- **search**: Search for content in Confluence using Confluence Query Language (CQL) with pagination support.
+- **list_issues**: List Jira issues with JQL filtering and pagination.
+- **get_issue**: Get detailed information about a specific Jira issue by ID or key.
 
 ## For Developers
 

@@ -1,15 +1,14 @@
 import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 
-import atlassianSpacesCli from './atlassian.spaces.cli.js';
-import atlassianPagesCli from './atlassian.pages.cli.js';
-import atlassianSearchCli from './atlassian.search.cli.js';
+import atlassianProjectsCli from './atlassian.projects.cli.js';
+import atlassianIssuesCli from './atlassian.issues.cli.js';
 
 // Get the version from package.json
 const VERSION = '1.0.0'; // This should match the version in src/index.ts
-const NAME = '@aashari/mcp-atlassian-confluence';
+const NAME = '@aashari/mcp-atlassian-jira';
 const DESCRIPTION =
-	'A Model Context Protocol (MCP) server for Atlassian Confluence integration';
+	'A Model Context Protocol (MCP) server for Atlassian Jira integration';
 
 export async function runCli(args: string[]) {
 	const program = new Command();
@@ -17,9 +16,8 @@ export async function runCli(args: string[]) {
 	program.name(NAME).description(DESCRIPTION).version(VERSION);
 
 	// Register CLI commands
-	atlassianSpacesCli.register(program);
-	atlassianPagesCli.register(program);
-	atlassianSearchCli.register(program);
+	atlassianProjectsCli.register(program);
+	atlassianIssuesCli.register(program);
 
 	// Handle unknown commands
 	program.on('command:*', (operands) => {

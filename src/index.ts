@@ -7,13 +7,12 @@ import { config } from './utils/config.util.js';
 import { createUnexpectedError } from './utils/error.util.js';
 import { runCli } from './cli/index.js';
 
-// Import Confluence-specific tools
-import atlassianSpacesTools from './tools/atlassian.spaces.tool.js';
-import atlassianPagesTools from './tools/atlassian.pages.tool.js';
-import atlassianSearchTools from './tools/atlassian.search.tool.js';
+// Import Jira-specific tools
+import atlassianProjectsTools from './tools/atlassian.projects.tool.js';
+import atlassianIssuesTools from './tools/atlassian.issues.tool.js';
 
 // Define version constant for easier management and consistent versioning
-const VERSION = '1.0.1';
+const VERSION = '1.0.0';
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
@@ -35,7 +34,7 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 	logger.info(`[src/index.ts] Config DEBUG value: ${config.get('DEBUG')}`);
 
 	serverInstance = new McpServer({
-		name: '@aashari/mcp-atlassian-confluence',
+		name: '@aashari/mcp-atlassian-jira',
 		version: VERSION,
 	});
 
@@ -46,13 +45,12 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 	}
 
 	logger.info(
-		`[src/index.ts] Starting Confluence MCP server with ${mode.toUpperCase()} transport...`,
+		`[src/index.ts] Starting Jira MCP server with ${mode.toUpperCase()} transport...`,
 	);
 
 	// register tools
-	atlassianSpacesTools.register(serverInstance);
-	atlassianPagesTools.register(serverInstance);
-	atlassianSearchTools.register(serverInstance);
+	atlassianProjectsTools.register(serverInstance);
+	atlassianIssuesTools.register(serverInstance);
 
 	return serverInstance.connect(transportInstance).catch((err) => {
 		logger.error(`[src/index.ts] Failed to start server`, err);

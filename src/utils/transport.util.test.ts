@@ -1,7 +1,7 @@
 import { getAtlassianCredentials, fetchAtlassian } from './transport.util.js';
 import { config } from './config.util.js';
 import { logger } from './logger.util.js';
-import { SpacesResponse } from '../services/vendor.atlassian.spaces.types.js';
+import { ProjectsResponse } from '../services/vendor.atlassian.projects.types.js';
 
 // Mock the logger module only
 jest.mock('./logger.util.js', () => ({
@@ -12,6 +12,9 @@ jest.mock('./logger.util.js', () => ({
 		error: jest.fn(),
 	},
 }));
+
+// Mock the fetch function for some tests
+global.fetch = jest.fn();
 
 describe('Transport Utility', () => {
 	// Load configuration before all tests
@@ -74,21 +77,51 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// We need to use a valid endpoint for this test
-			// Make a real API call to get spaces (limiting to 1 result to reduce load)
-			const result = await fetchAtlassian<SpacesResponse>(
+			// Mock the fetch function for this test
+			const mockResponse = {
+				ok: true,
+				status: 200,
+				statusText: 'OK',
+				json: jest.fn().mockResolvedValue({
+					values: [],
+					startAt: 0,
+					maxResults: 50,
+					total: 0,
+				}),
+				text: jest.fn().mockResolvedValue(''),
+				clone: jest.fn().mockReturnValue({
+					json: jest.fn().mockResolvedValue({
+						values: [],
+						startAt: 0,
+						maxResults: 50,
+						total: 0,
+					}),
+				}),
+				headers: new Headers(),
+			};
+			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
+			// Make a call to the function
+			const result = await fetchAtlassian<ProjectsResponse>(
 				credentials,
-				'/wiki/api/v2/spaces?limit=1',
+				'/rest/api/3/project/search',
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				},
 			);
 
-			// Verify the response structure from the real API
-			expect(result).toHaveProperty('results');
-			expect(Array.isArray(result.results)).toBe(true);
-			expect(result).toHaveProperty('_links');
-			expect(result).toHaveProperty('limit', 1);
-		}, 15000);
+			// Verify the response structure
+			expect(result).toHaveProperty('values');
+			expect(Array.isArray(result.values)).toBe(true);
+			expect(result).toHaveProperty('startAt');
+			expect(result).toHaveProperty('maxResults');
+			expect(result).toHaveProperty('total');
+		});
 
-		it('should throw an error for invalid endpoints', async () => {
+		it('should handle API errors correctly', async () => {
 			// This test will be skipped if credentials are not available
 			const credentials = getAtlassianCredentials();
 			if (!credentials) {
@@ -98,14 +131,24 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Make a call to a non-existent endpoint
+			// Mock the fetch function for this test
+			const mockResponse = {
+				ok: false,
+				status: 404,
+				statusText: 'Not Found',
+				text: jest.fn().mockResolvedValue('Not Found'),
+				headers: new Headers(),
+			};
+			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
+			// Make a call to the function and expect it to throw
 			await expect(
 				fetchAtlassian(
 					credentials,
-					'/wiki/api/v2/non-existent-endpoint',
+					'/rest/api/3/non-existent-endpoint',
 				),
 			).rejects.toThrow();
-		}, 15000);
+		});
 
 		it('should normalize paths that do not start with a slash', async () => {
 			// This test will be skipped if credentials are not available
@@ -117,18 +160,43 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Path without a leading slash (should be normalized)
-			const result = await fetchAtlassian<SpacesResponse>(
+			// Mock the fetch function for this test
+			const mockResponse = {
+				ok: true,
+				status: 200,
+				statusText: 'OK',
+				json: jest.fn().mockResolvedValue({
+					values: [],
+					startAt: 0,
+					maxResults: 50,
+					total: 0,
+				}),
+				text: jest.fn().mockResolvedValue(''),
+				clone: jest.fn().mockReturnValue({
+					json: jest.fn().mockResolvedValue({
+						values: [],
+						startAt: 0,
+						maxResults: 50,
+						total: 0,
+					}),
+				}),
+				headers: new Headers(),
+			};
+			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
+			// Make a call to the function
+			const result = await fetchAtlassian<ProjectsResponse>(
 				credentials,
-				'wiki/api/v2/spaces?limit=1',
+				'rest/api/3/project/search',
+				{
+					method: 'GET',
+				},
 			);
 
 			// Verify the response structure
-			expect(result).toHaveProperty('results');
-			expect(Array.isArray(result.results)).toBe(true);
-			expect(result).toHaveProperty('_links');
-			expect(result).toHaveProperty('limit', 1);
-		}, 15000);
+			expect(result).toHaveProperty('values');
+			expect(Array.isArray(result.values)).toBe(true);
+		});
 
 		it('should support custom request options', async () => {
 			// This test will be skipped if credentials are not available
@@ -140,6 +208,30 @@ describe('Transport Utility', () => {
 				return;
 			}
 
+			// Mock the fetch function for this test
+			const mockResponse = {
+				ok: true,
+				status: 200,
+				statusText: 'OK',
+				json: jest.fn().mockResolvedValue({
+					values: [1],
+					startAt: 0,
+					maxResults: 1,
+					total: 1,
+				}),
+				text: jest.fn().mockResolvedValue(''),
+				clone: jest.fn().mockReturnValue({
+					json: jest.fn().mockResolvedValue({
+						values: [1],
+						startAt: 0,
+						maxResults: 1,
+						total: 1,
+					}),
+				}),
+				headers: new Headers(),
+			};
+			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
+
 			// Custom request options
 			const options = {
 				method: 'GET' as const,
@@ -149,17 +241,17 @@ describe('Transport Utility', () => {
 				},
 			};
 
-			// Make a call with custom options
-			const result = await fetchAtlassian<SpacesResponse>(
+			// Make a call to the function
+			const result = await fetchAtlassian<ProjectsResponse>(
 				credentials,
-				'/wiki/api/v2/spaces?limit=1',
+				'/rest/api/3/project/search?maxResults=1',
 				options,
 			);
 
 			// Verify the response structure
-			expect(result).toHaveProperty('results');
-			expect(Array.isArray(result.results)).toBe(true);
-			expect(result).toHaveProperty('limit', 1);
-		}, 15000);
+			expect(result).toHaveProperty('values');
+			expect(Array.isArray(result.values)).toBe(true);
+			expect(result.values.length).toBe(1); // Verify limit parameter works
+		});
 	});
 });

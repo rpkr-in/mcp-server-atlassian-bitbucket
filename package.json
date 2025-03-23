@@ -1,16 +1,16 @@
 {
-	"name": "@aashari/mcp-server-atlassian-confluence",
-	"version": "1.0.1",
-	"description": "A TypeScript-based Model Context Protocol (MCP) server for Atlassian Confluence integration. Provides tools for accessing and searching Confluence spaces, pages, and content to connect Claude/Anthropic AI systems to Confluence knowledge bases.",
+	"name": "@aashari/mcp-server-atlassian-jira",
+	"version": "1.0.0",
+	"description": "A TypeScript-based Model Context Protocol (MCP) server for Atlassian Jira integration. Provides tools for accessing and managing Jira projects, issues, and content to connect Claude/Anthropic AI systems to Jira project management.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"type": "commonjs",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/aashari/mcp-server-atlassian-confluence.git"
+		"url": "https://github.com/aashari/mcp-server-atlassian-jira.git"
 	},
 	"bin": {
-		"mcp-confluence": "./dist/index.js"
+		"mcp-jira": "./dist/index.js"
 	},
 	"scripts": {
 		"build": "tsc",
@@ -36,9 +36,9 @@
 		"anthropic",
 		"ai",
 		"atlassian",
-		"confluence",
-		"wiki",
-		"knowledge-base",
+		"jira",
+		"project-management",
+		"issue-tracking",
 		"server",
 		"model-context-protocol",
 		"tools",

@@ -1,5 +1,5 @@
 /**
- * Common types for Atlassian Confluence API
+ * Common types for Atlassian Jira API
  */
 
 /**
