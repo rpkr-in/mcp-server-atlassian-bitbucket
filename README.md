@@ -88,6 +88,7 @@ You can also configure multiple MCP servers in the same file:
     - Launch Claude Desktop, click the gear icon (top-right).
 2. **Edit Config**:
     - Click "Edit Config" to open `claude_desktop_config.json` (e.g., `~/Library/Application Support/Claude` on macOS or `%APPDATA%\Claude` on Windows).
+    - Click "Edit Config" to open `claude_desktop_config.json` (e.g., `~/Library/Application Support/Claude` on macOS or `%APPDATA%\Claude` on Windows).
 3. **Add Server**:
     - Use the global config file (recommended):
         ```json
@@ -182,6 +183,31 @@ DEBUG=true ATLASSIAN_SITE_NAME=your-instance ATLASSIAN_USER_EMAIL=your-email@exa
 
 ## Developer Guide
 
+### Development Scripts
+
+The project includes several scripts for development and production use:
+
+- **`npm run dev:server`**: Run the server in development mode with MCP Inspector and debug logging.
+- **`npm run dev:cli`**: Run CLI commands in development mode with debug logging.
+- **`npm run start:server`**: Run the server in production mode with MCP Inspector.
+- **`npm run start:cli`**: Run CLI commands in production mode.
+
+Example usage:
+
+```bash
+# Start the server with Inspector and debug logging
+npm run dev:server
+
+# Run a CLI command with debug logging
+npm run dev:cli -- list-issues --jql "project = PROJ"
+
+# Start the server with Inspector (no debug)
+npm run start:server
+
+# Run a CLI command (no debug)
+npm run start:cli -- list-projects
+```
+
 ### Extending the Project
 
 To add custom tools or resources:
@@ -192,13 +218,11 @@ To add custom tools or resources:
 4. **Resources**: Add data sources in `src/resources`.
 5. **Register**: Update `src/index.ts` with your tools/resources.
 
-### Development Tools
+### Additional Development Tools
 
 ```bash
-# Run with live reload
-npm run dev
-# Test
-npm run test
+# Run tests
+npm test
 # Test coverage
 npm run test:coverage
 # Lint
@@ -209,16 +233,7 @@ npm run format
 
 ### MCP Inspector
 
-Debug visually:
-
-```bash
-# Start inspector
-npm run inspect
-# With debug logs
-npm run inspect:debug
-```
-
-When you run the inspector:
+The MCP Inspector provides a visual interface for debugging and testing your MCP server:
 
 1. The Inspector starts your MCP server.
 2. It launches a web UI (typically at `http://localhost:5173`).

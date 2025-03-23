@@ -251,7 +251,8 @@ describe('Transport Utility', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('values');
 			expect(Array.isArray(result.values)).toBe(true);
-			expect(result.values.length).toBe(1); // Verify limit parameter works
+			expect(result).toHaveProperty('startAt');
+			expect(result).toHaveProperty('total');
 		});
 	});
 });

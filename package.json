@@ -24,10 +24,10 @@
 		"update:check": "npx npm-check-updates",
 		"update:deps": "npx npm-check-updates -u && npm install --legacy-peer-deps",
 		"update:version": "node scripts/update-version.js",
-		"start": "node dist/index.js",
-		"dev": "nodemon --watch src --ext ts --exec 'npm run build && npm start'",
-		"inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
-		"inspect:debug": "npx @modelcontextprotocol/inspector -e DEBUG=true node dist/index.js"
+		"dev:server": "DEBUG=true npm run build && npx @modelcontextprotocol/inspector -e DEBUG=true node dist/index.js",
+		"dev:cli": "DEBUG=true npm run build && DEBUG=true node dist/index.js",
+		"start:server": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
+		"start:cli": "npm run build && node dist/index.js"
 	},
 	"keywords": [
 		"mcp",
@@ -75,6 +75,7 @@
 		"prettier": "^3.5.3",
 		"semantic-release": "^24.2.3",
 		"ts-jest": "^29.2.6",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.8.2",
 		"typescript-eslint": "^8.27.0"
 	},
