@@ -148,6 +148,4 @@ class ConfigLoader {
 }
 
 // Create and export a singleton instance with the package name from package.json
-export const config = new ConfigLoader(
-	'@aashari/mcp-server-atlassian-confluence',
-);
+export const config = new ConfigLoader('@aashari/mcp-server-atlassian-jira');

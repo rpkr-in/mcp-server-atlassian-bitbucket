@@ -239,6 +239,10 @@ The MCP Inspector provides a visual interface for debugging and testing your MCP
 2. It launches a web UI (typically at `http://localhost:5173`).
 3. Use the UI to test Jira tools, view requests/responses, and check errors.
 
+## Versioning Note
+
+This project follows semantic versioning independently from other MCP servers in the same family (like the Confluence MCP server). Version differences between these projects are expected and reflect their individual development cycles and feature implementations.
+
 ## License
 
 [ISC](https://opensource.org/licenses/ISC)
