@@ -111,5 +111,7 @@ export interface WorkspacePermissionsResponse {
 	pagelen: number;
 	page: number;
 	size: number;
+	next?: string;
+	previous?: string;
 	values: WorkspaceMembership[];
 }

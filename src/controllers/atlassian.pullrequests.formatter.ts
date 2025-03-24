@@ -1,175 +1,148 @@
 import {
 	PullRequest,
-	PullRequestDetailed,
 	PullRequestsResponse,
-	PullRequestState,
-	PullRequestUser,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 
 /**
- * Format a date string for display
- * @param dateString ISO date string
- * @returns Formatted date string
- */
-function formatDate(dateString: string): string {
-	const date = new Date(dateString);
-	return date.toISOString().split('T')[0];
-}
-
-/**
- * Format state for display
- * @param state Pull request state
- * @returns Formatted state string with emoji
- */
-function formatState(state: PullRequestState): string {
-	switch (state) {
-		case 'OPEN':
-			return '🟢 Open';
-		case 'MERGED':
-			return '🟣 Merged';
-		case 'DECLINED':
-			return '🔴 Declined';
-		case 'SUPERSEDED':
-			return '⚪ Superseded';
-		default:
-			return state;
-	}
-}
-
-/**
- * Format user info for display
- * @param user User object
- * @returns Formatted user string
- */
-function formatUser(user?: PullRequestUser): string {
-	if (!user) return 'Unknown user';
-	return (
-		user.display_name || user.nickname || user.account_id || 'Unknown user'
-	);
-}
-
-/**
- * Format a single pull request for display in the list format
- * @param pr Pull request object
- * @returns Formatted pull request string
- */
-function formatPullRequestListItem(pr: PullRequest): string {
-	const title = pr.title;
-	const state = formatState(pr.state);
-	const id = pr.id;
-	const author = formatUser(pr.author);
-	const created = formatDate(pr.created_on);
-	const updated = formatDate(pr.updated_on);
-	const sourceRepo = pr.source.repository?.name || 'unknown';
-	const sourceBranch = pr.source.branch.name;
-	const destRepo = pr.destination.repository?.name || 'unknown';
-	const destBranch = pr.destination.branch.name;
-
-	return `**#${id}: ${title}**
-- **Status**: ${state}
-- **Author**: ${author}
-- **Created**: ${created}${created !== updated ? ` (Updated: ${updated})` : ''}
-- **Branch**: \`${sourceRepo}/${sourceBranch}\` → \`${destRepo}/${destBranch}\`
-- **URL**: ${pr.links.html?.href || '#'}
-`;
-}
-
-/**
- * Format a list of pull requests into a markdown string
- * @param response API response containing pull requests
- * @param nextPage Next page number for pagination
- * @returns Formatted markdown string
+ * Format a list of pull requests for display
+ * @param pullRequestsData - Raw pull requests data from the API
+ * @param nextCursor - Pagination cursor for retrieving the next set of results
+ * @returns Formatted string with pull requests information in markdown format
  */
 export function formatPullRequestsList(
-	response: PullRequestsResponse,
-	nextPage?: number,
+	pullRequestsData: PullRequestsResponse,
+	nextCursor?: string,
 ): string {
-	const { values: pullRequests, size } = response;
-
-	if (!pullRequests || pullRequests.length === 0) {
-		return `### No pull requests found
-
-No pull requests match the criteria.`;
+	if (!pullRequestsData.values || pullRequestsData.values.length === 0) {
+		return 'No Bitbucket pull requests found.';
 	}
 
-	const totalCount = size || pullRequests.length;
-	const items = pullRequests.map(formatPullRequestListItem).join('\n\n');
-	const pagination = nextPage
-		? `\n\n_Showing ${pullRequests.length} of ${totalCount} pull requests. Use pagination to see more._`
-		: '';
+	const lines: string[] = ['# Bitbucket Pull Requests', ''];
 
-	return `### Pull Requests (${totalCount})
+	pullRequestsData.values.forEach((pr, index) => {
+		// Basic information
+		lines.push(`## ${index + 1}. #${pr.id}: ${pr.title}`);
+		lines.push(`- **State**: ${pr.state}`);
+		lines.push(`- **Repository**: ${pr.destination.repository.full_name}`);
 
-${items}${pagination}`;
+		// Source and destination branches
+		lines.push(`- **Source**: ${pr.source.branch.name}`);
+		lines.push(`- **Destination**: ${pr.destination.branch.name}`);
+
+		// Author information
+		if (pr.author) {
+			lines.push(`- **Author**: ${pr.author.display_name}`);
+		}
+
+		// Dates
+		if (pr.created_on) {
+			lines.push(
+				`- **Created**: ${new Date(pr.created_on).toLocaleString()}`,
+			);
+		}
+		if (pr.updated_on) {
+			lines.push(
+				`- **Updated**: ${new Date(pr.updated_on).toLocaleString()}`,
+			);
+		}
+
+		// Links
+		if (pr.links.html?.href) {
+			lines.push(`- **Web URL**: [PR #${pr.id}](${pr.links.html.href})`);
+		}
+
+		// Add a separator between pull requests
+		if (index < pullRequestsData.values.length - 1) {
+			lines.push('');
+			lines.push('---');
+			lines.push('');
+		}
+	});
+
+	// Add pagination information
+	if (nextCursor) {
+		lines.push('');
+		lines.push('---');
+		lines.push('');
+		lines.push(
+			`*Showing ${pullRequestsData.values.length} pull requests. More pull requests are available. Use pagination to retrieve more results.*`,
+		);
+	}
+
+	return lines.join('\n');
 }
 
 /**
- * Format detailed pull request information
- * @param pr Pull request details
- * @returns Formatted markdown string
+ * Format detailed pull request information for display
+ * @param pullRequest - Raw pull request data from the API
+ * @returns Formatted string with pull request details in markdown format
  */
-export function formatPullRequestDetails(pr: PullRequestDetailed): string {
-	const title = pr.title;
-	const state = formatState(pr.state);
-	const id = pr.id;
-	const author = formatUser(pr.author);
-	const created = formatDate(pr.created_on);
-	const updated = formatDate(pr.updated_on);
-	const sourceRepo = pr.source.repository?.name || 'unknown';
-	const sourceBranch = pr.source.branch.name;
-	const destRepo = pr.destination.repository?.name || 'unknown';
-	const destBranch = pr.destination.branch.name;
+export function formatPullRequestDetails(pullRequest: PullRequest): string {
+	const lines: string[] = [
+		`# Pull Request #${pullRequest.id}: ${pullRequest.title}`,
+		'',
+	];
 
-	// Reviewers section
-	const reviewers =
-		pr.reviewers && pr.reviewers.length > 0
-			? `### Reviewers
-${pr.reviewers.map((r) => `- ${formatUser(r)}`).join('\n')}`
-			: '';
+	// Basic information
+	lines.push('## Basic Information');
+	lines.push(`- **State**: ${pullRequest.state}`);
+	lines.push(
+		`- **Repository**: ${pullRequest.destination.repository.full_name}`,
+	);
+	lines.push(`- **Source**: ${pullRequest.source.branch.name}`);
+	lines.push(`- **Destination**: ${pullRequest.destination.branch.name}`);
 
-	// Description section
-	const description = pr.rendered?.description?.html
-		? `### Description
-${pr.rendered.description.html}`
-		: pr.summary?.raw
-			? `### Description
-${pr.summary.raw}`
-			: '';
+	if (pullRequest.author) {
+		lines.push(`- **Author**: ${pullRequest.author.display_name}`);
+	}
 
-	// Stats section
-	const stats = `### Stats
-- **Comments**: ${pr.comment_count || 0}
-- **Tasks**: ${pr.task_count || 0}
-- **Close source branch**: ${pr.close_source_branch ? 'Yes' : 'No'}`;
+	// Reviewers
+	if (pullRequest.reviewers && pullRequest.reviewers.length > 0) {
+		lines.push('- **Reviewers**:');
+		pullRequest.reviewers.forEach((reviewer) => {
+			lines.push(`  - ${reviewer.display_name}`);
+		});
+	}
 
-	// Links section
-	const links = pr.links || {};
-	const linksList = [
-		links.html?.href ? `- [View on Bitbucket](${links.html.href})` : '',
-		links.diff?.href ? `- [View diff](${links.diff.href})` : '',
-		links.commits?.href ? `- [View commits](${links.commits.href})` : '',
-		links.comments?.href ? `- [View comments](${links.comments.href})` : '',
-	]
-		.filter(Boolean)
-		.join('\n');
+	// Dates
+	if (pullRequest.created_on) {
+		lines.push(
+			`- **Created**: ${new Date(pullRequest.created_on).toLocaleString()}`,
+		);
+	}
+	if (pullRequest.updated_on) {
+		lines.push(
+			`- **Updated**: ${new Date(pullRequest.updated_on).toLocaleString()}`,
+		);
+	}
 
-	const linksSection = linksList
-		? `### Links
-${linksList}`
-		: '';
+	// Summary or rendered content for description if available
+	if (pullRequest.summary?.raw) {
+		lines.push('');
+		lines.push('## Description');
+		lines.push(pullRequest.summary.raw);
+	} else if (pullRequest.rendered?.description?.raw) {
+		lines.push('');
+		lines.push('## Description');
+		lines.push(pullRequest.rendered.description.raw);
+	}
 
-	return `# Pull Request #${id}: ${title}
+	// Links
+	lines.push('');
+	lines.push('## Links');
 
-- **Status**: ${state}
-- **Author**: ${author}
-- **Created**: ${created}${created !== updated ? ` (Updated: ${updated})` : ''}
-- **Branch**: \`${sourceRepo}/${sourceBranch}\` → \`${destRepo}/${destBranch}\`
+	if (pullRequest.links.html?.href) {
+		lines.push(`- [View in Browser](${pullRequest.links.html.href})`);
+	}
+	if (pullRequest.links.commits?.href) {
+		lines.push(`- [Commits](${pullRequest.links.commits.href})`);
+	}
+	if (pullRequest.links.comments?.href) {
+		lines.push(`- [Comments](${pullRequest.links.comments.href})`);
+	}
+	if (pullRequest.links.diff?.href) {
+		lines.push(`- [Diff](${pullRequest.links.diff.href})`);
+	}
 
-${description}
-
-${reviewers}
-
-${stats}
-
-${linksSection}`;
+	return lines.join('\n');
 }

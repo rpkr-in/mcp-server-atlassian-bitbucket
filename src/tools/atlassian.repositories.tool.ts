@@ -14,12 +14,12 @@ import atlassianRepositoriesController from '../controllers/atlassian.repositori
 /**
  * MCP Tool: List Bitbucket Repositories
  *
- * Lists Bitbucket repositories in a workspace with optional filtering by query and limit.
- * Returns a formatted markdown response with repository details and pagination info.
+ * Lists Bitbucket repositories within a workspace with optional filtering.
+ * Returns a formatted markdown response with repository details.
  *
- * @param {ListRepositoriesToolArgsType} args - Tool arguments for filtering repositories
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted repositories list
+ * @param args - Tool arguments for filtering repositories
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted repositories list
  * @throws Will return error message if repository listing fails
  */
 async function listRepositories(
@@ -37,9 +37,11 @@ async function listRepositories(
 		// Pass the filter options to the controller
 		const message = await atlassianRepositoriesController.list({
 			workspace: args.workspace,
-			q: args.query,
-			pagelen: args.limit,
-			page: args.cursor ? parseInt(args.cursor, 10) : undefined,
+			q: args.q,
+			sort: args.sort,
+			role: args.role,
+			limit: args.limit,
+			cursor: args.cursor,
 		});
 
 		logger.debug(
@@ -65,11 +67,11 @@ async function listRepositories(
  * MCP Tool: Get Bitbucket Repository Details
  *
  * Retrieves detailed information about a specific Bitbucket repository.
- * Returns a formatted markdown response with repository metadata and properties.
+ * Returns a formatted markdown response with repository metadata.
  *
- * @param {GetRepositoryToolArgsType} args - Tool arguments containing the workspace and repository slug
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted repository details
+ * @param args - Tool arguments containing the workspace and repository slug
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted repository details
  * @throws Will return error message if repository retrieval fails
  */
 async function getRepository(
@@ -79,14 +81,21 @@ async function getRepository(
 	const logPrefix =
 		'[src/tools/atlassian.repositories.tool.ts@getRepository]';
 	logger.debug(
-		`${logPrefix} Retrieving repository details for workspace: ${args.workspace}, repo: ${args.repo_slug}`,
+		`${logPrefix} Retrieving repository details for ${args.workspace}/${args.repoSlug}`,
+		args,
 	);
 
 	try {
-		const message = await atlassianRepositoriesController.get({
-			workspace: args.workspace,
-			repo_slug: args.repo_slug,
-		});
+		const message = await atlassianRepositoriesController.get(
+			args.workspace,
+			args.repoSlug,
+			{
+				includeBranches: args.includeBranches,
+				includeCommits: args.includeCommits,
+				includePullRequests: args.includePullRequests,
+			},
+		);
+
 		logger.debug(
 			`${logPrefix} Successfully retrieved repository details from controller`,
 			message,
@@ -112,7 +121,7 @@ async function getRepository(
  * Registers the list-repositories and get-repository tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
- * @param {McpServer} server - The MCP server instance to register tools with
+ * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
 	const logPrefix = '[src/tools/atlassian.repositories.tool.ts@register]';
@@ -121,7 +130,7 @@ function register(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'list-repositories',
-		'List Bitbucket repositories in a workspace with optional filtering. Returns repositories with their slugs, languages, sizes, and metadata. Use this tool to discover available repositories in a workspace. You can use Bitbucket query syntax to search by name, language, or other attributes, and limit the number of results.',
+		'List Bitbucket repositories within a workspace with optional filtering. Returns repositories with their names, slugs, descriptions, and URLs. Use this tool to discover available Bitbucket repositories before accessing specific content.',
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -129,7 +138,7 @@ function register(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'get-repository',
-		'Get detailed information about a specific Bitbucket repository by workspace and repository slug. Returns comprehensive metadata including description, permission settings, and URLs for different operations. Use this tool when you need in-depth information about a repository, such as its size, language, fork policy, or clone URLs.',
+		'Get detailed information about a specific Bitbucket repository by workspace and repository slug. Returns comprehensive metadata including branches, commits, and pull requests if requested. Use this tool when you need in-depth information about a particular repository.',
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);

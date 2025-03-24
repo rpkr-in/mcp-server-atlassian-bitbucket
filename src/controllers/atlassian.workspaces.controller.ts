@@ -19,12 +19,12 @@ import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.ty
 
 /**
  * List Bitbucket workspaces with optional filtering
- * @param {ListWorkspacesOptions} options - Options for listing workspaces
- * @param {string} [options.q] - Query to filter workspaces
- * @param {string} [options.sort] - Sort parameter
- * @param {number} [options.page] - Page number for pagination
- * @param {number} [options.pagelen] - Number of items per page
- * @returns {Promise<FormatWorkspacesResponse>} - Formatted list of workspaces
+ * @param options - Options for listing workspaces
+ * @param options.q - Query to filter workspaces
+ * @param options.sort - Sort parameter
+ * @param options.limit - Maximum number of workspaces to return
+ * @param options.cursor - Pagination cursor for retrieving the next set of results
+ * @returns Promise with formatted workspace list content and pagination information
  */
 async function list(
 	options: ListWorkspacesOptions = {},
@@ -39,8 +39,9 @@ async function list(
 		const serviceParams: ListWorkspacesParams = {
 			q: options.q,
 			sort: options.sort,
-			page: options.page,
-			pagelen: options.pagelen,
+			// Map cursor to page and limit to pagelen for Bitbucket API
+			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			pagelen: options.limit || 50,
 		};
 
 		logger.debug(
@@ -50,37 +51,35 @@ async function list(
 
 		const workspacesData =
 			await atlassianWorkspacesService.list(serviceParams);
-		// Log only the count of workspaces returned instead of the entire response
+
 		logger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@list] Retrieved ${workspacesData.values?.length || 0} workspaces`,
+			`[src/controllers/atlassian.workspaces.controller.ts@list] Retrieved ${
+				workspacesData.values?.length || 0
+			} workspaces`,
 		);
 
-		// Calculate the next page number if needed
-		let nextPage: number | undefined;
-		if (
-			workspacesData.page !== undefined &&
-			workspacesData.pagelen !== undefined &&
-			workspacesData.size !== undefined &&
-			workspacesData.page * workspacesData.pagelen < workspacesData.size
-		) {
-			nextPage = workspacesData.page + 1;
-			logger.debug(
-				`[src/controllers/atlassian.workspaces.controller.ts@list] Next page: ${nextPage}`,
-			);
+		// Extract pagination information
+		let nextCursor: string | undefined;
+		if (workspacesData.next) {
+			// Extract page from next URL if available
+			const nextUrl = new URL(workspacesData.next);
+			const nextPage = nextUrl.searchParams.get('page');
+			if (nextPage) {
+				nextCursor = nextPage;
+			}
 		}
 
 		// Format the workspaces data for display using the formatter
 		const formattedWorkspaces = formatWorkspacesList(
 			workspacesData,
-			nextPage,
+			nextCursor,
 		);
 
 		return {
 			content: formattedWorkspaces,
 			pagination: {
-				nextCursor:
-					nextPage !== undefined ? String(nextPage) : undefined,
-				hasMore: nextPage !== undefined,
+				nextCursor,
+				hasMore: !!nextCursor,
 			},
 		};
 	} catch (error) {
@@ -145,13 +144,20 @@ async function get(
 
 	try {
 		const workspaceData = await atlassianWorkspacesService.get(slug);
-		// Log only key information instead of the entire response
 		logger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.name} (${workspaceData.slug})`,
+			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.slug}`,
+		);
+
+		// Since membership info isn't directly available, we'll use the workspace data only
+		logger.debug(
+			`[src/controllers/atlassian.workspaces.controller.ts@get] Membership info not available, using workspace data only`,
 		);
 
 		// Format the workspace data for display using the formatter
-		const formattedWorkspace = formatWorkspaceDetails(workspaceData);
+		const formattedWorkspace = formatWorkspaceDetails(
+			workspaceData,
+			undefined, // Pass undefined instead of membership data
+		);
 
 		return {
 			content: formattedWorkspace,
@@ -176,7 +182,6 @@ async function get(
 		// 1. Workspace not found
 		if (
 			errorMessage.includes('not found') ||
-			errorMessage.includes('No workspace with identifier') ||
 			(error instanceof Error &&
 				'statusCode' in error &&
 				(error as { statusCode: number }).statusCode === 404)
@@ -186,8 +191,28 @@ async function get(
 			);
 
 			throw createApiError(
-				`Workspace not found: ${slug}. Verify the workspace slug is correct and that you have access to this workspace.`,
+				`Workspace not found: ${slug}. Verify the workspace slug and your access permissions.`,
 				404,
+				error,
+			);
+		}
+
+		// 2. Access denied
+		if (
+			errorMessage.includes('access') ||
+			errorMessage.includes('permission') ||
+			errorMessage.includes('authorize') ||
+			(error instanceof Error &&
+				'statusCode' in error &&
+				(error as { statusCode: number }).statusCode === 403)
+		) {
+			logger.warn(
+				`[src/controllers/atlassian.workspaces.controller.ts@get] Access denied for workspace: ${slug}`,
+			);
+
+			throw createApiError(
+				`Access denied for workspace: ${slug}. Verify your credentials and permissions.`,
+				403,
 				error,
 			);
 		}

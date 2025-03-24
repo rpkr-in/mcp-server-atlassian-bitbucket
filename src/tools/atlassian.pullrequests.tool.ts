@@ -14,12 +14,12 @@ import atlassianPullRequestsController from '../controllers/atlassian.pullreques
 /**
  * MCP Tool: List Bitbucket Pull Requests
  *
- * Lists pull requests for a specific repository with optional filtering and pagination.
- * Returns a formatted markdown response with pull request details and pagination info.
+ * Lists Bitbucket pull requests for a repository with optional filtering by state.
+ * Returns a formatted markdown response with pull request details.
  *
- * @param {ListPullRequestsToolArgsType} args - Tool arguments for filtering pull requests
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted pull requests list
+ * @param args - Tool arguments for filtering pull requests
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted pull requests list
  * @throws Will return error message if pull request listing fails
  */
 async function listPullRequests(
@@ -35,21 +35,24 @@ async function listPullRequests(
 
 	try {
 		// Pass the filter options to the controller
-		const response = await atlassianPullRequestsController.list({
+		const message = await atlassianPullRequestsController.list({
 			workspace: args.workspace,
-			repo_slug: args.repo_slug,
+			repoSlug: args.repoSlug,
 			state: args.state,
-			pagelen: args.limit,
-			page: args.cursor ? parseInt(args.cursor, 10) : undefined,
+			limit: args.limit,
+			cursor: args.cursor,
 		});
 
-		logger.debug(`${logPrefix} Successfully retrieved pull requests list`);
+		logger.debug(
+			`${logPrefix} Successfully retrieved pull requests from controller`,
+			message,
+		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: response.content,
+					text: message.content,
 				},
 			],
 		};
@@ -63,11 +66,11 @@ async function listPullRequests(
  * MCP Tool: Get Bitbucket Pull Request Details
  *
  * Retrieves detailed information about a specific Bitbucket pull request.
- * Returns a formatted markdown response with pull request metadata and properties.
+ * Returns a formatted markdown response with pull request metadata.
  *
- * @param {GetPullRequestToolArgsType} args - Tool arguments containing the pull request identifiers
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted pull request details
+ * @param args - Tool arguments containing the workspace, repository slug, and pull request ID
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted pull request details
  * @throws Will return error message if pull request retrieval fails
  */
 async function getPullRequest(
@@ -77,24 +80,30 @@ async function getPullRequest(
 	const logPrefix =
 		'[src/tools/atlassian.pullrequests.tool.ts@getPullRequest]';
 	logger.debug(
-		`${logPrefix} Retrieving pull request details for ${args.workspace}/${args.repo_slug}/${args.pull_request_id}`,
+		`${logPrefix} Retrieving pull request details for ${args.workspace}/${args.repoSlug}/${args.pullRequestId}`,
+		args,
 	);
 
 	try {
-		const response = await atlassianPullRequestsController.get(
+		const message = await atlassianPullRequestsController.get(
 			args.workspace,
-			args.repo_slug,
-			args.pull_request_id,
+			args.repoSlug,
+			args.pullRequestId,
+			{
+				includeComments: args.includeComments,
+			},
 		);
+
 		logger.debug(
-			`${logPrefix} Successfully retrieved pull request details`,
+			`${logPrefix} Successfully retrieved pull request details from controller`,
+			message,
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: response.content,
+					text: message.content,
 				},
 			],
 		};
@@ -107,10 +116,10 @@ async function getPullRequest(
 /**
  * Register Atlassian Pull Requests MCP Tools
  *
- * Registers the list-pull-requests and get-pull-request tools with the MCP server.
+ * Registers the list-pullrequests and get-pullrequest tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
- * @param {McpServer} server - The MCP server instance to register tools with
+ * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
 	const logPrefix = '[src/tools/atlassian.pullrequests.tool.ts@register]';
@@ -118,16 +127,16 @@ function register(server: McpServer) {
 
 	// Register the list pull requests tool
 	server.tool(
-		'list-pull-requests',
-		'List Bitbucket pull requests for a specific repository with optional filtering. Returns pull requests with their titles, authors, branches, and other metadata. Use this tool to discover open, merged, or declined pull requests.',
+		'list-pullrequests',
+		'List Bitbucket pull requests for a repository with optional filtering by state. Returns pull requests with their IDs, titles, states, authors, and URLs. Use this tool to discover available pull requests before accessing specific content.',
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
 
 	// Register the get pull request details tool
 	server.tool(
-		'get-pull-request',
-		'Get detailed information about a specific Bitbucket pull request by ID. Returns comprehensive metadata including description, reviewers, and branch information. Use this tool when you need in-depth information about a pull request.',
+		'get-pullrequest',
+		'Get detailed information about a specific Bitbucket pull request by workspace, repository slug, and pull request ID. Returns comprehensive metadata including description, comments, and source/destination branches. Use this tool when you need in-depth information about a particular pull request.',
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);

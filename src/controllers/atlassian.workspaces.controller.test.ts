@@ -49,7 +49,7 @@ describe('Atlassian Workspaces Controller', () => {
 
 			// Call the function with pagination options
 			const result = await atlassianWorkspacesController.list({
-				pagelen: 1,
+				limit: 1,
 			});
 
 			// Verify the response structure and pagination

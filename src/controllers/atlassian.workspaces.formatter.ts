@@ -1,17 +1,18 @@
 import {
 	WorkspaceDetailed,
 	WorkspacePermissionsResponse,
+	WorkspaceMembership,
 } from '../services/vendor.atlassian.workspaces.types.js';
 
 /**
  * Format a list of workspaces for display
  * @param workspacesData - Raw workspaces data from the API
- * @param nextPage - Pagination page for retrieving the next set of results
+ * @param nextCursor - Pagination cursor for retrieving the next set of results
  * @returns Formatted string with workspaces information in markdown format
  */
 export function formatWorkspacesList(
 	workspacesData: WorkspacePermissionsResponse,
-	nextPage?: number,
+	nextCursor?: string,
 ): string {
 	if (!workspacesData.values || workspacesData.values.length === 0) {
 		return 'No Bitbucket workspaces found.';
@@ -48,9 +49,7 @@ export function formatWorkspacesList(
 
 		// User info
 		if (membership.user) {
-			lines.push(
-				`- **User**: ${membership.user.display_name} (${membership.user.nickname})`,
-			);
+			lines.push(`- **User**: ${membership.user.display_name}`);
 		}
 
 		// Add a separator between workspaces
@@ -61,139 +60,81 @@ export function formatWorkspacesList(
 		}
 	});
 
-	// Add pagination information if available
-	if (
-		nextPage &&
-		workspacesData.page <
-			Math.ceil(workspacesData.size / workspacesData.pagelen)
-	) {
+	// Add pagination information
+	if (nextCursor) {
 		lines.push('');
 		lines.push('---');
 		lines.push('');
-		lines.push('## Pagination');
 		lines.push(
-			`*Showing ${workspacesData.values.length} of ${workspacesData.size} workspaces. More workspaces available. Use the following page number to retrieve the next page:*`,
-		);
-		lines.push('');
-		lines.push(`\`${nextPage}\``);
-		lines.push('');
-		lines.push(
-			`*For CLI: Use \`--page "${nextPage}"\` to get the next page*`,
-		);
-		lines.push('');
-		lines.push(
-			'*For MCP tools: Set the `page` parameter to retrieve the next page*',
+			`*Showing ${workspacesData.values.length} workspaces. More workspaces are available. Use pagination to retrieve more results.*`,
 		);
 	}
-
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(
-		`*Workspace information retrieved at ${new Date().toLocaleString()}*`,
-	);
 
 	return lines.join('\n');
 }
 
 /**
  * Format detailed workspace information for display
- * @param workspaceData - Raw workspace data from the API
+ * @param workspace - Raw workspace data from the API
+ * @param membership - Optional membership information for the workspace
  * @returns Formatted string with workspace details in markdown format
  */
 export function formatWorkspaceDetails(
-	workspaceData: WorkspaceDetailed,
+	workspace: WorkspaceDetailed,
+	membership?: WorkspaceMembership,
 ): string {
-	const lines: string[] = [`# Workspace: ${workspaceData.name}`, ''];
+	const lines: string[] = [
+		`# Workspace: ${workspace.name}`,
+		'',
+		'## Basic Information',
+		`- **UUID**: ${workspace.uuid}`,
+		`- **Slug**: ${workspace.slug}`,
+		`- **Type**: ${workspace.type || 'Not specified'}`,
+		`- **Created On**: ${
+			workspace.created_on
+				? new Date(workspace.created_on).toLocaleString()
+				: 'Not available'
+		}`,
+	];
 
-	// Add a brief summary line
-	const privacyStatus = workspaceData.is_private ? 'private' : 'public';
-	const summary = `> A ${privacyStatus} Bitbucket workspace with slug \`${workspaceData.slug}\`.`;
-	lines.push(summary);
-	lines.push('');
+	// Add membership information if available
+	if (membership) {
+		lines.push('');
+		lines.push('## Your Membership');
+		lines.push(`- **Permission**: ${membership.permission}`);
 
-	// Basic information
-	lines.push('## Basic Information');
-	lines.push(`- **UUID**: ${workspaceData.uuid}`);
-	lines.push(`- **Slug**: ${workspaceData.slug}`);
-	lines.push(
-		`- **Privacy**: ${workspaceData.is_private ? 'Private' : 'Public'}`,
-	);
-
-	if (workspaceData.forking_mode) {
-		lines.push(
-			`- **Forking Mode**: ${formatForkingMode(workspaceData.forking_mode)}`,
-		);
+		if (membership.last_accessed) {
+			lines.push(
+				`- **Last Accessed**: ${new Date(
+					membership.last_accessed,
+				).toLocaleString()}`,
+			);
+		}
+		if (membership.added_on) {
+			lines.push(
+				`- **Added On**: ${new Date(
+					membership.added_on,
+				).toLocaleString()}`,
+			);
+		}
 	}
 
-	if (workspaceData.created_on) {
-		lines.push(
-			`- **Created On**: ${new Date(workspaceData.created_on).toLocaleString()}`,
-		);
-	}
-
-	if (workspaceData.updated_on) {
-		lines.push(
-			`- **Updated On**: ${new Date(workspaceData.updated_on).toLocaleString()}`,
-		);
-	}
-
-	// Links section
+	// Add links
 	lines.push('');
 	lines.push('## Links');
 
-	if (workspaceData.links.html?.href) {
-		lines.push(
-			`- **Web UI**: [Open in Bitbucket](${workspaceData.links.html.href})`,
-		);
+	if (workspace.links.html?.href) {
+		lines.push(`- [View in Browser](${workspace.links.html.href})`);
 	}
-
-	if (workspaceData.links.repositories?.href) {
-		lines.push(
-			`- **Repositories**: [View Repositories](${workspaceData.links.repositories.href})`,
-		);
+	if (workspace.links.repositories?.href) {
+		lines.push(`- [Repositories](${workspace.links.repositories.href})`);
 	}
-
-	if (workspaceData.links.projects?.href) {
-		lines.push(
-			`- **Projects**: [View Projects](${workspaceData.links.projects.href})`,
-		);
+	if (workspace.links.projects?.href) {
+		lines.push(`- [Projects](${workspace.links.projects.href})`);
 	}
-
-	if (workspaceData.links.members?.href) {
-		lines.push(
-			`- **Members**: [View Members](${workspaceData.links.members.href})`,
-		);
-	}
-
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(
-		`*Workspace information retrieved at ${new Date().toLocaleString()}*`,
-	);
-
-	if (workspaceData.links.html?.href) {
-		lines.push(
-			`*To view this workspace in Bitbucket, visit: ${workspaceData.links.html.href}*`,
-		);
+	if (workspace.links.snippets?.href) {
+		lines.push(`- [Snippets](${workspace.links.snippets.href})`);
 	}
 
 	return lines.join('\n');
-}
-
-/**
- * Format forking mode to a more readable format
- * @param forkingMode - The forking mode from the API
- * @returns Human-readable forking mode description
- */
-function formatForkingMode(forkingMode: string): string {
-	switch (forkingMode) {
-		case 'allow_forks':
-			return 'All forks allowed';
-		case 'no_public_forks':
-			return 'No public forks';
-		case 'no_forks':
-			return 'No forks allowed';
-		default:
-			return forkingMode;
-	}
 }

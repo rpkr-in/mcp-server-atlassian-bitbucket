@@ -1,9 +1,9 @@
-import { ControllerResponse } from './atlassian.type.js';
+import { ControllerResponse, PaginationOptions } from './atlassian.type.js';
 
 /**
  * Options for listing Bitbucket workspaces
  */
-export interface ListWorkspacesOptions {
+export interface ListWorkspacesOptions extends PaginationOptions {
 	/**
 	 * Optional query to filter workspaces by name
 	 */
@@ -13,16 +13,6 @@ export interface ListWorkspacesOptions {
 	 * Optional sort parameter
 	 */
 	sort?: string;
-
-	/**
-	 * Page number for pagination
-	 */
-	page?: number;
-
-	/**
-	 * Number of items per page
-	 */
-	pagelen?: number;
 }
 
 /**

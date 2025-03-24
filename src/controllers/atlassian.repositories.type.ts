@@ -1,33 +1,28 @@
-import { ControllerResponse } from './atlassian.type.js';
+import { ControllerResponse, PaginationOptions } from './atlassian.type.js';
 
 /**
  * Options for listing Bitbucket repositories
  */
-export interface ListRepositoriesOptions {
+export interface ListRepositoriesOptions extends PaginationOptions {
 	/**
-	 * The workspace to list repositories from
+	 * The workspace slug to list repositories for
 	 */
 	workspace: string;
 
 	/**
-	 * Optional query to filter repositories by name
+	 * Filter repositories by query
 	 */
 	q?: string;
 
 	/**
-	 * Optional sort parameter
+	 * The field to sort by
 	 */
 	sort?: string;
 
 	/**
-	 * Page number for pagination
+	 * Role filter
 	 */
-	page?: number;
-
-	/**
-	 * Number of items per page
-	 */
-	pagelen?: number;
+	role?: string;
 }
 
 /**
@@ -47,9 +42,23 @@ export interface RepositoryIdentifier {
 
 /**
  * Options for getting repository details
- * @remarks This is a placeholder for future extensions
  */
-export type GetRepositoryOptions = Record<string, never>;
+export interface GetRepositoryOptions {
+	/**
+	 * Whether to include branches in the response
+	 */
+	includeBranches?: boolean;
+
+	/**
+	 * Whether to include commits in the response
+	 */
+	includeCommits?: boolean;
+
+	/**
+	 * Whether to include pull requests in the response
+	 */
+	includePullRequests?: boolean;
+}
 
 // Re-export ControllerResponse for backward compatibility
 export { ControllerResponse };

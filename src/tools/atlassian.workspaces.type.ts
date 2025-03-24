@@ -1,45 +1,40 @@
 import { z } from 'zod';
 
 /**
- * Arguments for listing Bitbucket workspaces
- * Includes optional filters with defaults applied in the controller
+ * Schema for list-workspaces tool arguments
  */
-const ListWorkspacesToolArgs = z.object({
-	limit: z
-		.number()
-		.min(1)
-		.max(100)
-		.optional()
-		.describe(
-			'Maximum number of workspaces to return (1-100). Use this to control the response size. Defaults to 50 if not specified.',
-		),
-	cursor: z
-		.string()
-		.optional()
-		.describe(
-			'Pagination cursor for retrieving the next set of results. Use this to navigate through large result sets. The cursor value can be obtained from the pagination information in a previous response.',
-		),
+export const ListWorkspacesToolArgs = z.object({
+	/**
+	 * Query to filter workspaces by name
+	 */
+	q: z.string().optional(),
+
+	/**
+	 * Sort parameter for ordering results
+	 */
+	sort: z.string().optional(),
+
+	/**
+	 * Maximum number of workspaces to return (default: 50)
+	 */
+	limit: z.number().int().positive().optional(),
+
+	/**
+	 * Pagination cursor for retrieving the next set of results
+	 */
+	cursor: z.string().optional(),
 });
 
-type ListWorkspacesToolArgsType = z.infer<typeof ListWorkspacesToolArgs>;
+export type ListWorkspacesToolArgsType = z.infer<typeof ListWorkspacesToolArgs>;
 
 /**
- * Arguments for getting a specific Bitbucket workspace
- * This matches the controller implementation which takes only a slug parameter
+ * Schema for get-workspace tool arguments
  */
-const GetWorkspaceToolArgs = z.object({
-	slug: z
-		.string()
-		.describe(
-			'The slug of the Bitbucket workspace to retrieve (e.g., "myworkspace"). This is the unique identifier used in the workspace URL.',
-		),
+export const GetWorkspaceToolArgs = z.object({
+	/**
+	 * Workspace slug to retrieve
+	 */
+	slug: z.string().min(1, 'Workspace slug is required'),
 });
 
-type GetWorkspaceToolArgsType = z.infer<typeof GetWorkspaceToolArgs>;
-
-export {
-	ListWorkspacesToolArgs,
-	type ListWorkspacesToolArgsType,
-	GetWorkspaceToolArgs,
-	type GetWorkspaceToolArgsType,
-};
+export type GetWorkspaceToolArgsType = z.infer<typeof GetWorkspaceToolArgs>;

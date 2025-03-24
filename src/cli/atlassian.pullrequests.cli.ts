@@ -81,12 +81,12 @@ function registerListPullRequestsCommand(program: Command): void {
 
 				const filterOptions: ListPullRequestsOptions = {
 					workspace: options.workspace,
-					repo_slug: options.repoSlug,
+					repoSlug: options.repoSlug,
 					...(options.state && {
 						state: options.state.toUpperCase() as PullRequestState,
 					}),
 					...(options.limit && {
-						pagelen: parseInt(options.limit, 10),
+						limit: parseInt(options.limit, 10),
 					}),
 					...(options.page && {
 						page: parseInt(options.page, 10),

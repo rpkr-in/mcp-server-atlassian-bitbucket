@@ -14,12 +14,12 @@ import atlassianWorkspacesController from '../controllers/atlassian.workspaces.c
 /**
  * MCP Tool: List Bitbucket Workspaces
  *
- * Lists Bitbucket workspaces with optional pagination.
- * Returns a formatted markdown response with workspace details and pagination info.
+ * Lists Bitbucket workspaces with optional filtering.
+ * Returns a formatted markdown response with workspace details.
  *
- * @param {ListWorkspacesToolArgsType} args - Tool arguments for filtering workspaces
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted workspaces list
+ * @param args - Tool arguments for filtering workspaces
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted workspaces list
  * @throws Will return error message if workspace listing fails
  */
 async function listWorkspaces(
@@ -34,18 +34,23 @@ async function listWorkspaces(
 
 	try {
 		// Pass the filter options to the controller
-		const response = await atlassianWorkspacesController.list({
-			pagelen: args.limit,
-			page: args.cursor ? parseInt(args.cursor, 10) : undefined,
+		const message = await atlassianWorkspacesController.list({
+			q: args.q,
+			sort: args.sort,
+			limit: args.limit,
+			cursor: args.cursor,
 		});
 
-		logger.debug(`${logPrefix} Successfully retrieved workspaces list`);
+		logger.debug(
+			`${logPrefix} Successfully retrieved workspaces from controller`,
+			message,
+		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: response.content,
+					text: message.content,
 				},
 			],
 		};
@@ -59,11 +64,11 @@ async function listWorkspaces(
  * MCP Tool: Get Bitbucket Workspace Details
  *
  * Retrieves detailed information about a specific Bitbucket workspace.
- * Returns a formatted markdown response with workspace metadata and properties.
+ * Returns a formatted markdown response with workspace metadata.
  *
- * @param {GetWorkspaceToolArgsType} args - Tool arguments containing the workspace slug
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted workspace details
+ * @param args - Tool arguments containing the workspace slug
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted workspace details
  * @throws Will return error message if workspace retrieval fails
  */
 async function getWorkspace(
@@ -72,18 +77,22 @@ async function getWorkspace(
 ) {
 	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@getWorkspace]';
 	logger.debug(
-		`${logPrefix} Retrieving workspace details for slug: ${args.slug}`,
+		`${logPrefix} Retrieving workspace details for ${args.slug}`,
+		args,
 	);
 
 	try {
-		const response = await atlassianWorkspacesController.get(args.slug);
-		logger.debug(`${logPrefix} Successfully retrieved workspace details`);
+		const message = await atlassianWorkspacesController.get(args.slug);
+		logger.debug(
+			`${logPrefix} Successfully retrieved workspace details from controller`,
+			message,
+		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: response.content,
+					text: message.content,
 				},
 			],
 		};
@@ -99,7 +108,7 @@ async function getWorkspace(
  * Registers the list-workspaces and get-workspace tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
- * @param {McpServer} server - The MCP server instance to register tools with
+ * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
 	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@register]';
@@ -108,7 +117,7 @@ function register(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'list-workspaces',
-		'List Bitbucket workspaces with optional pagination. Returns workspaces with their names, slugs, and other metadata. Use this tool to discover available workspaces.',
+		'List Bitbucket workspaces with optional filtering. Returns workspaces with their names, slugs, and access levels. Use this tool to discover available Bitbucket workspaces before accessing specific repositories.',
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);
@@ -116,7 +125,7 @@ function register(server: McpServer) {
 	// Register the get workspace details tool
 	server.tool(
 		'get-workspace',
-		'Get detailed information about a specific Bitbucket workspace by slug. Returns comprehensive metadata including creation date, privacy settings, and URLs. Use this tool when you need in-depth information about a workspace.',
+		'Get detailed information about a specific Bitbucket workspace by slug. Returns comprehensive metadata including membership details, projects, and repositories. Use this tool when you need in-depth information about a particular workspace.',
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,
 	);
