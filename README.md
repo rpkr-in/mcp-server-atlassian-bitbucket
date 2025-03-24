@@ -242,3 +242,4 @@ The MCP Inspector provides a visual interface for debugging and testing your MCP
 ## License
 
 [ISC](https://opensource.org/licenses/ISC)
+# Improvements added
