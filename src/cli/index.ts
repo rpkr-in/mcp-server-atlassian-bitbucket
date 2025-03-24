@@ -5,7 +5,7 @@ import atlassianProjectsCli from './atlassian.projects.cli.js';
 import atlassianIssuesCli from './atlassian.issues.cli.js';
 
 // Get the version from package.json
-const VERSION = '1.1.3'; // This should match the version in src/index.ts
+const VERSION = '1.1.4'; // This should match the version in src/index.ts
 const NAME = '@aashari/mcp-atlassian-jira';
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Jira integration';

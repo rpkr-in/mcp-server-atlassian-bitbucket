@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.3...v1.1.4) (2025-03-24)
+
+
+### Bug Fixes
+
+* remove dist directory from git tracking ([0ed5d4b](https://github.com/aashari/mcp-server-atlassian-jira/commit/0ed5d4bad05e09cbae3350eb934c98ef1d28ed12))
+
 ## [1.1.3](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.2...v1.1.3) (2025-03-24)
 
 
