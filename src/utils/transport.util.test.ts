@@ -1,7 +1,14 @@
 import { getAtlassianCredentials, fetchAtlassian } from './transport.util.js';
 import { config } from './config.util.js';
 import { logger } from './logger.util.js';
-import { ProjectsResponse } from '../services/vendor.atlassian.projects.types.js';
+
+// Define a basic response interface for testing
+interface TestResponse {
+	values: any[];
+	startAt?: number;
+	maxResults?: number;
+	total?: number;
+}
 
 // Mock the logger module only
 jest.mock('./logger.util.js', () => ({
@@ -34,15 +41,28 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Verify the structure of the credentials
-			expect(credentials).toHaveProperty('siteName');
-			expect(credentials).toHaveProperty('userEmail');
-			expect(credentials).toHaveProperty('apiToken');
+			// Check if the credentials are for standard Atlassian or Bitbucket-specific
+			if (credentials.useBitbucketAuth) {
+				// Verify the Bitbucket-specific credentials
+				expect(credentials).toHaveProperty('bitbucketUsername');
+				expect(credentials).toHaveProperty('bitbucketAppPassword');
+				expect(credentials).toHaveProperty('useBitbucketAuth');
 
-			// Verify the credentials are not empty
-			expect(credentials.siteName).toBeTruthy();
-			expect(credentials.userEmail).toBeTruthy();
-			expect(credentials.apiToken).toBeTruthy();
+				// Verify the credentials are not empty
+				expect(credentials.bitbucketUsername).toBeTruthy();
+				expect(credentials.bitbucketAppPassword).toBeTruthy();
+				expect(credentials.useBitbucketAuth).toBe(true);
+			} else {
+				// Verify the standard Atlassian credentials
+				expect(credentials).toHaveProperty('siteName');
+				expect(credentials).toHaveProperty('userEmail');
+				expect(credentials).toHaveProperty('apiToken');
+
+				// Verify the credentials are not empty
+				expect(credentials.siteName).toBeTruthy();
+				expect(credentials.userEmail).toBeTruthy();
+				expect(credentials.apiToken).toBeTruthy();
+			}
 		});
 
 		it('should return null and log a warning when environment variables are missing', () => {
@@ -56,9 +76,9 @@ describe('Transport Utility', () => {
 			// Verify the result is null
 			expect(credentials).toBeNull();
 
-			// Verify that a warning was logged
+			// Verify that a warning was logged with the updated message
 			expect(logger.warn).toHaveBeenCalledWith(
-				'Missing Atlassian credentials. Please set ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN environment variables.',
+				'Missing Atlassian credentials. Please set either ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN environment variables, or ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD for Bitbucket-specific auth.',
 			);
 
 			// Restore the original function
@@ -102,7 +122,7 @@ describe('Transport Utility', () => {
 			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
 			// Make a call to the function
-			const result = await fetchAtlassian<ProjectsResponse>(
+			const result = await fetchAtlassian<TestResponse>(
 				credentials,
 				'/rest/api/3/project/search',
 				{
@@ -185,7 +205,7 @@ describe('Transport Utility', () => {
 			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
 
 			// Make a call to the function
-			const result = await fetchAtlassian<ProjectsResponse>(
+			const result = await fetchAtlassian<TestResponse>(
 				credentials,
 				'rest/api/3/project/search',
 				{
@@ -242,7 +262,7 @@ describe('Transport Utility', () => {
 			};
 
 			// Make a call to the function
-			const result = await fetchAtlassian<ProjectsResponse>(
+			const result = await fetchAtlassian<TestResponse>(
 				credentials,
 				'/rest/api/3/project/search?maxResults=1',
 				options,

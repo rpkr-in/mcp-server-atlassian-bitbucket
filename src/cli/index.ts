@@ -1,14 +1,16 @@
 import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 
-import atlassianProjectsCli from './atlassian.projects.cli.js';
-import atlassianIssuesCli from './atlassian.issues.cli.js';
+// Import Bitbucket-specific CLI modules
+import atlassianWorkspacesCli from './atlassian.workspaces.cli.js';
+import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
+import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
 
 // Get the version from package.json
-const VERSION = '1.1.4'; // This should match the version in src/index.ts
-const NAME = '@aashari/mcp-atlassian-jira';
+const VERSION = '1.0.0'; // This should match the version in src/index.ts
+const NAME = '@aashari/mcp-server-atlassian-bitbucket';
 const DESCRIPTION =
-	'A Model Context Protocol (MCP) server for Atlassian Jira integration';
+	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
 
 export async function runCli(args: string[]) {
 	const program = new Command();
@@ -16,8 +18,9 @@ export async function runCli(args: string[]) {
 	program.name(NAME).description(DESCRIPTION).version(VERSION);
 
 	// Register CLI commands
-	atlassianProjectsCli.register(program);
-	atlassianIssuesCli.register(program);
+	atlassianWorkspacesCli.register(program);
+	atlassianRepositoriesCli.register(program);
+	atlassianPullRequestsCli.register(program);
 
 	// Handle unknown commands
 	program.on('command:*', (operands) => {

@@ -7,12 +7,13 @@ import { config } from './utils/config.util.js';
 import { createUnexpectedError } from './utils/error.util.js';
 import { runCli } from './cli/index.js';
 
-// Import Jira-specific tools
-import atlassianProjectsTools from './tools/atlassian.projects.tool.js';
-import atlassianIssuesTools from './tools/atlassian.issues.tool.js';
+// Import Bitbucket-specific tools
+import atlassianWorkspacesTools from './tools/atlassian.workspaces.tool.js';
+import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
+import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
 
 // Define version constant for easier management and consistent versioning
-const VERSION = '1.1.4';
+const VERSION = '1.0.0';
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
@@ -34,7 +35,7 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 	logger.info(`[src/index.ts] Config DEBUG value: ${config.get('DEBUG')}`);
 
 	serverInstance = new McpServer({
-		name: '@aashari/mcp-atlassian-jira',
+		name: '@aashari/mcp-server-atlassian-bitbucket',
 		version: VERSION,
 	});
 
@@ -45,12 +46,13 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 	}
 
 	logger.info(
-		`[src/index.ts] Starting Jira MCP server with ${mode.toUpperCase()} transport...`,
+		`[src/index.ts] Starting Bitbucket MCP server with ${mode.toUpperCase()} transport...`,
 	);
 
 	// register tools
-	atlassianProjectsTools.register(serverInstance);
-	atlassianIssuesTools.register(serverInstance);
+	atlassianWorkspacesTools.register(serverInstance);
+	atlassianRepositoriesTools.register(serverInstance);
+	atlassianPullRequestsTools.register(serverInstance);
 
 	return serverInstance.connect(transportInstance).catch((err) => {
 		logger.error(`[src/index.ts] Failed to start server`, err);
