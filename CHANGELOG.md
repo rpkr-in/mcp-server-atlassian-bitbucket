@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.1...v1.1.2) (2025-03-24)
+
+
+### Bug Fixes
+
+* correct package name and version consistency ([374a660](https://github.com/aashari/mcp-server-atlassian-jira/commit/374a660e88a62b9c7b7c59718beec09806c47c0e))
+
 ## [1.1.1](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.0...v1.1.1) (2025-03-24)
 
 
