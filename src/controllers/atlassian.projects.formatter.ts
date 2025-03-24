@@ -64,10 +64,17 @@ export function formatProjectsList(
 		lines.push(
 			`*For CLI: Use \`--cursor "${nextCursor}"\` to get the next page*`,
 		);
+		lines.push('');
 		lines.push(
 			'*For MCP tools: Set the `cursor` parameter to retrieve the next page*',
 		);
 	}
+
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Project information retrieved at ${new Date().toLocaleString()}*`,
+	);
 
 	return lines.join('\n');
 }
@@ -79,6 +86,11 @@ export function formatProjectsList(
  */
 export function formatProjectDetails(projectData: ProjectDetailed): string {
 	const lines: string[] = [`# Project: ${projectData.name}`, ''];
+
+	// Add a brief summary line
+	const summary = `> A ${projectData.style || 'standard'} project with key \`${projectData.key}\`.`;
+	lines.push(summary);
+	lines.push('');
 
 	// Basic information
 	lines.push('## Basic Information');
@@ -133,10 +145,14 @@ export function formatProjectDetails(projectData: ProjectDetailed): string {
 			lines.push(`- **Released**: ${version.released ? 'Yes' : 'No'}`);
 			lines.push(`- **Archived**: ${version.archived ? 'Yes' : 'No'}`);
 			if (version.releaseDate) {
-				lines.push(`- **Release Date**: ${version.releaseDate}`);
+				lines.push(
+					`- **Release Date**: ${new Date(version.releaseDate).toLocaleString()}`,
+				);
 			}
 			if (version.startDate) {
-				lines.push(`- **Start Date**: ${version.startDate}`);
+				lines.push(
+					`- **Start Date**: ${new Date(version.startDate).toLocaleString()}`,
+				);
 			}
 		});
 	} else {
@@ -145,16 +161,23 @@ export function formatProjectDetails(projectData: ProjectDetailed): string {
 		lines.push('No versions defined for this project.');
 	}
 
-	// URL
+	// Links section
+	lines.push('');
+	lines.push('## Links');
 	const projectUrl = projectData.self.replace(
 		'/rest/api/3/project/',
 		'/browse/',
 	);
+	lines.push(`- **Web UI**: [Open in Jira](${projectUrl})`);
+	lines.push(`- **Issues**: [View Issues](${projectUrl}/issues)`);
+	lines.push(`- **Board**: [View Board](${projectUrl}/board)`);
+
+	// Add timestamp for when this information was retrieved
 	lines.push('');
-	lines.push('## Links');
-	lines.push(`- [Open in Jira](${projectUrl})`);
-	lines.push(`- [View Issues](${projectUrl}/issues)`);
-	lines.push(`- [View Board](${projectUrl}/board)`);
+	lines.push(
+		`*Project information retrieved at ${new Date().toLocaleString()}*`,
+	);
+	lines.push(`*To view this project in Jira, visit: ${projectUrl}*`);
 
 	return lines.join('\n');
 }

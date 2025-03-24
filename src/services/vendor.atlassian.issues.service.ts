@@ -125,7 +125,7 @@ async function search(
  *
  * @async
  * @memberof VendorAtlassianIssuesService
- * @param {string} issueIdOrKey - The ID or key of the issue to retrieve
+ * @param {string} idOrKey - The ID or key of the issue to retrieve
  * @param {GetIssueByIdParams} [params={}] - Optional parameters for customizing the response
  * @param {string[]} [params.fields] - Fields to include in the response
  * @param {string[]} [params.expand] - Fields to expand in the response
@@ -142,12 +142,12 @@ async function search(
  * });
  */
 async function get(
-	issueIdOrKey: string,
+	idOrKey: string,
 	params: GetIssueByIdParams = {},
 ): Promise<Issue> {
 	const logPrefix = '[src/services/vendor.atlassian.issues.service.ts@get]';
 	logger.debug(
-		`${logPrefix} Getting Jira issue with ID/key: ${issueIdOrKey}, params:`,
+		`${logPrefix} Getting Jira issue with ID/key: ${idOrKey}, params:`,
 		params,
 	);
 
@@ -183,7 +183,7 @@ async function get(
 	const queryString = queryParams.toString()
 		? `?${queryParams.toString()}`
 		: '';
-	const path = `${API_PATH}/issue/${issueIdOrKey}${queryString}`;
+	const path = `${API_PATH}/issue/${idOrKey}${queryString}`;
 
 	logger.debug(`${logPrefix} Sending request to: ${path}`);
 	return fetchAtlassian<Issue>(credentials, path);

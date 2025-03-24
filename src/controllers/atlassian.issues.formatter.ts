@@ -60,7 +60,9 @@ export function formatIssuesList(
 
 		// Created date
 		if (issue.fields.created) {
-			lines.push(`- **Created**: ${issue.fields.created}`);
+			lines.push(
+				`- **Created**: ${new Date(issue.fields.created).toLocaleString()}`,
+			);
 		}
 
 		// URL
@@ -90,10 +92,17 @@ export function formatIssuesList(
 		lines.push(
 			`*For CLI: Use \`--cursor "${nextCursor}"\` to get the next page*`,
 		);
+		lines.push('');
 		lines.push(
 			'*For MCP tools: Set the `cursor` parameter to retrieve the next page*',
 		);
 	}
+
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Issue information retrieved at ${new Date().toLocaleString()}*`,
+	);
 
 	return lines.join('\n');
 }
@@ -105,6 +114,13 @@ export function formatIssuesList(
  */
 export function formatIssueDetails(issueData: Issue): string {
 	const lines: string[] = [`# Jira Issue: ${issueData.fields.summary}`, ''];
+
+	// Add a brief summary line
+	if (issueData.fields.status) {
+		const summary = `> A ${issueData.fields.status.name.toLowerCase()} issue in the ${issueData.fields.project?.name} project.`;
+		lines.push(summary);
+		lines.push('');
+	}
 
 	// Basic Information section
 	lines.push('## Basic Information');
@@ -190,10 +206,14 @@ export function formatIssueDetails(issueData: Issue): string {
 	lines.push('');
 	lines.push('## Dates');
 	if (issueData.fields.created) {
-		lines.push(`- **Created**: ${issueData.fields.created}`);
+		lines.push(
+			`- **Created**: ${new Date(issueData.fields.created).toLocaleString()}`,
+		);
 	}
 	if (issueData.fields.updated) {
-		lines.push(`- **Updated**: ${issueData.fields.updated}`);
+		lines.push(
+			`- **Updated**: ${new Date(issueData.fields.updated).toLocaleString()}`,
+		);
 	}
 
 	// Time tracking
@@ -229,7 +249,9 @@ export function formatIssueDetails(issueData: Issue): string {
 		issueData.fields.attachment.forEach((attachment, index) => {
 			lines.push(`### ${index + 1}. ${attachment.filename}`);
 			lines.push(`- **Size**: ${formatFileSize(attachment.size)}`);
-			lines.push(`- **Created**: ${attachment.created}`);
+			lines.push(
+				`- **Created**: ${new Date(attachment.created).toLocaleString()}`,
+			);
 			lines.push(`- **Author**: ${attachment.author.displayName}`);
 			lines.push(`- **Content Type**: ${attachment.mimeType}`);
 			lines.push(`- **URL**: [Download](${attachment.content})`);
@@ -248,7 +270,7 @@ export function formatIssueDetails(issueData: Issue): string {
 			const commentObj = issueData.fields.comment as {
 				comments?: IssueComment[];
 			};
-			if (commentObj.comments && Array.isArray(commentObj.comments)) {
+			if (commentObj.comments && commentObj.comments.length > 0) {
 				comments = commentObj.comments;
 			}
 		}
@@ -256,145 +278,69 @@ export function formatIssueDetails(issueData: Issue): string {
 		if (comments.length > 0) {
 			lines.push('');
 			lines.push('## Comments');
-
 			comments.forEach((comment, index) => {
 				lines.push(
-					`### ${index + 1}. Comment by ${comment.author.displayName} (${comment.created})`,
+					`### ${index + 1}. Comment by ${comment.author.displayName} - ${new Date(comment.created).toLocaleString()}`,
 				);
-
-				// Handle different comment body formats
-				if (typeof comment.body === 'string') {
-					lines.push(comment.body);
-				} else if (typeof comment.body === 'object') {
-					lines.push(adfToMarkdown(comment.body));
-				} else {
-					lines.push('*Comment format not supported*');
+				if (comment.body) {
+					if (typeof comment.body === 'string') {
+						lines.push(comment.body);
+					} else {
+						lines.push(adfToMarkdown(comment.body));
+					}
 				}
 
-				if (comment.updated && comment.updated !== comment.created) {
-					lines.push(`*Updated: ${comment.updated}*`);
+				if (index < comments.length - 1) {
+					lines.push('');
 				}
 			});
 		}
 	}
 
-	// Issue links
+	// Issue Links
 	if (issueData.fields.issuelinks && issueData.fields.issuelinks.length > 0) {
 		lines.push('');
 		lines.push('## Linked Issues');
 
-		// Group by link type
-		const linksByType: Record<
-			string,
-			{
-				inward: IssueLink[];
-				outward: IssueLink[];
-				type: {
-					id: string;
-					name: string;
-					inward: string;
-					outward: string;
-				};
-			}
-		> = {};
+		const formattedLinks: string[] = [];
 
-		issueData.fields.issuelinks.forEach((link) => {
-			const typeName = link.type.name;
-			if (!linksByType[typeName]) {
-				linksByType[typeName] = {
-					inward: [],
-					outward: [],
-					type: link.type,
-				};
+		// Process outward links
+		issueData.fields.issuelinks.forEach((link: IssueLink) => {
+			if (link.outwardIssue) {
+				const issue = link.outwardIssue;
+				const type = link.type?.outward || 'relates to';
+				formattedLinks.push(
+					`- This issue ${type} [${issue.key}](${issue.self.replace('/rest/api/3/issue/', '/browse/')}) - ${issue.fields?.status?.name || 'Unknown status'}`,
+				);
 			}
 
 			if (link.inwardIssue) {
-				linksByType[typeName].inward.push(link);
-			} else if (link.outwardIssue) {
-				linksByType[typeName].outward.push(link);
+				const issue = link.inwardIssue;
+				const type = link.type?.inward || 'is related to';
+				formattedLinks.push(
+					`- This issue ${type} [${issue.key}](${issue.self.replace('/rest/api/3/issue/', '/browse/')}) - ${issue.fields?.status?.name || 'Unknown status'}`,
+				);
 			}
 		});
 
-		// Display links by type
-		Object.entries(linksByType).forEach(([typeName, links]) => {
-			lines.push(`### ${typeName}`);
-
-			if (links.inward.length > 0) {
-				lines.push(`#### ${links.inward[0].type.inward}`);
-				links.inward.forEach((link) => {
-					if (link.inwardIssue) {
-						const issue = link.inwardIssue;
-						const issueUrl = issue.self.replace(
-							'/rest/api/3/issue/',
-							'/browse/',
-						);
-						lines.push(
-							`- [${issue.key}](${issueUrl}) (${issue.fields.status.name})`,
-						);
-					}
-				});
-			}
-
-			if (links.outward.length > 0) {
-				lines.push(`#### ${links.outward[0].type.outward}`);
-				links.outward.forEach((link) => {
-					if (link.outwardIssue) {
-						const issue = link.outwardIssue;
-						const issueUrl = issue.self.replace(
-							'/rest/api/3/issue/',
-							'/browse/',
-						);
-						lines.push(
-							`- [${issue.key}](${issueUrl}) (${issue.fields.status.name})`,
-						);
-					}
-				});
-			}
+		// Add the formatted links to the output
+		formattedLinks.forEach((linkText) => {
+			lines.push(linkText);
 		});
 	}
 
-	// Worklog
-	if (issueData.fields.worklog && issueData.fields.worklog.length > 0) {
-		lines.push('');
-		lines.push('## Work Log');
-		issueData.fields.worklog.forEach((worklog, index) => {
-			lines.push(
-				`### ${index + 1}. Work logged by ${worklog.author.displayName}`,
-			);
-			lines.push(
-				`- **Time Spent**: ${worklog.timeSpent} (${worklog.timeSpentSeconds} seconds)`,
-			);
-			lines.push(`- **Started**: ${worklog.started}`);
-
-			// Handle different comment formats
-			if (worklog.comment) {
-				lines.push(`- **Comment**:`);
-				if (typeof worklog.comment === 'string') {
-					lines.push(`  ${worklog.comment}`);
-				} else if (
-					typeof worklog.comment === 'object' &&
-					'value' in worklog.comment
-				) {
-					lines.push(`  ${worklog.comment.value}`);
-				}
-			}
-		});
-	}
-
-	// URL
-	const issueUrl = issueData.self.replace('/rest/api/3/issue/', '/browse/');
+	// Links section
 	lines.push('');
 	lines.push('## Links');
-	lines.push(`- [Open in Jira](${issueUrl})`);
+	const issueUrl = issueData.self.replace('/rest/api/3/issue/', '/browse/');
+	lines.push(`- **Web UI**: [Open in Jira](${issueUrl})`);
 
-	// Add project links if project info is available
-	if (issueData.fields.project) {
-		const projectUrl = issueData.fields.project.self.replace(
-			'/rest/api/3/project/',
-			'/browse/',
-		);
-		lines.push(`- [View Project](${projectUrl})`);
-	}
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Issue information retrieved at ${new Date().toLocaleString()}*`,
+	);
+	lines.push(`*To view this issue in Jira, visit: ${issueUrl}*`);
 
 	return lines.join('\n');
 }
@@ -405,13 +351,11 @@ export function formatIssueDetails(issueData: Issue): string {
  * @returns Formatted file size string
  */
 function formatFileSize(bytes: number): string {
-	if (bytes < 1024) {
-		return `${bytes} B`;
-	} else if (bytes < 1024 * 1024) {
-		return `${(bytes / 1024).toFixed(1)} KB`;
-	} else if (bytes < 1024 * 1024 * 1024) {
-		return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-	} else {
-		return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-	}
+	if (bytes === 0) return '0 Bytes';
+
+	const k = 1024;
+	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }

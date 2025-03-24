@@ -2,10 +2,7 @@ import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianIssuesController from '../controllers/atlassian.issues.controller.js';
-import {
-	ListIssuesOptions,
-	GetIssueOptions,
-} from '../controllers/atlassian.issues.type.js';
+import { ListIssuesOptions } from '../controllers/atlassian.issues.type.js';
 
 /**
  * CLI module for managing Jira issues.
@@ -91,15 +88,10 @@ function registerGetIssueCommand(program: Command): void {
 					...options,
 				});
 
-				const issueOptions: GetIssueOptions = {};
-
 				logger.debug(
 					`${logPrefix} Fetching details for issue ID/key: ${idOrKey}`,
 				);
-				const result = await atlassianIssuesController.get(
-					idOrKey,
-					issueOptions,
-				);
+				const result = await atlassianIssuesController.get(idOrKey);
 				logger.debug(
 					`${logPrefix} Successfully retrieved issue details`,
 				);

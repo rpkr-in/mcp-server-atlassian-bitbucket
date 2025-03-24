@@ -8,41 +8,18 @@ export interface ListIssuesOptions extends PaginationOptions {
 	 * JQL query string to filter issues
 	 */
 	jql?: string;
-
-	/**
-	 * Fields to include in the response
-	 * Note: This is kept for backward compatibility but is now hardcoded in the controller
-	 */
-	fields?: string[];
 }
 
 /**
  * Options for getting issue details
+ *
+ * Note: This interface is intentionally kept minimal as all necessary fields
+ * are now hardcoded in the controller for consistent results across all requests.
+ * The empty interface is maintained for backward compatibility and future extensibility.
  */
 export interface GetIssueOptions {
-	/**
-	 * Fields to include in the response
-	 * Note: This is kept for backward compatibility but is now hardcoded in the controller
-	 */
-	fields?: string[];
-
-	/**
-	 * Whether to include comments in the response
-	 * Note: This is kept for backward compatibility but is now hardcoded to true in the controller
-	 */
-	includeComments?: boolean;
-
-	/**
-	 * Whether to include attachments in the response
-	 * Note: This is kept for backward compatibility but is now hardcoded to true in the controller
-	 */
-	includeAttachments?: boolean;
-
-	/**
-	 * Whether to include worklog in the response
-	 * Note: This is kept for backward compatibility but is now hardcoded to true in the controller
-	 */
-	includeWorklog?: boolean;
+	// This interface is intentionally empty but maintained for backward compatibility
+	// and to allow for future extensibility without breaking changes.
 }
 
 // Re-export ControllerResponse for backward compatibility
