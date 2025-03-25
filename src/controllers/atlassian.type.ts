@@ -19,6 +19,12 @@ export interface ResponsePagination {
 	 * When true, clients should use the nextCursor to retrieve more results.
 	 */
 	hasMore: boolean;
+
+	/**
+	 * The number of items in the current result set.
+	 * This helps clients track how many items they've received.
+	 */
+	count?: number;
 }
 
 /**

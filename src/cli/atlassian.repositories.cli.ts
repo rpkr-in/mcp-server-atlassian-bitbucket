@@ -28,46 +28,52 @@ function register(program: Command): void {
 }
 
 /**
- * Register the command for listing Bitbucket repositories
+ * Register the command for listing repositories within a workspace
  * @param program - The Commander program instance
  */
 function registerListRepositoriesCommand(program: Command): void {
 	program
 		.command('list-repositories')
 		.description(
-			'List Bitbucket repositories with optional filtering\n\n  Retrieves repositories from a specific workspace with filtering and pagination options.',
+			'List repositories within a Bitbucket workspace\n\n  Retrieves repositories from the specified workspace with filtering and pagination options.',
 		)
-		.argument('<workspace>', 'Workspace slug containing the repositories')
+		.argument(
+			'<workspace>',
+			'Workspace slug (e.g., codapayments) to list repositories from',
+		)
+		.option(
+			'-r, --role <role>',
+			"Filter by the authenticated user's role on the repositories. Values: owner, admin, contributor, member",
+		)
+		.option(
+			'-f, --filter <filter>',
+			'Filter the list by a substring of the name',
+		)
 		.option(
 			'-l, --limit <number>',
 			'Maximum number of repositories to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
 		)
 		.option(
-			'-c, --cursor <string>',
+			'-c, --cursor <cursor>',
 			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
 		)
-		.option(
-			'-q, --query <query>',
-			'Query string to filter repositories using Bitbucket query syntax. Example: "name ~ \\"api\\"" for repositories with "api" in the name.',
-		)
-		.action(async (workspace, options) => {
+		.action(async (workspace: string, options) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
-				logger.debug(`${logPrefix} Processing command options:`, {
-					workspace,
-					...options,
-				});
+				logger.debug(
+					`${logPrefix} Processing command options:`,
+					options,
+				);
 
 				const filterOptions: ListRepositoriesOptions = {
 					workspace,
+					...(options.role && { role: options.role }),
+					...(options.filter && { query: options.filter }),
 					...(options.limit && {
 						limit: parseInt(options.limit, 10),
 					}),
 					...(options.cursor && { cursor: options.cursor }),
-					...(options.query && {
-						query: options.query,
-					}),
 				};
 
 				logger.debug(
@@ -81,6 +87,17 @@ function registerListRepositoriesCommand(program: Command): void {
 				);
 
 				console.log(result.content);
+
+				// Display pagination information if available
+				if (result.pagination?.hasMore) {
+					console.log('\n## Pagination');
+					console.log(
+						`*Showing ${result.pagination.count || ''} items. More results are available.*`,
+					);
+					console.log(
+						`\nTo see more results, use --cursor "${result.pagination.nextCursor}"`,
+					);
+				}
 			} catch (error) {
 				logger.error(`${logPrefix} Operation failed:`, error);
 				handleCliError(error);

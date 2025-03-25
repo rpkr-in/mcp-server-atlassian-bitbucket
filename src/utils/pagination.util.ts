@@ -65,19 +65,23 @@ export type PaginationData =
  * @param data The API response containing pagination information
  * @param paginationType The type of pagination mechanism used
  * @param source Source identifier for logging
- * @returns Object with nextCursor and hasMore properties
+ * @returns Object with nextCursor, hasMore, and count properties
  */
 export function extractPaginationInfo(
 	data: PaginationData,
 	paginationType: PaginationType,
 	source: string,
-): { nextCursor?: string; hasMore: boolean } {
+): { nextCursor?: string; hasMore: boolean; count?: number } {
 	let nextCursor: string | undefined;
+	let count: number | undefined;
 
 	try {
+		// Extract count from the appropriate data field based on pagination type
 		switch (paginationType) {
 			case PaginationType.OFFSET: {
 				const offsetData = data as OffsetPaginationData;
+				count = offsetData.values?.length;
+
 				// Handle Jira's offset-based pagination
 				if (
 					offsetData.startAt !== undefined &&
@@ -97,6 +101,8 @@ export function extractPaginationInfo(
 
 			case PaginationType.CURSOR: {
 				const cursorData = data as CursorPaginationData;
+				count = cursorData.results?.length;
+
 				// Handle Confluence's cursor-based pagination
 				if (cursorData._links && cursorData._links.next) {
 					const nextUrl = cursorData._links.next;
@@ -110,6 +116,8 @@ export function extractPaginationInfo(
 
 			case PaginationType.PAGE: {
 				const pageData = data as PagePaginationData;
+				count = pageData.values?.length;
+
 				// Handle Bitbucket's page-based pagination
 				if (pageData.next) {
 					try {
@@ -138,9 +146,14 @@ export function extractPaginationInfo(
 			logger.debug(`${source} Next cursor: ${nextCursor}`);
 		}
 
+		if (count !== undefined) {
+			logger.debug(`${source} Count: ${count}`);
+		}
+
 		return {
 			nextCursor,
 			hasMore: !!nextCursor,
+			count,
 		};
 	} catch (error) {
 		logger.warn(
