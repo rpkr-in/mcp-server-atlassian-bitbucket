@@ -1,5 +1,5 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { handleControllerError } from '../utils/errorHandler.util.js';
 import {
 	extractPaginationInfo,
@@ -25,6 +25,14 @@ import {
  * Provides functionality for listing repositories and retrieving repository details.
  */
 
+// Create a contextualized logger for this file
+const controllerLogger = Logger.forContext(
+	'controllers/atlassian.repositories.controller.ts',
+);
+
+// Log controller initialization
+controllerLogger.debug('Bitbucket repositories controller initialized');
+
 /**
  * List Bitbucket repositories with optional filtering
  * @param options - Options for listing repositories
@@ -39,8 +47,11 @@ import {
 async function list(
 	options: ListRepositoriesOptions,
 ): Promise<ControllerResponse> {
-	const source = `[src/controllers/atlassian.repositories.controller.ts@list]`;
-	logger.debug(`${source} Listing Bitbucket repositories...`, options);
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'list',
+	);
+	methodLogger.debug('Listing Bitbucket repositories...', options);
 
 	try {
 		// Convert to service params
@@ -54,22 +65,20 @@ async function list(
 			pagelen: options.limit || 50,
 		};
 
-		logger.debug(`${source} Using filters:`, serviceParams);
+		methodLogger.debug('Using filters:', serviceParams);
 
 		const repositoriesData =
 			await atlassianRepositoriesService.list(serviceParams);
 
-		logger.debug(
-			`${source} Retrieved ${
-				repositoriesData.values?.length || 0
-			} repositories`,
+		methodLogger.debug(
+			`Retrieved ${repositoriesData.values?.length || 0} repositories`,
 		);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
 			repositoriesData,
 			PaginationType.PAGE,
-			source,
+			'controllers/atlassian.repositories.controller.ts@list',
 		);
 
 		// Format the repositories data for display using the formatter
@@ -87,7 +96,7 @@ async function list(
 		handleControllerError(error, {
 			entityType: 'Repositories',
 			operation: 'listing',
-			source: 'src/controllers/atlassian.repositories.controller.ts@list',
+			source: 'controllers/atlassian.repositories.controller.ts@list',
 			additionalInfo: { options },
 		});
 	}
@@ -107,9 +116,13 @@ async function get(
 	options: GetRepositoryOptions = {},
 ): Promise<ControllerResponse> {
 	const { workspace, repoSlug } = identifier;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'get',
+	);
 
-	logger.debug(
-		`[src/controllers/atlassian.repositories.controller.ts@get] Getting repository details for ${workspace}/${repoSlug}...`,
+	methodLogger.debug(
+		`Getting repository details for ${workspace}/${repoSlug}...`,
 		options,
 	);
 
@@ -122,9 +135,7 @@ async function get(
 
 		const repositoryData = await atlassianRepositoriesService.get(params);
 
-		logger.debug(
-			`[src/controllers/atlassian.repositories.controller.ts@get] Retrieved repository: ${repositoryData.full_name}`,
-		);
+		methodLogger.debug(`Retrieved repository: ${repositoryData.full_name}`);
 
 		// Format the repository data for display using the formatter
 		// Since we don't have extra data available, pass an empty object
@@ -139,7 +150,7 @@ async function get(
 			entityType: 'Repository',
 			entityId: identifier,
 			operation: 'retrieving',
-			source: 'src/controllers/atlassian.repositories.controller.ts@get',
+			source: 'controllers/atlassian.repositories.controller.ts@get',
 			additionalInfo: { options },
 		});
 	}

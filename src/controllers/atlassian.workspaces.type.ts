@@ -36,4 +36,4 @@ export interface ListWorkspacesOptions extends PaginationOptions {
 export type GetWorkspaceOptions = Record<string, never>;
 
 // Re-export ControllerResponse for backward compatibility
-export { ControllerResponse };
+export type { ControllerResponse };

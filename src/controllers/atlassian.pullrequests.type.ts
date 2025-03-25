@@ -55,4 +55,4 @@ export interface GetPullRequestOptions {
 }
 
 // Re-export ControllerResponse for backward compatibility
-export { ControllerResponse };
+export type { ControllerResponse };

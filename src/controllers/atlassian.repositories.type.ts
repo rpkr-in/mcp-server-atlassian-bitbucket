@@ -65,4 +65,4 @@ export interface GetRepositoryOptions {
 }
 
 // Re-export ControllerResponse for backward compatibility
-export { ControllerResponse };
+export type { ControllerResponse };
