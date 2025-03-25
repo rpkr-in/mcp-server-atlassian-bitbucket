@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.0...v1.4.1) (2025-03-25)
+
+
+### Bug Fixes
+
+* replace any with unknown in defaults.util.ts ([5dbc0b1](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5dbc0b1050df479ac844907ef1ed26fc26734561))
+
 # [1.4.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.3.0...v1.4.0) (2025-03-25)
 
 
