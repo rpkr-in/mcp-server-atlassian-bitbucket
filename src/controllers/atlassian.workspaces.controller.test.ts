@@ -108,7 +108,7 @@ describe('Atlassian Workspaces Controller', () => {
 
 			// Call the function with the extracted slug
 			const result =
-				await atlassianWorkspacesController.get(workspaceSlug);
+				await atlassianWorkspacesController.get({ workspace: workspaceSlug });
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
@@ -133,7 +133,7 @@ describe('Atlassian Workspaces Controller', () => {
 
 			// Expect an error to be thrown
 			await expect(
-				atlassianWorkspacesController.get(invalidSlug),
+				atlassianWorkspacesController.get({ workspace: invalidSlug }),
 			).rejects.toThrow();
 		}, 15000); // Increase timeout for API call
 	});

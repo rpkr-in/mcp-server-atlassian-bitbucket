@@ -1,10 +1,15 @@
 import atlassianWorkspacesService from '../services/vendor.atlassian.workspaces.service.js';
 import { logger } from '../utils/logger.util.js';
-import { McpError, createApiError } from '../utils/error.util.js';
+import { handleControllerError } from '../utils/errorHandler.util.js';
+import {
+	extractPaginationInfo,
+	PaginationType,
+} from '../utils/pagination.util.js';
 import {
 	ListWorkspacesOptions,
 	GetWorkspaceOptions,
 	ControllerResponse,
+	WorkspaceIdentifier,
 } from './atlassian.workspaces.type.js';
 import {
 	formatWorkspacesList,
@@ -29,10 +34,8 @@ import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.ty
 async function list(
 	options: ListWorkspacesOptions = {},
 ): Promise<ControllerResponse> {
-	logger.debug(
-		`[src/controllers/atlassian.workspaces.controller.ts@list] Listing Bitbucket workspaces...`,
-		options,
-	);
+	const source = `[src/controllers/atlassian.workspaces.controller.ts@list]`;
+	logger.debug(`${source} Listing Bitbucket workspaces...`, options);
 
 	try {
 		// Convert to service params
@@ -44,106 +47,65 @@ async function list(
 			pagelen: options.limit || 50,
 		};
 
-		logger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@list] Using filters:`,
-			serviceParams,
-		);
+		logger.debug(`${source} Using filters:`, serviceParams);
 
 		const workspacesData =
 			await atlassianWorkspacesService.list(serviceParams);
 
 		logger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@list] Retrieved ${
+			`${source} Retrieved ${
 				workspacesData.values?.length || 0
 			} workspaces`,
 		);
 
-		// Extract pagination information
-		let nextCursor: string | undefined;
-		if (workspacesData.next) {
-			// Extract page from next URL if available
-			const nextUrl = new URL(workspacesData.next);
-			const nextPage = nextUrl.searchParams.get('page');
-			if (nextPage) {
-				nextCursor = nextPage;
-			}
-		}
+		// Extract pagination information using the utility
+		const pagination = extractPaginationInfo(
+			workspacesData,
+			PaginationType.PAGE,
+			source,
+		);
 
 		// Format the workspaces data for display using the formatter
 		const formattedWorkspaces = formatWorkspacesList(
 			workspacesData,
-			nextCursor,
+			pagination.nextCursor,
 		);
 
 		return {
 			content: formattedWorkspaces,
-			pagination: {
-				nextCursor,
-				hasMore: !!nextCursor,
-			},
+			pagination,
 		};
 	} catch (error) {
-		logger.error(
-			`[src/controllers/atlassian.workspaces.controller.ts@list] Error listing workspaces`,
-			error,
-		);
-
-		// Get the error message
-		const errorMessage =
-			error instanceof Error ? error.message : String(error);
-
-		// Pass through McpErrors
-		if (error instanceof McpError) {
-			throw error;
-		}
-
-		// Handle specific error patterns
-
-		// 1. No workspaces or access denied
-		if (
-			errorMessage.includes('access') ||
-			errorMessage.includes('permission') ||
-			errorMessage.includes('authorize')
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.workspaces.controller.ts@list] Access denied or no workspaces`,
-			);
-
-			throw createApiError(
-				`Unable to access Bitbucket workspaces. Verify your credentials and permissions.`,
-				403,
-				error,
-			);
-		}
-
-		// Default: preserve original message with status code if available
-		throw createApiError(
-			errorMessage,
-			error instanceof Error && 'statusCode' in error
-				? (error as { statusCode: number }).statusCode
-				: undefined,
-			error,
-		);
+		// Use the standardized error handler
+		handleControllerError(error, {
+			entityType: 'Workspaces',
+			operation: 'listing',
+			source: 'src/controllers/atlassian.workspaces.controller.ts@list',
+			additionalInfo: { options },
+		});
 	}
 }
 
 /**
  * Get details of a specific Bitbucket workspace
- * @param slug - The slug of the workspace to retrieve
- * @param _options - Options for retrieving the workspace (not currently used)
+ * @param identifier - Object containing the workspace slug
+ * @param identifier.workspace - The slug of the workspace to retrieve
+ * @param options - Options for retrieving the workspace (not currently used)
  * @returns Promise with formatted workspace details content
  * @throws Error if workspace retrieval fails
  */
 async function get(
-	slug: string,
-	_options: GetWorkspaceOptions = {},
+	identifier: WorkspaceIdentifier,
+	options: GetWorkspaceOptions = {},
 ): Promise<ControllerResponse> {
+	const { workspace } = identifier;
+
 	logger.debug(
-		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${slug}...`,
+		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${workspace}...`,
 	);
 
 	try {
-		const workspaceData = await atlassianWorkspacesService.get(slug);
+		const workspaceData = await atlassianWorkspacesService.get(workspace);
 		logger.debug(
 			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.slug}`,
 		);
@@ -163,68 +125,14 @@ async function get(
 			content: formattedWorkspace,
 		};
 	} catch (error) {
-		logger.error(
-			`[src/controllers/atlassian.workspaces.controller.ts@get] Error getting workspace`,
-			error,
-		);
-
-		// Get the error message
-		const errorMessage =
-			error instanceof Error ? error.message : String(error);
-
-		// Pass through McpErrors
-		if (error instanceof McpError) {
-			throw error;
-		}
-
-		// Handle specific error patterns
-
-		// 1. Workspace not found
-		if (
-			errorMessage.includes('not found') ||
-			(error instanceof Error &&
-				'statusCode' in error &&
-				(error as { statusCode: number }).statusCode === 404)
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.workspaces.controller.ts@get] Workspace not found: ${slug}`,
-			);
-
-			throw createApiError(
-				`Workspace not found: ${slug}. Verify the workspace slug and your access permissions.`,
-				404,
-				error,
-			);
-		}
-
-		// 2. Access denied
-		if (
-			errorMessage.includes('access') ||
-			errorMessage.includes('permission') ||
-			errorMessage.includes('authorize') ||
-			(error instanceof Error &&
-				'statusCode' in error &&
-				(error as { statusCode: number }).statusCode === 403)
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.workspaces.controller.ts@get] Access denied for workspace: ${slug}`,
-			);
-
-			throw createApiError(
-				`Access denied for workspace: ${slug}. Verify your credentials and permissions.`,
-				403,
-				error,
-			);
-		}
-
-		// Default: preserve original message with status code if available
-		throw createApiError(
-			errorMessage,
-			error instanceof Error && 'statusCode' in error
-				? (error as { statusCode: number }).statusCode
-				: undefined,
-			error,
-		);
+		// Use the standardized error handler
+		handleControllerError(error, {
+			entityType: 'Workspace',
+			entityId: identifier,
+			operation: 'retrieving',
+			source: 'src/controllers/atlassian.workspaces.controller.ts@get',
+			additionalInfo: { options },
+		});
 	}
 }
 

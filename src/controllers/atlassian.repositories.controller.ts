@@ -1,10 +1,15 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
 import { logger } from '../utils/logger.util.js';
-import { McpError, createApiError } from '../utils/error.util.js';
+import { handleControllerError } from '../utils/errorHandler.util.js';
+import {
+	extractPaginationInfo,
+	PaginationType,
+} from '../utils/pagination.util.js';
 import {
 	ListRepositoriesOptions,
 	GetRepositoryOptions,
 	ControllerResponse,
+	RepositoryIdentifier,
 } from './atlassian.repositories.type.js';
 import {
 	formatRepositoriesList,
@@ -34,10 +39,8 @@ import {
 async function list(
 	options: ListRepositoriesOptions,
 ): Promise<ControllerResponse> {
-	logger.debug(
-		`[src/controllers/atlassian.repositories.controller.ts@list] Listing Bitbucket repositories...`,
-		options,
-	);
+	const source = `[src/controllers/atlassian.repositories.controller.ts@list]`;
+	logger.debug(`${source} Listing Bitbucket repositories...`, options);
 
 	try {
 		// Convert to service params
@@ -51,118 +54,60 @@ async function list(
 			pagelen: options.limit || 50,
 		};
 
-		logger.debug(
-			`[src/controllers/atlassian.repositories.controller.ts@list] Using filters:`,
-			serviceParams,
-		);
+		logger.debug(`${source} Using filters:`, serviceParams);
 
 		const repositoriesData =
 			await atlassianRepositoriesService.list(serviceParams);
 
 		logger.debug(
-			`[src/controllers/atlassian.repositories.controller.ts@list] Retrieved ${
+			`${source} Retrieved ${
 				repositoriesData.values?.length || 0
 			} repositories`,
 		);
 
-		// Extract pagination information
-		let nextCursor: string | undefined;
-		if (repositoriesData.next) {
-			// Extract page from next URL if available
-			const nextUrl = new URL(repositoriesData.next);
-			const nextPage = nextUrl.searchParams.get('page');
-			if (nextPage) {
-				nextCursor = nextPage;
-			}
-		}
+		// Extract pagination information using the utility
+		const pagination = extractPaginationInfo(
+			repositoriesData,
+			PaginationType.PAGE,
+			source,
+		);
 
 		// Format the repositories data for display using the formatter
 		const formattedRepositories = formatRepositoriesList(
 			repositoriesData,
-			nextCursor,
+			pagination.nextCursor,
 		);
 
 		return {
 			content: formattedRepositories,
-			pagination: {
-				nextCursor,
-				hasMore: !!nextCursor,
-			},
+			pagination,
 		};
 	} catch (error) {
-		logger.error(
-			`[src/controllers/atlassian.repositories.controller.ts@list] Error listing repositories`,
-			error,
-		);
-
-		// Get the error message
-		const errorMessage =
-			error instanceof Error ? error.message : String(error);
-
-		// Pass through McpErrors
-		if (error instanceof McpError) {
-			throw error;
-		}
-
-		// Handle specific error patterns
-
-		// 1. Workspace not found
-		if (
-			errorMessage.includes('workspace') &&
-			errorMessage.includes('not found')
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.repositories.controller.ts@list] Workspace not found: ${options.workspace}`,
-			);
-
-			throw createApiError(
-				`Workspace not found: ${options.workspace}. Verify the workspace slug and your access permissions.`,
-				404,
-				error,
-			);
-		}
-
-		// 2. Access denied
-		if (
-			errorMessage.includes('access') ||
-			errorMessage.includes('permission') ||
-			errorMessage.includes('authorize')
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.repositories.controller.ts@list] Access denied for workspace: ${options.workspace}`,
-			);
-
-			throw createApiError(
-				`Access denied for workspace: ${options.workspace}. Verify your credentials and permissions.`,
-				403,
-				error,
-			);
-		}
-
-		// Default: preserve original message with status code if available
-		throw createApiError(
-			errorMessage,
-			error instanceof Error && 'statusCode' in error
-				? (error as { statusCode: number }).statusCode
-				: undefined,
-			error,
-		);
+		// Use the standardized error handler
+		handleControllerError(error, {
+			entityType: 'Repositories',
+			operation: 'listing',
+			source: 'src/controllers/atlassian.repositories.controller.ts@list',
+			additionalInfo: { options },
+		});
 	}
 }
 
 /**
  * Get details of a specific Bitbucket repository
- * @param workspace - The workspace slug that contains the repository
- * @param repoSlug - The repository slug
+ * @param identifier - Object containing repository identifiers
+ * @param identifier.workspace - The workspace slug that contains the repository
+ * @param identifier.repoSlug - The repository slug
  * @param options - Options for retrieving the repository details
  * @returns Promise with formatted repository details content
  * @throws Error if repository retrieval fails
  */
 async function get(
-	workspace: string,
-	repoSlug: string,
+	identifier: RepositoryIdentifier,
 	options: GetRepositoryOptions = {},
 ): Promise<ControllerResponse> {
+	const { workspace, repoSlug } = identifier;
+
 	logger.debug(
 		`[src/controllers/atlassian.repositories.controller.ts@get] Getting repository details for ${workspace}/${repoSlug}...`,
 		options,
@@ -189,68 +134,14 @@ async function get(
 			content: formattedRepository,
 		};
 	} catch (error) {
-		logger.error(
-			`[src/controllers/atlassian.repositories.controller.ts@get] Error getting repository`,
-			error,
-		);
-
-		// Get the error message
-		const errorMessage =
-			error instanceof Error ? error.message : String(error);
-
-		// Pass through McpErrors
-		if (error instanceof McpError) {
-			throw error;
-		}
-
-		// Handle specific error patterns
-
-		// 1. Repository not found
-		if (
-			errorMessage.includes('not found') ||
-			(error instanceof Error &&
-				'statusCode' in error &&
-				(error as { statusCode: number }).statusCode === 404)
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.repositories.controller.ts@get] Repository not found: ${workspace}/${repoSlug}`,
-			);
-
-			throw createApiError(
-				`Repository not found: ${workspace}/${repoSlug}. Verify the repository slug and your access permissions.`,
-				404,
-				error,
-			);
-		}
-
-		// 2. Access denied
-		if (
-			errorMessage.includes('access') ||
-			errorMessage.includes('permission') ||
-			errorMessage.includes('authorize') ||
-			(error instanceof Error &&
-				'statusCode' in error &&
-				(error as { statusCode: number }).statusCode === 403)
-		) {
-			logger.warn(
-				`[src/controllers/atlassian.repositories.controller.ts@get] Access denied for repository: ${workspace}/${repoSlug}`,
-			);
-
-			throw createApiError(
-				`Access denied for repository: ${workspace}/${repoSlug}. Verify your credentials and permissions.`,
-				403,
-				error,
-			);
-		}
-
-		// Default: preserve original message with status code if available
-		throw createApiError(
-			errorMessage,
-			error instanceof Error && 'statusCode' in error
-				? (error as { statusCode: number }).statusCode
-				: undefined,
-			error,
-		);
+		// Use the standardized error handler
+		handleControllerError(error, {
+			entityType: 'Repository',
+			entityId: identifier,
+			operation: 'retrieving',
+			source: 'src/controllers/atlassian.repositories.controller.ts@get',
+			additionalInfo: { options },
+		});
 	}
 }
 

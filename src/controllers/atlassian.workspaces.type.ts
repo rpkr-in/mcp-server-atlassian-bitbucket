@@ -1,4 +1,18 @@
-import { ControllerResponse, PaginationOptions } from './atlassian.type.js';
+import {
+	ControllerResponse,
+	PaginationOptions,
+	EntityIdentifier,
+} from './atlassian.type.js';
+
+/**
+ * Workspace identifier for retrieving specific workspaces
+ */
+export interface WorkspaceIdentifier extends EntityIdentifier {
+	/**
+	 * The workspace slug to retrieve
+	 */
+	workspace: string;
+}
 
 /**
  * Options for listing Bitbucket workspaces

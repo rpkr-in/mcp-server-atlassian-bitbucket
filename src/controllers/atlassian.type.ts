@@ -29,6 +29,14 @@ export interface PaginationOptions {
 }
 
 /**
+ * Base interface for entity identifiers
+ * Used to standardize parameter patterns across controllers
+ */
+export interface EntityIdentifier {
+	[key: string]: string;
+}
+
+/**
  * Common response structure for controller operations
  */
 export interface ControllerResponse {

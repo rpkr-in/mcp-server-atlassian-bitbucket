@@ -1,4 +1,8 @@
-import { ControllerResponse, PaginationOptions } from './atlassian.type.js';
+import {
+	ControllerResponse,
+	PaginationOptions,
+	EntityIdentifier,
+} from './atlassian.type.js';
 
 /**
  * Options for listing Bitbucket repositories
@@ -28,7 +32,7 @@ export interface ListRepositoriesOptions extends PaginationOptions {
 /**
  * Parameters for identifying a specific repository
  */
-export interface RepositoryIdentifier {
+export interface RepositoryIdentifier extends EntityIdentifier {
 	/**
 	 * The workspace slug
 	 */
@@ -37,7 +41,7 @@ export interface RepositoryIdentifier {
 	/**
 	 * The repository slug
 	 */
-	repo_slug: string;
+	repoSlug: string;
 }
 
 /**

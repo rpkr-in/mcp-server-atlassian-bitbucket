@@ -1,4 +1,28 @@
-import { ControllerResponse, PaginationOptions } from './atlassian.type.js';
+import {
+	ControllerResponse,
+	PaginationOptions,
+	EntityIdentifier,
+} from './atlassian.type.js';
+
+/**
+ * Pull request identifier for retrieving specific pull requests
+ */
+export interface PullRequestIdentifier extends EntityIdentifier {
+	/**
+	 * The workspace slug
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug
+	 */
+	repoSlug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	pullRequestId: string;
+}
 
 /**
  * Options for listing Bitbucket pull requests
