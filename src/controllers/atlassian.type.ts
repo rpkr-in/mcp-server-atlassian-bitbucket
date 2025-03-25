@@ -1,52 +1,72 @@
 /**
- * Common pagination information for Atlassian API responses
+ * Common type definitions for Atlassian controllers.
+ * These types provide a standard interface for controller interactions.
+ */
+
+/**
+ * Common pagination information for API responses.
+ * This is used for providing consistent pagination details to clients.
  */
 export interface ResponsePagination {
 	/**
-	 * Cursor for the next page of results, if available
+	 * Cursor for the next page of results, if available.
+	 * This should be passed to subsequent requests to retrieve the next page.
 	 */
 	nextCursor?: string;
 
 	/**
-	 * Whether more results are available
+	 * Whether more results are available beyond the current page.
+	 * When true, clients should use the nextCursor to retrieve more results.
 	 */
 	hasMore: boolean;
 }
 
 /**
- * Common pagination options for Atlassian API requests
+ * Common pagination options for API requests.
+ * These options control how many results are returned and which page is retrieved.
  */
 export interface PaginationOptions {
 	/**
-	 * Limit the number of results returned
+	 * Maximum number of results to return per page.
+	 * Valid range: 1-100
+	 * If not specified, the default page size (typically 25) will be used.
 	 */
 	limit?: number;
 
 	/**
-	 * Pagination cursor for retrieving the next set of results
+	 * Pagination cursor for retrieving a specific page of results.
+	 * Obtain this value from the previous response's pagination information.
 	 */
 	cursor?: string;
 }
 
 /**
- * Base interface for entity identifiers
- * Used to standardize parameter patterns across controllers
+ * Base interface for entity identifiers.
+ * Used to standardize parameter patterns across controllers.
+ * Each entity-specific identifier should extend this interface.
  */
 export interface EntityIdentifier {
+	/**
+	 * Allows for dynamic keys with string values.
+	 * Entity-specific identifiers will add strongly-typed properties.
+	 */
 	[key: string]: string;
 }
 
 /**
- * Common response structure for controller operations
+ * Common response structure for controller operations.
+ * All controller methods should return this structure.
  */
 export interface ControllerResponse {
 	/**
-	 * Formatted content to be displayed
+	 * Formatted content to be displayed to the user.
+	 * Usually a Markdown-formatted string.
 	 */
 	content: string;
 
 	/**
-	 * Optional pagination information
+	 * Optional pagination information for list operations.
+	 * If present, indicates that more results are available.
 	 */
 	pagination?: ResponsePagination;
 }

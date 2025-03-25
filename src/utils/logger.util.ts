@@ -45,20 +45,41 @@ function extractEssentialValues(
 }
 
 /**
- * Format source path consistently
- * @param filePath File path
- * @param functionName Function name
- * @returns Formatted source path
+ * Format source path consistently using the standardized format:
+ * [module/file.ts@function] or [module/file.ts]
+ *
+ * @param filePath File path (with or without src/ prefix)
+ * @param functionName Optional function name
+ * @returns Formatted source path according to standard pattern
  */
 function formatSourcePath(filePath: string, functionName?: string): string {
-	const formattedPath = filePath.startsWith('src/')
-		? filePath
-		: `src/${filePath}`;
+	// Always strip 'src/' prefix for consistency
+	const normalizedPath = filePath.replace(/^src\//, '');
+
 	return functionName
-		? `[${formattedPath}@${functionName}]`
-		: `[${formattedPath}]`;
+		? `[${normalizedPath}@${functionName}]`
+		: `[${normalizedPath}]`;
 }
 
+/**
+ * Logger class for consistent logging across the application.
+ *
+ * RECOMMENDED USAGE:
+ *
+ * 1. Create a file-level logger using the static forContext method:
+ *    ```
+ *    const logger = Logger.forContext('controllers/myController.ts');
+ *    ```
+ *
+ * 2. For method-specific logging, create a method logger:
+ *    ```
+ *    const methodLogger = Logger.forContext('controllers/myController.ts', 'myMethod');
+ *    ```
+ *
+ * 3. Avoid using raw string prefixes in log messages. Instead, use contextualized loggers.
+ *
+ * 4. For debugging objects, use the debugResponse method to log only essential properties.
+ */
 class Logger {
 	private context?: string;
 
@@ -67,10 +88,19 @@ class Logger {
 	}
 
 	/**
-	 * Create a contextualized logger for a specific file or component
+	 * Create a contextualized logger for a specific file or component.
+	 * This is the preferred method for creating loggers.
+	 *
 	 * @param filePath The file path (e.g., 'controllers/atlassian.projects.controller.ts')
 	 * @param functionName Optional function name for more specific context
 	 * @returns A new Logger instance with the specified context
+	 *
+	 * @example
+	 * // File-level logger
+	 * const logger = Logger.forContext('controllers/myController.ts');
+	 *
+	 * // Method-level logger
+	 * const methodLogger = Logger.forContext('controllers/myController.ts', 'myMethod');
 	 */
 	static forContext(filePath: string, functionName?: string): Logger {
 		return new Logger(formatSourcePath(filePath, functionName));

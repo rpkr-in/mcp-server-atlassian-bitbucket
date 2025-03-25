@@ -19,17 +19,12 @@ import {
 	ListRepositoriesParams,
 	GetRepositoryParams,
 } from '../services/vendor.atlassian.repositories.types.js';
+import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
  * Provides functionality for listing repositories and retrieving repository details.
  */
-
-// Default values for options
-const DEFAULT_PAGE_LENGTH = 25;
-const DEFAULT_INCLUDE_BRANCHES = false;
-const DEFAULT_INCLUDE_COMMITS = false;
-const DEFAULT_INCLUDE_PULL_REQUESTS = false;
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -64,7 +59,7 @@ async function list(
 			// Required workspace
 			workspace: options.workspace,
 			// Handle limit with default value
-			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			pagelen: options.limit || DEFAULT_PAGE_SIZE,
 			// Map cursor to page for page-based pagination
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 			// Optional filter parameters
@@ -115,11 +110,7 @@ async function list(
  */
 async function get(
 	identifier: RepositoryIdentifier,
-	options: GetRepositoryOptions = {
-		includeBranches: DEFAULT_INCLUDE_BRANCHES,
-		includeCommits: DEFAULT_INCLUDE_COMMITS,
-		includePullRequests: DEFAULT_INCLUDE_PULL_REQUESTS,
-	},
+	options: GetRepositoryOptions = {},
 ): Promise<ControllerResponse> {
 	const { workspace, repoSlug } = identifier;
 	const methodLogger = Logger.forContext(
