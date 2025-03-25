@@ -1,25 +1,18 @@
-import {
-	Repository,
-	RepositoriesResponse,
-} from '../services/vendor.atlassian.repositories.types.js';
+import { Repository } from '../services/vendor.atlassian.repositories.types.js';
 
 /**
  * Format a list of repositories for display
- * @param repositoriesData - Raw repositories data from the API
- * @param nextCursor - Pagination cursor for retrieving the next set of results
+ * @param repositories - Array of repositories from the API response
  * @returns Formatted string with repositories information in markdown format
  */
-export function formatRepositoriesList(
-	repositoriesData: RepositoriesResponse,
-	nextCursor?: string,
-): string {
-	if (!repositoriesData.values || repositoriesData.values.length === 0) {
+export function formatRepositoriesList(repositories: Repository[]): string {
+	if (!repositories || repositories.length === 0) {
 		return 'No Bitbucket repositories found.';
 	}
 
 	const lines: string[] = ['# Bitbucket Repositories', ''];
 
-	repositoriesData.values.forEach((repo, index) => {
+	repositories.forEach((repo, index) => {
 		// Basic information
 		lines.push(`## ${index + 1}. ${repo.name}`);
 		lines.push(`- **UUID**: ${repo.uuid}`);
@@ -57,22 +50,12 @@ export function formatRepositoriesList(
 		}
 
 		// Add a separator between repositories
-		if (index < repositoriesData.values.length - 1) {
+		if (index < repositories.length - 1) {
 			lines.push('');
 			lines.push('---');
 			lines.push('');
 		}
 	});
-
-	// Add pagination information
-	if (nextCursor) {
-		lines.push('');
-		lines.push('---');
-		lines.push('');
-		lines.push(
-			`*Showing ${repositoriesData.values.length} repositories. More repositories are available. Use pagination to retrieve more results.*`,
-		);
-	}
 
 	return lines.join('\n');
 }

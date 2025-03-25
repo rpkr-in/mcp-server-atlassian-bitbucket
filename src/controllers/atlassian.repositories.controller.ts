@@ -25,6 +25,12 @@ import {
  * Provides functionality for listing repositories and retrieving repository details.
  */
 
+// Default values for options
+const DEFAULT_PAGE_LENGTH = 25;
+const DEFAULT_INCLUDE_BRANCHES = false;
+const DEFAULT_INCLUDE_COMMITS = false;
+const DEFAULT_INCLUDE_PULL_REQUESTS = false;
+
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
 	'controllers/atlassian.repositories.controller.ts',
@@ -34,42 +40,42 @@ const controllerLogger = Logger.forContext(
 controllerLogger.debug('Bitbucket repositories controller initialized');
 
 /**
- * List Bitbucket repositories with optional filtering
- * @param options - Options for listing repositories
- * @param options.workspace - The workspace slug to list repositories from
- * @param options.q - Query to filter repositories
- * @param options.sort - Sort parameter
- * @param options.role - Role filter
- * @param options.limit - Maximum number of repositories to return
- * @param options.cursor - Pagination cursor for retrieving the next set of results
- * @returns Promise with formatted repository list content and pagination information
+ * Lists repositories for a specific workspace with pagination and filtering options
+ * @param options - Options for listing repositories including workspace
+ * @returns Formatted list of repositories with pagination information
  */
 async function list(
 	options: ListRepositoriesOptions,
 ): Promise<ControllerResponse> {
+	const { workspace } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'list',
 	);
-	methodLogger.debug('Listing Bitbucket repositories...', options);
+
+	methodLogger.debug(
+		`Listing repositories for workspace: ${workspace}...`,
+		options,
+	);
 
 	try {
-		// Convert to service params
+		// Map controller options to service parameters
 		const serviceParams: ListRepositoriesParams = {
-			workspace: options.workspace,
+			// Required params
+			workspace,
+			// Optional query params
 			q: options.q,
 			sort: options.sort,
-			// Role is not supported, ignore it
-			// Map cursor to page and limit to pagelen for Bitbucket API
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
-			pagelen: options.limit || 50,
+			// Pagination with defaults
+			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			page: options.cursor ? parseInt(options.cursor, 10) : 1,
 		};
 
-		methodLogger.debug('Using filters:', serviceParams);
+		methodLogger.debug('Using service parameters:', serviceParams);
 
 		const repositoriesData =
 			await atlassianRepositoriesService.list(serviceParams);
-
+		// Log only the count of repositories returned instead of the entire response
 		methodLogger.debug(
 			`Retrieved ${repositoriesData.values?.length || 0} repositories`,
 		);
@@ -83,8 +89,7 @@ async function list(
 
 		// Format the repositories data for display using the formatter
 		const formattedRepositories = formatRepositoriesList(
-			repositoriesData,
-			pagination.nextCursor,
+			repositoriesData.values,
 		);
 
 		return {
@@ -103,17 +108,18 @@ async function list(
 }
 
 /**
- * Get details of a specific Bitbucket repository
- * @param identifier - Object containing repository identifiers
- * @param identifier.workspace - The workspace slug that contains the repository
- * @param identifier.repoSlug - The repository slug
- * @param options - Options for retrieving the repository details
- * @returns Promise with formatted repository details content
- * @throws Error if repository retrieval fails
+ * Gets details of a specific Bitbucket repository
+ * @param identifier - Repository identifier containing workspace and repoSlug
+ * @param options - Options for retrieving repository details
+ * @returns Formatted repository details
  */
 async function get(
 	identifier: RepositoryIdentifier,
-	options: GetRepositoryOptions = {},
+	options: GetRepositoryOptions = {
+		includeBranches: DEFAULT_INCLUDE_BRANCHES,
+		includeCommits: DEFAULT_INCLUDE_COMMITS,
+		includePullRequests: DEFAULT_INCLUDE_PULL_REQUESTS,
+	},
 ): Promise<ControllerResponse> {
 	const { workspace, repoSlug } = identifier;
 	const methodLogger = Logger.forContext(
@@ -127,31 +133,31 @@ async function get(
 	);
 
 	try {
-		// Get basic repository information
-		const params: GetRepositoryParams = {
-			workspace: workspace,
+		// Map controller options to service parameters
+		const serviceParams: GetRepositoryParams = {
+			workspace,
 			repo_slug: repoSlug,
 		};
 
-		const repositoryData = await atlassianRepositoriesService.get(params);
+		methodLogger.debug('Using service parameters:', serviceParams);
+
+		const repositoryData =
+			await atlassianRepositoriesService.get(serviceParams);
 
 		methodLogger.debug(`Retrieved repository: ${repositoryData.full_name}`);
 
 		// Format the repository data for display using the formatter
-		// Since we don't have extra data available, pass an empty object
 		const formattedRepository = formatRepositoryDetails(repositoryData);
 
 		return {
 			content: formattedRepository,
 		};
 	} catch (error) {
-		// Use the standardized error handler
 		handleControllerError(error, {
-			entityType: 'Repository',
-			entityId: identifier,
-			operation: 'retrieving',
 			source: 'controllers/atlassian.repositories.controller.ts@get',
-			additionalInfo: { options },
+			entityType: 'Repository',
+			operation: 'retrieving',
+			entityId: { workspace, repoSlug },
 		});
 	}
 }

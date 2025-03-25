@@ -107,8 +107,9 @@ describe('Atlassian Workspaces Controller', () => {
 			const workspaceSlug = slugMatch[1].trim();
 
 			// Call the function with the extracted slug
-			const result =
-				await atlassianWorkspacesController.get({ workspace: workspaceSlug });
+			const result = await atlassianWorkspacesController.get({
+				workspace: workspaceSlug,
+			});
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
