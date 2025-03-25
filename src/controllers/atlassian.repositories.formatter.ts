@@ -1,61 +1,70 @@
 import { Repository } from '../services/vendor.atlassian.repositories.types.js';
+import {
+	formatUrl,
+	formatPagination,
+	formatHeading,
+	formatBulletList,
+	formatSeparator,
+	formatNumberedList,
+} from '../utils/formatters/common.formatter.js';
 
 /**
  * Format a list of repositories for display
  * @param repositories - Array of repositories from the API response
+ * @param nextCursor - Pagination cursor for retrieving the next set of results
  * @returns Formatted string with repositories information in markdown format
  */
-export function formatRepositoriesList(repositories: Repository[]): string {
+export function formatRepositoriesList(
+	repositories: Repository[],
+	nextCursor?: string,
+): string {
 	if (!repositories || repositories.length === 0) {
 		return 'No Bitbucket repositories found.';
 	}
 
-	const lines: string[] = ['# Bitbucket Repositories', ''];
+	const lines: string[] = [formatHeading('Bitbucket Repositories', 1), ''];
 
-	repositories.forEach((repo, index) => {
+	// Use the numbered list formatter for consistent formatting
+	const formattedList = formatNumberedList(repositories, (repo) => {
+		const itemLines: string[] = [];
+
 		// Basic information
-		lines.push(`## ${index + 1}. ${repo.name}`);
-		lines.push(`- **UUID**: ${repo.uuid}`);
-		lines.push(`- **Full Name**: ${repo.full_name}`);
-		lines.push(`- **Type**: ${repo.type || 'Not specified'}`);
-		lines.push(`- **Private**: ${repo.is_private ? 'Yes' : 'No'}`);
+		itemLines.push(formatHeading(repo.name, 2));
 
-		// Creation date
-		if (repo.created_on) {
-			lines.push(
-				`- **Created On**: ${new Date(repo.created_on).toLocaleString()}`,
-			);
-		}
+		// Create an object with all the properties to display
+		const properties: Record<string, unknown> = {
+			UUID: repo.uuid,
+			'Full Name': repo.full_name,
+			Type: repo.type || 'Not specified',
+			Private: repo.is_private ? 'Yes' : 'No',
+			'Created On': repo.created_on,
+			'Updated On': repo.updated_on,
+			Language: repo.language,
+			Size: repo.size !== undefined ? formatSize(repo.size) : undefined,
+			'Web URL': repo.links.html?.href
+				? {
+						url: repo.links.html.href,
+						title: repo.full_name,
+					}
+				: undefined,
+			Description: repo.description,
+		};
 
-		// Links
-		if (repo.links.html?.href) {
-			lines.push(
-				`- **Web URL**: [${repo.full_name}](${repo.links.html.href})`,
-			);
-		}
+		// Format as a bullet list with proper formatting for each value type
+		itemLines.push(formatBulletList(properties, (key) => key));
 
-		// Language if available
-		if (repo.language) {
-			lines.push(`- **Language**: ${repo.language}`);
-		}
-
-		// Size if available
-		if (repo.size !== undefined) {
-			lines.push(`- **Size**: ${formatSize(repo.size)}`);
-		}
-
-		// Description if available
-		if (repo.description) {
-			lines.push(`- **Description**: ${repo.description}`);
-		}
-
-		// Add a separator between repositories
-		if (index < repositories.length - 1) {
-			lines.push('');
-			lines.push('---');
-			lines.push('');
-		}
+		return itemLines.join('\n');
 	});
+
+	lines.push(formattedList);
+
+	// Add pagination information
+	if (nextCursor) {
+		lines.push('');
+		lines.push(formatSeparator());
+		lines.push('');
+		lines.push(formatPagination(repositories.length, true, nextCursor));
+	}
 
 	return lines.join('\n');
 }
@@ -66,65 +75,67 @@ export function formatRepositoriesList(repositories: Repository[]): string {
  * @returns Formatted string with repository details in markdown format
  */
 export function formatRepositoryDetails(repository: Repository): string {
-	const lines: string[] = [`# Repository: ${repository.name}`, ''];
+	const lines: string[] = [
+		formatHeading(`Repository: ${repository.name}`, 1),
+		'',
+		formatHeading('Basic Information', 2),
+	];
 
-	// Basic information
-	lines.push('## Basic Information');
-	lines.push(`- **UUID**: ${repository.uuid}`);
-	lines.push(`- **Full Name**: ${repository.full_name}`);
-	lines.push(`- **Type**: ${repository.type || 'Not specified'}`);
-	lines.push(`- **Private**: ${repository.is_private ? 'Yes' : 'No'}`);
-	lines.push(
-		`- **Default Branch**: ${repository.mainbranch?.name || 'Not set'}`,
-	);
+	// Format basic information as a bullet list
+	const basicProperties: Record<string, unknown> = {
+		UUID: repository.uuid,
+		'Full Name': repository.full_name,
+		Type: repository.type || 'Not specified',
+		Private: repository.is_private ? 'Yes' : 'No',
+		'Default Branch': repository.mainbranch?.name || 'Not set',
+		'Created On': repository.created_on,
+		'Updated On': repository.updated_on,
+		Size:
+			repository.size !== undefined
+				? formatSize(repository.size)
+				: undefined,
+		Language: repository.language,
+	};
 
-	if (repository.created_on) {
-		lines.push(
-			`- **Created On**: ${new Date(repository.created_on).toLocaleString()}`,
-		);
-	}
-	if (repository.updated_on) {
-		lines.push(
-			`- **Updated On**: ${new Date(repository.updated_on).toLocaleString()}`,
-		);
-	}
-
-	// Size if available
-	if (repository.size !== undefined) {
-		lines.push(`- **Size**: ${formatSize(repository.size)}`);
-	}
-
-	// Language if available
-	if (repository.language) {
-		lines.push(`- **Language**: ${repository.language}`);
-	}
+	lines.push(formatBulletList(basicProperties, (key) => key));
 
 	// Description if available
 	if (repository.description) {
 		lines.push('');
-		lines.push('## Description');
+		lines.push(formatHeading('Description', 2));
 		lines.push(repository.description);
 	}
 
 	// Links section
 	lines.push('');
-	lines.push('## Links');
+	lines.push(formatHeading('Links', 2));
+
+	const links: string[] = [];
 
 	if (repository.links.html?.href) {
-		lines.push(`- [View in Browser](${repository.links.html.href})`);
+		links.push(
+			`- ${formatUrl(repository.links.html.href, 'View in Browser')}`,
+		);
 	}
+
 	if (repository.links.clone) {
-		lines.push('- **Clone URLs**:');
+		links.push('- **Clone URLs**:');
 		repository.links.clone.forEach((clone) => {
-			lines.push(`  - ${clone.name}: \`${clone.href}\``);
+			links.push(`  - ${clone.name}: \`${clone.href}\``);
 		});
 	}
+
 	if (repository.links.commits?.href) {
-		lines.push(`- [Commits](${repository.links.commits.href})`);
+		links.push(`- ${formatUrl(repository.links.commits.href, 'Commits')}`);
 	}
+
 	if (repository.links.pullrequests?.href) {
-		lines.push(`- [Pull Requests](${repository.links.pullrequests.href})`);
+		links.push(
+			`- ${formatUrl(repository.links.pullrequests.href, 'Pull Requests')}`,
+		);
 	}
+
+	lines.push(links.join('\n'));
 
 	return lines.join('\n');
 }

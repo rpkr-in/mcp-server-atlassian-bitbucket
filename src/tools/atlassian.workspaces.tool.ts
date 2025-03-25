@@ -14,7 +14,7 @@ import atlassianWorkspacesController from '../controllers/atlassian.workspaces.c
 /**
  * MCP Tool: List Bitbucket Workspaces
  *
- * Lists Bitbucket workspaces with optional filtering.
+ * Lists Bitbucket workspaces available to the authenticated user with optional filtering.
  * Returns a formatted markdown response with workspace details.
  *
  * @param args - Tool arguments for filtering workspaces
@@ -77,13 +77,13 @@ async function getWorkspace(
 ) {
 	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@getWorkspace]';
 	logger.debug(
-		`${logPrefix} Retrieving workspace details for ${args.slug}`,
+		`${logPrefix} Retrieving workspace details for ${args.workspace}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianWorkspacesController.get({
-			workspace: args.slug,
+			workspace: args.workspace,
 		});
 		logger.debug(
 			`${logPrefix} Successfully retrieved workspace details from controller`,
@@ -172,7 +172,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed workspace information including slug, name, type, description, projects, and permission levels.
 
 EXAMPLES:
-- Get workspace: {slug: "myteam"}
+- Get workspace: {workspace: "myteam"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct

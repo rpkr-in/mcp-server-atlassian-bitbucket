@@ -17,6 +17,9 @@ import {
 } from './atlassian.workspaces.formatter.js';
 import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.types.js';
 
+// Default constants
+const DEFAULT_PAGE_LENGTH = 25;
+
 /**
  * Controller for managing Bitbucket workspaces.
  * Provides functionality for listing workspaces and retrieving workspace details.
@@ -38,13 +41,10 @@ async function list(
 	logger.debug(`${source} Listing Bitbucket workspaces...`, options);
 
 	try {
-		// Convert to service params
+		// Map controller filters to service params
 		const serviceParams: ListWorkspacesParams = {
-			q: options.q,
-			sort: options.sort,
-			// Map cursor to page and limit to pagelen for Bitbucket API
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
-			pagelen: options.limit || 50,
+			pagelen: options.limit || DEFAULT_PAGE_LENGTH, // Default page length
+			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
 		};
 
 		logger.debug(`${source} Using filters:`, serviceParams);

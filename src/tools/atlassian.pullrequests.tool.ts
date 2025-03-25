@@ -129,10 +129,10 @@ function register(server: McpServer) {
 
 	// Register the list pull requests tool
 	server.tool(
-		'list-pullrequests',
-		`List Bitbucket pull requests for a specific repository.
+		'list-pull-requests',
+		`List Bitbucket pull requests with optional filtering capabilities.
 
-PURPOSE: Discovers open, merged, or declined pull requests with their IDs, titles, authors, and status to help track code review activity.
+PURPOSE: Allows you to find and browse pull requests across repositories with filtering options.
 
 WHEN TO USE:
 - When you need to find pull requests within a specific repository
@@ -143,8 +143,8 @@ WHEN TO USE:
 
 WHEN NOT TO USE:
 - When you don't know which repository to look in (use list-repositories first)
-- When you already know the PR ID (use get-pullrequest instead)
-- When you need detailed PR content or comments (use get-pullrequest instead)
+- When you already know the PR ID (use get-pull-request instead)
+- When you need detailed PR content or comments (use get-pull-request instead)
 - When you need to browse repositories rather than PRs (use list-repositories)
 
 RETURNS: Formatted list of pull requests with IDs, titles, states, authors, branch information, and URLs, plus pagination info.
@@ -165,7 +165,7 @@ ERRORS:
 
 	// Register the get pull request details tool
 	server.tool(
-		'get-pullrequest',
+		'get-pull-request',
 		`Get detailed information about a specific Bitbucket pull request.
 
 PURPOSE: Retrieves comprehensive PR data including description, comments, diff stats, reviewers, and branch information.
@@ -175,11 +175,11 @@ WHEN TO USE:
 - When you need to see comments, reviews, or approvals
 - When you need details about the source and destination branches
 - When you need diff statistics or changed files information
-- After using list-pullrequests to identify the relevant PR ID
+- After using list-pull-requests to identify the relevant PR ID
 
 WHEN NOT TO USE:
-- When you don't know which PR to look for (use list-pullrequests first)
-- When you need to browse multiple PRs (use list-pullrequests instead)
+- When you don't know which PR to look for (use list-pull-requests first)
+- When you need to browse multiple PRs (use list-pull-requests instead)
 - When you only need basic PR information without comments or details
 - When you need repository information rather than PR details (use get-repository)
 

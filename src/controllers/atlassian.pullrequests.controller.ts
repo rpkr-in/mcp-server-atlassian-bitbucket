@@ -21,6 +21,9 @@ import {
 	GetPullRequestParams,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 
+// Default constants
+const DEFAULT_PAGE_LENGTH = 25;
+
 /**
  * Controller for managing Bitbucket pull requests.
  * Provides functionality for listing pull requests and retrieving pull request details.
@@ -50,13 +53,16 @@ async function list(
 			);
 		}
 
-		// Translate the controller options to service parameters
+		// Map controller filters to service params
 		const serviceParams: ListPullRequestsParams = {
+			// Required parameters
 			workspace: options.workspace,
 			repo_slug: options.repoSlug,
-			...(options.state && { state: options.state }),
-			pagelen: options.limit || 50,
-			...(options.cursor && { page: parseInt(options.cursor, 10) }),
+
+			// Optional parameters
+			q: options.state ? `state="${options.state}"` : undefined,
+			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 		};
 
 		logger.debug(`${source} Using filters:`, serviceParams);

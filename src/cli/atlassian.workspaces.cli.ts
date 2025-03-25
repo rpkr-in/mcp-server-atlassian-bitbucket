@@ -34,14 +34,16 @@ function register(program: Command): void {
 function registerListWorkspacesCommand(program: Command): void {
 	program
 		.command('list-workspaces')
-		.description('List Bitbucket workspaces with optional filtering')
-		.option(
-			'-l, --limit <number>',
-			'Maximum number of workspaces to return',
+		.description(
+			'List Bitbucket workspaces with optional filtering\n\n  Retrieves workspaces the authenticated user has access to with pagination options.',
 		)
 		.option(
-			'-p, --page <number>',
-			'Page number for pagination (starts at 1)',
+			'-l, --limit <number>',
+			'Maximum number of workspaces to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
+		)
+		.option(
+			'-c, --cursor <string>',
+			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
 		)
 		.action(async (options) => {
 			const logPrefix =
@@ -56,9 +58,7 @@ function registerListWorkspacesCommand(program: Command): void {
 					...(options.limit && {
 						limit: parseInt(options.limit, 10),
 					}),
-					...(options.page && {
-						cursor: options.page,
-					}),
+					...(options.cursor ? { cursor: options.cursor } : {}),
 				};
 
 				logger.debug(
@@ -85,18 +85,18 @@ function registerGetWorkspaceCommand(program: Command): void {
 	program
 		.command('get-workspace')
 		.description(
-			'Get detailed information about a specific Bitbucket workspace',
+			'Get detailed information about a specific Bitbucket workspace\n\n  Retrieves comprehensive details for a workspace including projects, permissions, and settings.',
 		)
-		.argument('<slug>', 'Slug of the workspace to retrieve')
-		.action(async (slug: string) => {
+		.argument('<workspace-slug>', 'Slug of the workspace to retrieve')
+		.action(async (workspaceSlug: string) => {
 			const logPrefix =
 				'[src/cli/atlassian.workspaces.cli.ts@get-workspace]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for workspace slug: ${slug}`,
+					`${logPrefix} Fetching details for workspace slug: ${workspaceSlug}`,
 				);
 				const result = await atlassianWorkspacesController.get({
-					workspace: slug,
+					workspace: workspaceSlug,
 				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved workspace details`,

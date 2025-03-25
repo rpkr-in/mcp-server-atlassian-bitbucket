@@ -61,14 +61,14 @@ async function list(
 	try {
 		// Map controller options to service parameters
 		const serviceParams: ListRepositoriesParams = {
-			// Required params
-			workspace,
-			// Optional query params
-			q: options.q,
-			sort: options.sort,
-			// Pagination with defaults
+			// Required workspace
+			workspace: options.workspace,
+			// Handle limit with default value
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
-			page: options.cursor ? parseInt(options.cursor, 10) : 1,
+			// Map cursor to page for page-based pagination
+			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			// Optional filter parameters
+			...(options.q && { q: options.q }),
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);

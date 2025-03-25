@@ -34,19 +34,21 @@ function register(program: Command): void {
 function registerListRepositoriesCommand(program: Command): void {
 	program
 		.command('list-repositories')
-		.description('List Bitbucket repositories with optional filtering')
-		.argument('<workspace>', 'The workspace slug')
+		.description(
+			'List Bitbucket repositories with optional filtering\n\n  Retrieves repositories from a specific workspace with filtering and pagination options.',
+		)
+		.argument('<workspace>', 'Workspace slug containing the repositories')
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of repositories to return',
+			'Maximum number of repositories to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
 		)
 		.option(
-			'-p, --page <number>',
-			'Page number for pagination (starts at 1)',
+			'-c, --cursor <string>',
+			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
 		)
 		.option(
 			'-q, --query <query>',
-			'Query string to filter repositories using Bitbucket query syntax (e.g., "name ~ \\"api\\"" for repositories with "api" in the name)',
+			'Query string to filter repositories using Bitbucket query syntax. Example: "name ~ \\"api\\"" for repositories with "api" in the name.',
 		)
 		.action(async (workspace, options) => {
 			const logPrefix =
@@ -62,9 +64,7 @@ function registerListRepositoriesCommand(program: Command): void {
 					...(options.limit && {
 						limit: parseInt(options.limit, 10),
 					}),
-					...(options.page && {
-						cursor: options.page,
-					}),
+					...(options.cursor && { cursor: options.cursor }),
 					...(options.query && {
 						query: options.query,
 					}),
@@ -96,20 +96,20 @@ function registerGetRepositoryCommand(program: Command): void {
 	program
 		.command('get-repository')
 		.description(
-			'Get detailed information about a specific Bitbucket repository',
+			'Get detailed information about a specific Bitbucket repository\n\n  Retrieves comprehensive details for a repository including branches, permissions, and settings.',
 		)
-		.argument('<workspace>', 'Workspace slug that contains the repository')
-		.argument('<repo_slug>', 'Slug of the repository to retrieve')
-		.action(async (workspace: string, repo_slug: string) => {
+		.argument('<workspace>', 'Workspace slug containing the repository')
+		.argument('<repo-slug>', 'Slug of the repository to retrieve')
+		.action(async (workspace: string, repoSlug: string) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@get-repository]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for repository: ${workspace}/${repo_slug}`,
+					`${logPrefix} Fetching details for repository: ${workspace}/${repoSlug}`,
 				);
 				const result = await atlassianRepositoriesController.get({
 					workspace,
-					repoSlug: repo_slug,
+					repoSlug,
 				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved repository details`,

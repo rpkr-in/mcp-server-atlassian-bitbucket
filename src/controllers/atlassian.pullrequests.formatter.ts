@@ -2,6 +2,14 @@ import {
 	PullRequest,
 	PullRequestsResponse,
 } from '../services/vendor.atlassian.pullrequests.types.js';
+import {
+	formatUrl,
+	formatPagination,
+	formatHeading,
+	formatBulletList,
+	formatSeparator,
+	formatNumberedList,
+} from '../utils/formatters/common.formatter.js';
 
 /**
  * Format a list of pull requests for display
@@ -17,55 +25,47 @@ export function formatPullRequestsList(
 		return 'No Bitbucket pull requests found.';
 	}
 
-	const lines: string[] = ['# Bitbucket Pull Requests', ''];
+	const lines: string[] = [formatHeading('Bitbucket Pull Requests', 1), ''];
 
-	pullRequestsData.values.forEach((pr, index) => {
+	// Use the numbered list formatter for consistent formatting
+	const formattedList = formatNumberedList(pullRequestsData.values, (pr) => {
+		const itemLines: string[] = [];
+
 		// Basic information
-		lines.push(`## ${index + 1}. #${pr.id}: ${pr.title}`);
-		lines.push(`- **State**: ${pr.state}`);
-		lines.push(`- **Repository**: ${pr.destination.repository.full_name}`);
+		itemLines.push(formatHeading(`#${pr.id}: ${pr.title}`, 2));
 
-		// Source and destination branches
-		lines.push(`- **Source**: ${pr.source.branch.name}`);
-		lines.push(`- **Destination**: ${pr.destination.branch.name}`);
+		// Create an object with all the properties to display
+		const properties: Record<string, unknown> = {
+			State: pr.state,
+			Repository: pr.destination.repository.full_name,
+			Source: pr.source.branch.name,
+			Destination: pr.destination.branch.name,
+			Author: pr.author?.display_name,
+			Created: pr.created_on,
+			Updated: pr.updated_on,
+			'Web URL': pr.links.html?.href
+				? {
+						url: pr.links.html.href,
+						title: `PR #${pr.id}`,
+					}
+				: undefined,
+		};
 
-		// Author information
-		if (pr.author) {
-			lines.push(`- **Author**: ${pr.author.display_name}`);
-		}
+		// Format as a bullet list with proper formatting for each value type
+		itemLines.push(formatBulletList(properties, (key) => key));
 
-		// Dates
-		if (pr.created_on) {
-			lines.push(
-				`- **Created**: ${new Date(pr.created_on).toLocaleString()}`,
-			);
-		}
-		if (pr.updated_on) {
-			lines.push(
-				`- **Updated**: ${new Date(pr.updated_on).toLocaleString()}`,
-			);
-		}
-
-		// Links
-		if (pr.links.html?.href) {
-			lines.push(`- **Web URL**: [PR #${pr.id}](${pr.links.html.href})`);
-		}
-
-		// Add a separator between pull requests
-		if (index < pullRequestsData.values.length - 1) {
-			lines.push('');
-			lines.push('---');
-			lines.push('');
-		}
+		return itemLines.join('\n');
 	});
+
+	lines.push(formattedList);
 
 	// Add pagination information
 	if (nextCursor) {
 		lines.push('');
-		lines.push('---');
+		lines.push(formatSeparator());
 		lines.push('');
 		lines.push(
-			`*Showing ${pullRequestsData.values.length} pull requests. More pull requests are available. Use pagination to retrieve more results.*`,
+			formatPagination(pullRequestsData.values.length, true, nextCursor),
 		);
 	}
 
@@ -79,70 +79,73 @@ export function formatPullRequestsList(
  */
 export function formatPullRequestDetails(pullRequest: PullRequest): string {
 	const lines: string[] = [
-		`# Pull Request #${pullRequest.id}: ${pullRequest.title}`,
+		formatHeading(
+			`Pull Request #${pullRequest.id}: ${pullRequest.title}`,
+			1,
+		),
 		'',
+		formatHeading('Basic Information', 2),
 	];
 
-	// Basic information
-	lines.push('## Basic Information');
-	lines.push(`- **State**: ${pullRequest.state}`);
-	lines.push(
-		`- **Repository**: ${pullRequest.destination.repository.full_name}`,
-	);
-	lines.push(`- **Source**: ${pullRequest.source.branch.name}`);
-	lines.push(`- **Destination**: ${pullRequest.destination.branch.name}`);
+	// Format basic information as a bullet list
+	const basicProperties: Record<string, unknown> = {
+		State: pullRequest.state,
+		Repository: pullRequest.destination.repository.full_name,
+		Source: pullRequest.source.branch.name,
+		Destination: pullRequest.destination.branch.name,
+		Author: pullRequest.author?.display_name,
+		Created: pullRequest.created_on,
+		Updated: pullRequest.updated_on,
+	};
 
-	if (pullRequest.author) {
-		lines.push(`- **Author**: ${pullRequest.author.display_name}`);
-	}
+	lines.push(formatBulletList(basicProperties, (key) => key));
 
 	// Reviewers
 	if (pullRequest.reviewers && pullRequest.reviewers.length > 0) {
-		lines.push('- **Reviewers**:');
+		lines.push('');
+		lines.push(formatHeading('Reviewers', 2));
+		const reviewerLines: string[] = [];
 		pullRequest.reviewers.forEach((reviewer) => {
-			lines.push(`  - ${reviewer.display_name}`);
+			reviewerLines.push(`- ${reviewer.display_name}`);
 		});
-	}
-
-	// Dates
-	if (pullRequest.created_on) {
-		lines.push(
-			`- **Created**: ${new Date(pullRequest.created_on).toLocaleString()}`,
-		);
-	}
-	if (pullRequest.updated_on) {
-		lines.push(
-			`- **Updated**: ${new Date(pullRequest.updated_on).toLocaleString()}`,
-		);
+		lines.push(reviewerLines.join('\n'));
 	}
 
 	// Summary or rendered content for description if available
 	if (pullRequest.summary?.raw) {
 		lines.push('');
-		lines.push('## Description');
+		lines.push(formatHeading('Description', 2));
 		lines.push(pullRequest.summary.raw);
 	} else if (pullRequest.rendered?.description?.raw) {
 		lines.push('');
-		lines.push('## Description');
+		lines.push(formatHeading('Description', 2));
 		lines.push(pullRequest.rendered.description.raw);
 	}
 
 	// Links
 	lines.push('');
-	lines.push('## Links');
+	lines.push(formatHeading('Links', 2));
+
+	const links: string[] = [];
 
 	if (pullRequest.links.html?.href) {
-		lines.push(`- [View in Browser](${pullRequest.links.html.href})`);
+		links.push(
+			`- ${formatUrl(pullRequest.links.html.href, 'View in Browser')}`,
+		);
 	}
 	if (pullRequest.links.commits?.href) {
-		lines.push(`- [Commits](${pullRequest.links.commits.href})`);
+		links.push(`- ${formatUrl(pullRequest.links.commits.href, 'Commits')}`);
 	}
 	if (pullRequest.links.comments?.href) {
-		lines.push(`- [Comments](${pullRequest.links.comments.href})`);
+		links.push(
+			`- ${formatUrl(pullRequest.links.comments.href, 'Comments')}`,
+		);
 	}
 	if (pullRequest.links.diff?.href) {
-		lines.push(`- [Diff](${pullRequest.links.diff.href})`);
+		links.push(`- ${formatUrl(pullRequest.links.diff.href, 'Diff')}`);
 	}
+
+	lines.push(links.join('\n'));
 
 	return lines.join('\n');
 }
