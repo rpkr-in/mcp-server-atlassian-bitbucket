@@ -86,9 +86,11 @@ async function getPullRequest(
 
 	try {
 		const message = await atlassianPullRequestsController.get(
-			args.workspace,
-			args.repoSlug,
-			args.pullRequestId,
+			{
+				workspace: args.workspace,
+				repoSlug: args.repoSlug,
+				pullRequestId: String(args.pullRequestId),
+			},
 			{
 				includeComments: args.includeComments,
 			},

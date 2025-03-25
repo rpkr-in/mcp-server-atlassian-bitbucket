@@ -87,8 +87,10 @@ async function getRepository(
 
 	try {
 		const message = await atlassianRepositoriesController.get(
-			args.workspace,
-			args.repoSlug,
+			{
+				workspace: args.workspace,
+				repoSlug: args.repoSlug,
+			},
 			{
 				includeBranches: args.includeBranches,
 				includeCommits: args.includeCommits,

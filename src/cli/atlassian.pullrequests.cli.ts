@@ -137,11 +137,11 @@ function registerGetPullRequestCommand(program: Command): void {
 					throw new Error('Pull request ID must be a number');
 				}
 
-				const result = await atlassianPullRequestsController.get(
-					options.workspace,
-					options.repoSlug,
-					pullRequestId,
-				);
+				const result = await atlassianPullRequestsController.get({
+					workspace: options.workspace,
+					repoSlug: options.repoSlug,
+					pullRequestId: options.id,
+				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved pull request details`,
 				);

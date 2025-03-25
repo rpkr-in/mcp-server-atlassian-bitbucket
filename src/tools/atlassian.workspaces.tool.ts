@@ -82,7 +82,9 @@ async function getWorkspace(
 	);
 
 	try {
-		const message = await atlassianWorkspacesController.get(args.slug);
+		const message = await atlassianWorkspacesController.get({
+			workspace: args.slug,
+		});
 		logger.debug(
 			`${logPrefix} Successfully retrieved workspace details from controller`,
 			message,

@@ -107,10 +107,10 @@ function registerGetRepositoryCommand(program: Command): void {
 				logger.debug(
 					`${logPrefix} Fetching details for repository: ${workspace}/${repo_slug}`,
 				);
-				const result = await atlassianRepositoriesController.get(
+				const result = await atlassianRepositoriesController.get({
 					workspace,
-					repo_slug,
-				);
+					repoSlug: repo_slug,
+				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved repository details`,
 				);

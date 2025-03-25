@@ -95,7 +95,7 @@ function registerGetWorkspaceCommand(program: Command): void {
 				logger.debug(
 					`${logPrefix} Fetching details for workspace slug: ${slug}`,
 				);
-				const result = await atlassianWorkspacesController.get(slug);
+				const result = await atlassianWorkspacesController.get({ workspace: slug });
 				logger.debug(
 					`${logPrefix} Successfully retrieved workspace details`,
 				);
