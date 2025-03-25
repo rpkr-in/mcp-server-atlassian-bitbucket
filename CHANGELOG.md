@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.3.0...v1.4.0) (2025-03-25)
+
+
+### Features
+
+* **pagination:** standardize pagination display across all CLI commands ([34f4c91](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/34f4c91f8aeb5c00d56d6975b8fa4c3ee81f4a9a))
+
 # [1.3.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.2.0...v1.3.0) (2025-03-25)
 
 
