@@ -66,7 +66,7 @@ export const PULL_REQUEST_DEFAULTS = {
  * const options = applyDefaults({ limit: 10 }, { limit: DEFAULT_PAGE_SIZE, includeBranches: true });
  * // Result: { limit: 10, includeBranches: true }
  */
-export function applyDefaults<T extends Record<string, any>>(
+export function applyDefaults<T extends Record<string, unknown>>(
 	options: Partial<T>,
 	defaults: T,
 ): T {
