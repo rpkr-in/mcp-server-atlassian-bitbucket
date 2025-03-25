@@ -1,3 +1,20 @@
+# [1.1.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.0.0...v1.1.0) (2025-03-25)
+
+
+### Bug Fixes
+
+* conflict ([91d2720](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/91d27204fdb7029d5fdd49282dbdfbdfe6da9090))
+* conflict ([bccabbf](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/bccabbf44991eda2c91de592d2662f614adf4fb2))
+* improve documentation with additional section ([6849f9b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/6849f9b2339c049e0017ef40aedadd184350cee0))
+* remove dist directory from git tracking ([7343e65](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/7343e65746001cb3465f9d0b0db30297ee43fb09))
+* remove dist files from release commit assets ([74e53ce](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/74e53cee60c6a7785561354c81cbdf611323df5a))
+* version consistency and release workflow improvements ([1a2baae](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1a2baae4326163c8caf4fa4cfeb9f4b8028d2b5a))
+
+
+### Features
+
+* enhance get-space command to support both numeric IDs and space keys ([2913153](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/29131536f302abf1923c0c6521d544c51ad222fa))
+
 # 1.0.0 (2025-03-24)
 
 ### Bug Fixes
