@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.1.1...v1.2.0) (2025-03-25)
+
+
+### Bug Fixes
+
+* standardize logging patterns and fix linter and type errors ([368df0f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/368df0f602e29eea982628ddbc6f4f0702a6fab7))
+
+
+### Features
+
+* **workspaces:** improve workspace and repository management ([f27daf2](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f27daf2238362c897ca2990a252d268e9d005484))
+
 ## [1.1.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.1.0...v1.1.1) (2025-03-25)
 
 
