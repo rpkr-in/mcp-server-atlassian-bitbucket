@@ -1,3 +1,11 @@
+## [1.1.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.1.0...v1.1.1) (2025-03-25)
+
+
+### Bug Fixes
+
+* trigger new release for parameter and pagination standardization ([5607ce9](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5607ce91179b33ee9f3457e5150608300072a5f9))
+* update CLI and tool handlers to use object-based identifiers ([2899adc](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/2899adc38e2b804bc85098aef1f0a26caa90f5aa))
+
 # [1.1.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.0.0...v1.1.0) (2025-03-25)
 
 
