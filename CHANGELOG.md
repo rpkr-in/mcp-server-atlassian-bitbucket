@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.2.0...v1.3.0) (2025-03-25)
+
+
+### Features
+
+* **format:** implement standardized formatters and update CLI documentation ([9770402](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/9770402096de6b6dffda263b976f7dbf4f4a9ee4))
+
 # [1.2.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.1.1...v1.2.0) (2025-03-25)
 
 
