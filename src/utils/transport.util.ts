@@ -150,7 +150,7 @@ export async function fetchAtlassian<T>(
 			} else if (response.status === 404) {
 				throw createApiError(`Resource not found`, 404, errorText);
 			} else {
-				// For other API errors, extract the actual error message from Atlassian API
+				// For other API errors, preserve the original error message from Atlassian API
 				throw createApiError(errorMessage, response.status, errorText);
 			}
 		}

@@ -1,43 +1,37 @@
 ## [1.1.4](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.3...v1.1.4) (2025-03-24)
 
-
 ### Bug Fixes
 
-* remove dist directory from git tracking ([0ed5d4b](https://github.com/aashari/mcp-server-atlassian-jira/commit/0ed5d4bad05e09cbae3350eb934c98ef1d28ed12))
+- remove dist directory from git tracking ([0ed5d4b](https://github.com/aashari/mcp-server-atlassian-jira/commit/0ed5d4bad05e09cbae3350eb934c98ef1d28ed12))
 
 ## [1.1.3](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.2...v1.1.3) (2025-03-24)
 
-
 ### Bug Fixes
 
-* remove dist files from release commit assets ([86e486b](https://github.com/aashari/mcp-server-atlassian-jira/commit/86e486bb68cb18d077852e73eabf8f912d9d007e))
+- remove dist files from release commit assets ([86e486b](https://github.com/aashari/mcp-server-atlassian-jira/commit/86e486bb68cb18d077852e73eabf8f912d9d007e))
 
 ## [1.1.2](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.1...v1.1.2) (2025-03-24)
 
-
 ### Bug Fixes
 
-* correct package name and version consistency ([374a660](https://github.com/aashari/mcp-server-atlassian-jira/commit/374a660e88a62b9c7b7c59718beec09806c47c0e))
+- correct package name and version consistency ([374a660](https://github.com/aashari/mcp-server-atlassian-jira/commit/374a660e88a62b9c7b7c59718beec09806c47c0e))
 
 ## [1.1.1](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.1.0...v1.1.1) (2025-03-24)
 
-
 ### Bug Fixes
 
-* improve documentation with additional section ([ccbd814](https://github.com/aashari/mcp-server-atlassian-jira/commit/ccbd8146ef55bed1edb6ed005f923ac25bfa8dae))
+- improve documentation with additional section ([ccbd814](https://github.com/aashari/mcp-server-atlassian-jira/commit/ccbd8146ef55bed1edb6ed005f923ac25bfa8dae))
 
 # [1.1.0](https://github.com/aashari/mcp-server-atlassian-jira/compare/v1.0.0...v1.1.0) (2025-03-23)
 
-
 ### Bug Fixes
 
-* remove incorrect limit expectation in transport utility tests ([6f7b689](https://github.com/aashari/mcp-server-atlassian-jira/commit/6f7b689a7eb5db8a8592db88e7fa27ac04d641c8))
-* update package.json version and scripts, fix transport.util.test.ts, update README ([deefccd](https://github.com/aashari/mcp-server-atlassian-jira/commit/deefccdc93311be572abf45feb9a5aae69ed57eb))
-
+- remove incorrect limit expectation in transport utility tests ([6f7b689](https://github.com/aashari/mcp-server-atlassian-jira/commit/6f7b689a7eb5db8a8592db88e7fa27ac04d641c8))
+- update package.json version and scripts, fix transport.util.test.ts, update README ([deefccd](https://github.com/aashari/mcp-server-atlassian-jira/commit/deefccdc93311be572abf45feb9a5aae69ed57eb))
 
 ### Features
 
-* improve development workflow and update documentation ([4458957](https://github.com/aashari/mcp-server-atlassian-jira/commit/445895777be6287a624cb19b8cd8a12590a28c7b))
+- improve development workflow and update documentation ([4458957](https://github.com/aashari/mcp-server-atlassian-jira/commit/445895777be6287a624cb19b8cd8a12590a28c7b))
 
 # 1.0.0 (2025-03-23)
 
