@@ -6,7 +6,7 @@ import {
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
-} from '../utils/formatters/common.formatter.js';
+} from '../utils/formatter.util.js';
 
 /**
  * Format a list of repositories for display

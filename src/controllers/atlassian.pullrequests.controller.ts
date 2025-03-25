@@ -1,7 +1,7 @@
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { logger } from '../utils/logger.util.js';
 import { createApiError } from '../utils/error.util.js';
-import { handleControllerError } from '../utils/errorHandler.util.js';
+import { handleControllerError } from '../utils/error-handler.util.js';
 import {
 	extractPaginationInfo,
 	PaginationType,
