@@ -132,7 +132,36 @@ function register(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'list-repositories',
-		'List Bitbucket repositories within a workspace with optional filtering. Returns repositories with their names, slugs, descriptions, and URLs. Use this tool to discover available Bitbucket repositories before accessing specific content.',
+		`List Bitbucket repositories within a specific workspace.
+
+PURPOSE: Discovers repositories in a workspace with their slugs, names, and URLs to help navigate code resources.
+
+WHEN TO USE:
+- When you need to find repositories within a specific workspace
+- When you need repository slugs for other Bitbucket operations
+- When you want to explore available repositories before accessing specific content
+- When you need to check repository visibility and access levels
+- When looking for repositories with specific characteristics (language, size, etc.)
+
+WHEN NOT TO USE:
+- When you don't know which workspace to look for repos in (use list-workspaces first)
+- When you already know the repository slug (use get-repository instead)
+- When you need detailed repository information (use get-repository instead)
+- When you need to access pull requests or branches (use dedicated tools after identifying the repo)
+
+RETURNS: Formatted list of repositories with slugs, names, descriptions, URLs, and metadata, plus pagination info.
+
+EXAMPLES:
+- List all repos in workspace: {workspace: "myteam"}
+- With sorting: {workspace: "myteam", sort: "name"}
+- With filtering: {workspace: "myteam", query: "api"}
+- With pagination: {workspace: "myteam", limit: 10, cursor: "next-page-token"}
+
+ERRORS:
+- Workspace not found: Verify the workspace slug is correct
+- Authentication failures: Check your Bitbucket credentials
+- Permission errors: Ensure you have access to the requested workspace
+- Rate limiting: Use pagination and reduce query frequency`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -140,7 +169,32 @@ function register(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'get-repository',
-		'Get detailed information about a specific Bitbucket repository by workspace and repository slug. Returns comprehensive metadata including branches, commits, and pull requests if requested. Use this tool when you need in-depth information about a particular repository.',
+		`Get detailed information about a specific Bitbucket repository.
+
+PURPOSE: Retrieves comprehensive repository metadata including branches, settings, permissions, and more.
+
+WHEN TO USE:
+- When you need detailed information about a specific repository
+- When you need repository URLs, clone links, or other reference information
+- When you need to check repository settings or permissions
+- After using list-repositories to identify the relevant repository
+- Before performing operations that require repository context (PRs, branches)
+
+WHEN NOT TO USE:
+- When you don't know which repository to look for (use list-repositories first)
+- When you just need basic repository information
+- When you're looking for pull request details (use list-pullrequests instead)
+- When you need content from multiple repositories (use list-repositories instead)
+
+RETURNS: Detailed repository information including slug, name, description, URLs, branch information, and settings.
+
+EXAMPLES:
+- Get repository: {workspace: "myteam", repoSlug: "project-api"}
+
+ERRORS:
+- Repository not found: Verify workspace and repository slugs
+- Permission errors: Ensure you have access to the requested repository
+- Rate limiting: Cache repository information when possible`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);
