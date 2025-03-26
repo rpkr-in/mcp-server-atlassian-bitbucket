@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
-import { ListRepositoriesOptions } from '../controllers/atlassian.repositories.type.js';
+import { ListRepositoriesOptions } from '../controllers/atlassian.repositories.types.js';
 
 /**
  * CLI module for managing Bitbucket repositories.

@@ -7,7 +7,7 @@ import {
 	ListWorkspacesToolArgsType,
 	GetWorkspaceToolArgs,
 	GetWorkspaceToolArgsType,
-} from './atlassian.workspaces.type.js';
+} from './atlassian.workspaces.types.js';
 
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
 

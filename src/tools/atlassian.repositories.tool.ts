@@ -7,7 +7,7 @@ import {
 	ListRepositoriesToolArgsType,
 	GetRepositoryToolArgs,
 	GetRepositoryToolArgsType,
-} from './atlassian.repositories.type.js';
+} from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
 

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
-import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.type.js';
+import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.types.js';
 import { PullRequestState } from '../services/vendor.atlassian.pullrequests.types.js';
 import { formatHeading, formatPagination } from '../utils/formatter.util.js';
 

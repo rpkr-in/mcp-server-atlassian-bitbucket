@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
-import { ListWorkspacesOptions } from '../controllers/atlassian.workspaces.type.js';
+import { ListWorkspacesOptions } from '../controllers/atlassian.workspaces.types.js';
 
 /**
  * CLI module for managing Bitbucket workspaces.

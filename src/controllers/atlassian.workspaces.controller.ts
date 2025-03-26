@@ -10,7 +10,7 @@ import {
 	ListWorkspacesOptions,
 	GetWorkspaceOptions,
 	WorkspaceIdentifier,
-} from './atlassian.workspaces.type.js';
+} from './atlassian.workspaces.types.js';
 import {
 	formatWorkspacesList,
 	formatWorkspaceDetails,

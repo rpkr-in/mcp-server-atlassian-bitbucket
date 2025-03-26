@@ -11,7 +11,7 @@ import {
 	ListPullRequestsOptions,
 	GetPullRequestOptions,
 	PullRequestIdentifier,
-} from './atlassian.pullrequests.type.js';
+} from './atlassian.pullrequests.types.js';
 import {
 	formatPullRequestsList,
 	formatPullRequestDetails,
