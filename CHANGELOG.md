@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.1...v1.4.2) (2025-03-26)
+
+
+### Bug Fixes
+
+* standardize CLI pagination and query parameter names ([e116b25](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e116b2582eda41f2241bf71454f82fcd2a6bdad0))
+
 ## [1.4.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.0...v1.4.1) (2025-03-25)
 
 
