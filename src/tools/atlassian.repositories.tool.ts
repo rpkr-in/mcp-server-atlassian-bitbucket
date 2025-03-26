@@ -165,7 +165,7 @@ ERRORS:
 		'get-repository',
 		`Get detailed information about a specific Bitbucket repository.
 
-PURPOSE: Retrieves comprehensive repository metadata including branches, settings, permissions, and more.
+PURPOSE: Retrieves comprehensive repository metadata including owner information, settings, URLs, and more.
 
 WHEN TO USE:
 - When you need detailed information about a specific repository
@@ -180,7 +180,7 @@ WHEN NOT TO USE:
 - When you're looking for pull request details (use list-pullrequests instead)
 - When you need content from multiple repositories (use list-repositories instead)
 
-RETURNS: Detailed repository information including slug, name, description, URLs, branch information, and settings.
+RETURNS: Detailed repository information including slug, name, description, owner details, URLs, and settings. All information is included by default for a comprehensive view.
 
 EXAMPLES:
 - Get repository: {workspaceSlug: "myteam", repoSlug: "project-api"}

@@ -176,11 +176,10 @@ WHEN NOT TO USE:
 - When you need repository information (use get-repository instead)
 - When you need information from multiple PRs (use list-pull-requests instead)
 
-RETURNS: Detailed pull request information including title, description, status, reviewers, comments, and links.
+RETURNS: Detailed pull request information including title, description, status, reviewers, comments, and links. All details are included by default for a comprehensive view.
 
 EXAMPLES:
 - Get PR: {workspaceSlug: "myteam", repoSlug: "project-api", prId: "42"}
-- With comments: {workspaceSlug: "myteam", repoSlug: "project-api", prId: "42", includeComments: true}
 
 ERRORS:
 - PR not found: Verify workspace slug, repository slug, and PR ID
