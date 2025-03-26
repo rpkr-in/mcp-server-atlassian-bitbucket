@@ -85,7 +85,7 @@ async function list(
 		// Format the pull requests data for display using the formatter
 		const formattedPullRequests = formatPullRequestsList(
 			pullRequestsData,
-			pagination.nextCursor,
+			pagination,
 		);
 
 		return {

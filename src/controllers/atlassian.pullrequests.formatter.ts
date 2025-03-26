@@ -1,7 +1,4 @@
-import {
-	PullRequest,
-	PullRequestsResponse,
-} from '../services/vendor.atlassian.pullrequests.types.js';
+import { PullRequest } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	formatUrl,
 	formatPagination,
@@ -14,21 +11,23 @@ import {
 /**
  * Format a list of pull requests for display
  * @param pullRequestsData - Raw pull requests data from the API
- * @param nextCursor - Pagination cursor for retrieving the next set of results
+ * @param pagination - Pagination information including count and next cursor
  * @returns Formatted string with pull requests information in markdown format
  */
 export function formatPullRequestsList(
-	pullRequestsData: PullRequestsResponse,
-	nextCursor?: string,
+	pullRequestsData: { values?: PullRequest[] },
+	pagination?: { nextCursor?: string; hasMore: boolean; count?: number },
 ): string {
-	if (!pullRequestsData.values || pullRequestsData.values.length === 0) {
-		return 'No Bitbucket pull requests found.';
+	const pullRequests = pullRequestsData.values || [];
+
+	if (pullRequests.length === 0) {
+		return 'No pull requests found.';
 	}
 
 	const lines: string[] = [formatHeading('Bitbucket Pull Requests', 1), ''];
 
 	// Use the numbered list formatter for consistent formatting
-	const formattedList = formatNumberedList(pullRequestsData.values, (pr) => {
+	const formattedList = formatNumberedList(pullRequests, (pr) => {
 		const itemLines: string[] = [];
 
 		// Basic information
@@ -36,19 +35,18 @@ export function formatPullRequestsList(
 
 		// Create an object with all the properties to display
 		const properties: Record<string, unknown> = {
+			ID: pr.id,
+			Title: pr.title,
 			State: pr.state,
-			Repository: pr.destination.repository.full_name,
-			Source: pr.source.branch.name,
-			Destination: pr.destination.branch.name,
-			Author: pr.author?.display_name,
-			Created: pr.created_on,
-			Updated: pr.updated_on,
-			'Web URL': pr.links.html?.href
-				? {
-						url: pr.links.html.href,
-						title: `PR #${pr.id}`,
-					}
-				: undefined,
+			'Created On': pr.created_on,
+			'Updated On': pr.updated_on,
+			Author: pr.author?.display_name || pr.author?.nickname,
+			Source: `${pr.source.branch.name} (${pr.source.repository.name})`,
+			Destination: `${pr.destination.branch.name} (${pr.destination.repository.name})`,
+			URL: {
+				url: pr.links.html?.href || '',
+				title: `PR #${pr.id}`,
+			},
 		};
 
 		// Format as a bullet list with proper formatting for each value type
@@ -59,13 +57,17 @@ export function formatPullRequestsList(
 
 	lines.push(formattedList);
 
-	// Add pagination information
-	if (nextCursor) {
+	// Add pagination information if available
+	if (pagination) {
 		lines.push('');
 		lines.push(formatSeparator());
 		lines.push('');
 		lines.push(
-			formatPagination(pullRequestsData.values.length, true, nextCursor),
+			formatPagination(
+				pagination.count || pullRequests.length,
+				pagination.hasMore,
+				pagination.nextCursor,
+			),
 		);
 	}
 

@@ -4,6 +4,7 @@ import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
 import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.type.js';
 import { PullRequestState } from '../services/vendor.atlassian.pullrequests.types.js';
+import { formatHeading, formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -36,23 +37,32 @@ function registerListPullRequestsCommand(program: Command): void {
 	program
 		.command('list-pull-requests')
 		.description(
-			'List Bitbucket pull requests with optional filtering\n\n  Retrieves pull requests from a specific repository with filtering and pagination options.',
+			'List Bitbucket pull requests with optional filtering\n\n' +
+				'Retrieves pull requests from a specific repository with filtering and pagination options.\n\n' +
+				'Examples:\n' +
+				'  $ list-pull-requests my-workspace my-repo --state OPEN\n' +
+				'  $ list-pull-requests my-workspace my-repo --limit 50 --state MERGED\n' +
+				'  $ list-pull-requests my-workspace my-repo --filter "title:feature"',
 		)
 		.argument('<workspace>', 'Workspace slug containing the repository')
 		.argument('<repo-slug>', 'Repository slug to list pull requests from')
 		.option(
-			'-s, --state <string>',
-			'Filter pull requests by state. Options: "OPEN" (active PRs), "MERGED" (completed PRs), "DECLINED" (rejected PRs), or "SUPERSEDED" (replaced PRs). If omitted, defaults to showing all states.',
-			'OPEN',
-		)
-		.option(
 			'-l, --limit <number>',
-			'Maximum number of pull requests to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
+			'Maximum number of items to return (1-100)',
 			'25',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
+			'Pagination cursor for retrieving the next set of results',
+		)
+		.option(
+			'-f, --filter <string>',
+			'Filter pull requests by title, description, or author',
+		)
+		.option(
+			'-s, --state <string>',
+			'Filter by state: OPEN, MERGED, DECLINED, or SUPERSEDED',
+			'OPEN',
 		)
 		.action(async (workspace, repoSlug, options) => {
 			const logPrefix =
@@ -92,6 +102,7 @@ function registerListPullRequestsCommand(program: Command): void {
 						limit: parseInt(options.limit, 10),
 					}),
 					...(options.cursor && { cursor: options.cursor }),
+					...(options.filter && { filter: options.filter }),
 				};
 
 				logger.debug(
@@ -104,7 +115,21 @@ function registerListPullRequestsCommand(program: Command): void {
 					`${logPrefix} Successfully retrieved pull requests`,
 				);
 
+				// Print the main content
+				console.log(formatHeading('Pull Requests', 2));
 				console.log(result.content);
+
+				// Print pagination information if available
+				if (result.pagination) {
+					console.log(
+						'\n' +
+							formatPagination(
+								result.pagination.count || 0,
+								result.pagination.hasMore,
+								result.pagination.nextCursor,
+							),
+					);
+				}
 			} catch (error) {
 				logger.error(`${logPrefix} Operation failed:`, error);
 				handleCliError(error);
