@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
 import { ListRepositoriesOptions } from '../controllers/atlassian.repositories.types.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket repositories.
@@ -35,11 +36,16 @@ function registerListRepositoriesCommand(program: Command): void {
 	program
 		.command('list-repositories')
 		.description(
-			'List repositories within a Bitbucket workspace\n\n  Retrieves repositories from the specified workspace with filtering and pagination options.',
+			'List repositories within a Bitbucket workspace\n\n' +
+				'Retrieves repositories from the specified workspace with filtering and pagination options.\n\n' +
+				'Examples:\n' +
+				'  $ list-repositories myworkspace --limit 25\n' +
+				'  $ list-repositories myworkspace --filter "api" --role admin\n' +
+				'  $ list-repositories myworkspace --cursor "next-page-token"',
 		)
 		.argument(
-			'<workspace>',
-			'Workspace slug (e.g., codapayments) to list repositories from',
+			'<parent-id>',
+			'Workspace slug (e.g., myteam) to list repositories from',
 		)
 		.option(
 			'-r, --role <role>',
@@ -51,13 +57,14 @@ function registerListRepositoriesCommand(program: Command): void {
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of repositories to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
+			'Maximum number of items to return (1-100)',
+			'25',
 		)
 		.option(
 			'-c, --cursor <cursor>',
-			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
+			'Pagination cursor for retrieving the next set of results',
 		)
-		.action(async (workspace: string, options) => {
+		.action(async (parentId: string, options) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
@@ -67,7 +74,7 @@ function registerListRepositoriesCommand(program: Command): void {
 				);
 
 				const filterOptions: ListRepositoriesOptions = {
-					workspace,
+					workspace: parentId,
 					...(options.role && { role: options.role }),
 					...(options.filter && { query: options.filter }),
 					...(options.limit && {
@@ -80,22 +87,25 @@ function registerListRepositoriesCommand(program: Command): void {
 					`${logPrefix} Fetching repositories with filters:`,
 					filterOptions,
 				);
+
 				const result =
 					await atlassianRepositoriesController.list(filterOptions);
 				logger.debug(
 					`${logPrefix} Successfully retrieved repositories`,
 				);
 
+				// Print the main content
 				console.log(result.content);
 
 				// Display pagination information if available
 				if (result.pagination?.hasMore) {
-					console.log('\n## Pagination');
 					console.log(
-						`*Showing ${result.pagination.count || ''} items. More results are available.*`,
-					);
-					console.log(
-						`\nTo see more results, use --cursor "${result.pagination.nextCursor}"`,
+						'\n' +
+							formatPagination(
+								result.pagination.count || 0,
+								result.pagination.hasMore,
+								result.pagination.nextCursor,
+							),
 					);
 				}
 			} catch (error) {
@@ -113,21 +123,26 @@ function registerGetRepositoryCommand(program: Command): void {
 	program
 		.command('get-repository')
 		.description(
-			'Get detailed information about a specific Bitbucket repository\n\n  Retrieves comprehensive details for a repository including branches, permissions, and settings.',
+			'Get detailed information about a specific Bitbucket repository\n\n' +
+				'Retrieves comprehensive details for a repository including branches, permissions, and settings.\n\n' +
+				'Examples:\n' +
+				'  $ get-repository myworkspace myrepo',
 		)
-		.argument('<workspace>', 'Workspace slug containing the repository')
-		.argument('<repo-slug>', 'Slug of the repository to retrieve')
-		.action(async (workspace: string, repoSlug: string) => {
+		.argument('<parent-id>', 'Workspace slug containing the repository')
+		.argument('<entity-id>', 'Slug of the repository to retrieve')
+		.action(async (parentId: string, entityId: string) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@get-repository]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for repository: ${workspace}/${repoSlug}`,
+					`${logPrefix} Fetching details for repository: ${parentId}/${entityId}`,
 				);
+
 				const result = await atlassianRepositoriesController.get({
-					workspace,
-					repoSlug,
+					workspace: parentId,
+					repoSlug: entityId,
 				});
+
 				logger.debug(
 					`${logPrefix} Successfully retrieved repository details`,
 				);

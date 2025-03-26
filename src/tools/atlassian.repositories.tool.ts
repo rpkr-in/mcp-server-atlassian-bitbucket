@@ -34,10 +34,14 @@ async function listRepositories(
 	);
 
 	try {
+		// Handle both new standardized parameters and legacy parameters
+		const workspace = args.parentId || args.workspace;
+		const query = args.filter || args.q;
+
 		// Pass the filter options to the controller
 		const message = await atlassianRepositoriesController.list({
-			workspace: args.workspace,
-			q: args.q,
+			workspace,
+			q: query,
 			sort: args.sort,
 			role: args.role,
 			limit: args.limit,
@@ -80,16 +84,21 @@ async function getRepository(
 ) {
 	const logPrefix =
 		'[src/tools/atlassian.repositories.tool.ts@getRepository]';
+
+	// Handle both new standardized parameters and legacy parameters
+	const workspace = args.parentId || args.workspace;
+	const repoSlug = args.entityId || args.repoSlug;
+
 	logger.debug(
-		`${logPrefix} Retrieving repository details for ${args.workspace}/${args.repoSlug}`,
+		`${logPrefix} Retrieving repository details for ${workspace}/${repoSlug}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianRepositoriesController.get(
 			{
-				workspace: args.workspace,
-				repoSlug: args.repoSlug,
+				workspace,
+				repoSlug,
 			},
 			{
 				includeBranches: args.includeBranches,
@@ -152,10 +161,10 @@ WHEN NOT TO USE:
 RETURNS: Formatted list of repositories with slugs, names, descriptions, URLs, and metadata, plus pagination info.
 
 EXAMPLES:
-- List all repos in workspace: {workspace: "myteam"}
-- With sorting: {workspace: "myteam", sort: "name"}
-- With filtering: {workspace: "myteam", query: "api"}
-- With pagination: {workspace: "myteam", limit: 10, cursor: "next-page-token"}
+- List all repos in workspace: {parentId: "myteam"} or {workspace: "myteam"}
+- With sorting: {parentId: "myteam", sort: "name"}
+- With filtering: {parentId: "myteam", filter: "api"} or {workspace: "myteam", q: "api"}
+- With pagination: {parentId: "myteam", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct
@@ -189,7 +198,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed repository information including slug, name, description, URLs, branch information, and settings.
 
 EXAMPLES:
-- Get repository: {workspace: "myteam", repoSlug: "project-api"}
+- Get repository: {parentId: "myteam", entityId: "project-api"} or {workspace: "myteam", repoSlug: "project-api"}
 
 ERRORS:
 - Repository not found: Verify workspace and repository slugs
