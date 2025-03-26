@@ -10,14 +10,17 @@ import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListPullRequestsOptions,
 	PullRequestIdentifier,
+	ListPullRequestCommentsOptions,
 } from './atlassian.pullrequests.types.js';
 import {
 	formatPullRequestsList,
 	formatPullRequestDetails,
+	formatPullRequestComments,
 } from './atlassian.pullrequests.formatter.js';
 import {
 	ListPullRequestsParams,
 	GetPullRequestParams,
+	GetPullRequestCommentsParams,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 
@@ -165,4 +168,86 @@ async function get(
 	}
 }
 
-export default { list, get };
+/**
+ * List comments on a specific Bitbucket pull request
+ * @param options - Options for listing pull request comments
+ * @param options.workspaceSlug - The workspace slug containing the repository
+ * @param options.repoSlug - The repository slug containing the pull request
+ * @param options.prId - The pull request ID
+ * @param options.limit - Maximum number of comments to return
+ * @param options.cursor - Pagination cursor for retrieving the next set of results
+ * @returns Promise with formatted pull request comments content and pagination information
+ */
+async function listComments(
+	options: ListPullRequestCommentsOptions,
+): Promise<ControllerResponse> {
+	const source =
+		'[src/controllers/atlassian.pullrequests.controller.ts@listComments]';
+	logger.debug(
+		`${source} Listing Bitbucket pull request comments...`,
+		options,
+	);
+
+	try {
+		if (!options.workspaceSlug || !options.repoSlug || !options.prId) {
+			throw createApiError(
+				'workspaceSlug, repoSlug, and prId parameters are all required',
+			);
+		}
+
+		// Validate pull request ID
+		const prId = parseInt(options.prId, 10);
+		if (isNaN(prId) || prId <= 0) {
+			throw createApiError('Pull request ID must be a positive integer');
+		}
+
+		// Map controller options to service params
+		const serviceParams: GetPullRequestCommentsParams = {
+			workspace: options.workspaceSlug,
+			repo_slug: options.repoSlug,
+			pull_request_id: prId,
+			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+		};
+
+		logger.debug(`${source} Using service parameters:`, serviceParams);
+
+		// Call the service to get the pull request comments
+		const commentsData =
+			await atlassianPullRequestsService.getComments(serviceParams);
+
+		// Log the count of comments retrieved
+		const count = commentsData.values?.length || 0;
+		logger.debug(`${source} Retrieved ${count} pull request comments`);
+
+		// Extract pagination information using the utility
+		const pagination = extractPaginationInfo(
+			commentsData,
+			PaginationType.PAGE,
+			source,
+		);
+
+		// Format the comments data for display using the formatter
+		const formattedComments = formatPullRequestComments(commentsData);
+
+		return {
+			content: formattedComments,
+			pagination,
+		};
+	} catch (error) {
+		// Use the standardized error handler
+		handleControllerError(error, {
+			entityType: 'Pull Request Comments',
+			operation: 'listing',
+			source: 'src/controllers/atlassian.pullrequests.controller.ts@listComments',
+			additionalInfo: {
+				options,
+				workspaceSlug: options.workspaceSlug,
+				repoSlug: options.repoSlug,
+				prId: options.prId,
+			},
+		});
+	}
+}
+
+export default { list, get, listComments };

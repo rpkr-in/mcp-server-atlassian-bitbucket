@@ -150,3 +150,167 @@ export interface PullRequestsResponse {
 	previous?: string;
 	values: PullRequest[];
 }
+
+/**
+ * Parameters for getting pull request comments
+ */
+export interface GetPullRequestCommentsParams {
+	/**
+	 * The workspace slug or UUID
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug or UUID
+	 */
+	repo_slug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	pull_request_id: number;
+
+	/**
+	 * Page number for pagination
+	 */
+	page?: number;
+
+	/**
+	 * Number of items per page
+	 */
+	pagelen?: number;
+}
+
+/**
+ * Inline comment position information
+ */
+export interface InlineCommentPosition {
+	/**
+	 * The file path the comment is on
+	 */
+	path: string;
+
+	/**
+	 * The original file path if renamed/moved
+	 */
+	from_path?: string;
+
+	/**
+	 * Line number in the "from" file
+	 */
+	from?: number;
+
+	/**
+	 * Line number in the "to" file
+	 */
+	to?: number;
+}
+
+/**
+ * Pull request comment object
+ */
+export interface PullRequestComment {
+	/**
+	 * Comment ID
+	 */
+	id: number;
+
+	/**
+	 * Comment content
+	 */
+	content: {
+		raw: string;
+		markup?: string;
+		html?: string;
+		type?: string;
+	};
+
+	/**
+	 * User who created the comment
+	 */
+	user: PullRequestUser;
+
+	/**
+	 * When the comment was created
+	 */
+	created_on: string;
+
+	/**
+	 * When the comment was last updated
+	 */
+	updated_on: string;
+
+	/**
+	 * Whether the comment has been deleted
+	 */
+	deleted?: boolean;
+
+	/**
+	 * For inline comments, contains file and line information
+	 */
+	inline?: InlineCommentPosition;
+
+	/**
+	 * For threaded comments, ID of the parent comment
+	 */
+	parent?: {
+		id: number;
+	};
+
+	/**
+	 * Links related to this comment
+	 */
+	links?: {
+		self?: { href: string };
+		html?: { href: string };
+		code?: { href: string };
+	};
+
+	/**
+	 * Type of the object
+	 */
+	type: 'pullrequest_comment';
+}
+
+/**
+ * API response for listing pull request comments
+ */
+export interface PullRequestCommentsResponse {
+	/**
+	 * Number of items per page
+	 */
+	pagelen: number;
+
+	/**
+	 * Current page number
+	 */
+	page: number;
+
+	/**
+	 * Total number of items
+	 */
+	size: number;
+
+	/**
+	 * URL for the next page, if available
+	 */
+	next?: string;
+
+	/**
+	 * URL for the previous page, if available
+	 */
+	previous?: string;
+
+	/**
+	 * Array of comment objects
+	 */
+	values: PullRequestComment[];
+
+	/**
+	 * Reference to the pull request these comments belong to
+	 */
+	pullrequest?: {
+		id: number;
+		title?: string;
+	};
+}

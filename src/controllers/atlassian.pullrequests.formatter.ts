@@ -1,11 +1,12 @@
 import {
 	PullRequest,
 	PullRequestsResponse,
+	PullRequestCommentsResponse,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
-	formatUrl,
 	formatHeading,
 	formatBulletList,
+	formatUrl,
 	formatSeparator,
 	formatNumberedList,
 	formatDate,
@@ -162,4 +163,123 @@ export function formatPullRequestDetails(pullRequest: PullRequest): string {
 	lines.push(links.join('\n'));
 
 	return lines.join('\n');
+}
+
+/**
+ * Format pull request comments for display
+ * @param commentsData - Raw pull request comments data from the API
+ * @returns Formatted string with pull request comments in markdown format
+ */
+export function formatPullRequestComments(
+	commentsData: PullRequestCommentsResponse,
+): string {
+	const lines: string[] = [];
+
+	// Main heading
+	const prId = commentsData.pullrequest?.id || '';
+	lines.push(formatHeading(`Comments on Pull Request #${prId}`, 1));
+	lines.push('');
+
+	if (!commentsData.values || commentsData.values.length === 0) {
+		lines.push('*No comments found on this pull request.*');
+		return lines.join('\n');
+	}
+
+	// Group comments by parent (to handle threads)
+	const topLevelComments: PullRequestCommentsResponse['values'] = [];
+	const childComments: {
+		[parentId: number]: PullRequestCommentsResponse['values'];
+	} = {};
+
+	// First pass: organize comments by parent
+	commentsData.values.forEach((comment) => {
+		if (comment.parent) {
+			// This is a reply to another comment
+			const parentId = comment.parent.id;
+			if (!childComments[parentId]) {
+				childComments[parentId] = [];
+			}
+			childComments[parentId].push(comment);
+		} else {
+			// This is a top-level comment
+			topLevelComments.push(comment);
+		}
+	});
+
+	// Format each top-level comment and its replies
+	topLevelComments.forEach((comment) => {
+		formatComment(comment, lines);
+
+		// Add replies if any exist
+		const replies = childComments[comment.id] || [];
+		if (replies.length > 0) {
+			lines.push('');
+			lines.push('**Replies:**');
+
+			replies.forEach((reply) => {
+				lines.push('');
+				lines.push(
+					`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(new Date(reply.created_on))})`,
+				);
+				lines.push(`> ${reply.content.raw.replace(/\n/g, '\n> ')}`);
+			});
+		}
+
+		lines.push('');
+		lines.push(formatSeparator());
+	});
+
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(`*Comment information retrieved at ${formatDate(new Date())}*`);
+
+	return lines.join('\n');
+}
+
+/**
+ * Helper function to format a single comment
+ * @param comment - The comment to format
+ * @param lines - Array of string lines to append to
+ */
+function formatComment(
+	comment: PullRequestCommentsResponse['values'][0],
+	lines: string[],
+): void {
+	lines.push(
+		formatHeading(
+			`Comment by ${comment.user.display_name || 'Unknown User'}`,
+			3,
+		),
+	);
+	lines.push(`*Posted on ${formatDate(new Date(comment.created_on))}*`);
+
+	if (comment.updated_on && comment.updated_on !== comment.created_on) {
+		lines.push(`*Updated on ${formatDate(new Date(comment.updated_on))}*`);
+	}
+
+	// If it's an inline comment, show file and line information
+	if (comment.inline) {
+		const fileInfo = `File: \`${comment.inline.path}\``;
+		let lineInfo = '';
+
+		if (
+			comment.inline.from !== undefined &&
+			comment.inline.to !== undefined
+		) {
+			lineInfo = `(changed from line ${comment.inline.from} to line ${comment.inline.to})`;
+		} else if (comment.inline.to !== undefined) {
+			lineInfo = `(line ${comment.inline.to})`;
+		}
+
+		lines.push(`**${fileInfo}** ${lineInfo}`);
+	}
+
+	lines.push('');
+	lines.push(comment.content.raw || 'No content');
+
+	// Add link to view in browser if available
+	if (comment.links?.html?.href) {
+		lines.push('');
+		lines.push(`[View comment in browser](${comment.links.html.href})`);
+	}
 }

@@ -114,3 +114,49 @@ export const GetPullRequestToolArgs = z.object({
 });
 
 export type GetPullRequestToolArgsType = z.infer<typeof GetPullRequestToolArgs>;
+
+/**
+ * Schema for list-pr-comments tool arguments
+ */
+export const ListPullRequestCommentsToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe(
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug containing the pull request
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Pull request identifier
+	 */
+	prId: z
+		.union([z.string(), z.number()])
+		.transform((value) =>
+			typeof value === 'string' ? value : String(value),
+		)
+		.describe(
+			'Numeric ID of the pull request to retrieve comments from. Must be a valid pull request ID in the specified repository. Example: 42',
+		),
+
+	/**
+	 * Pagination parameters
+	 */
+	...PaginationArgs,
+});
+
+export type ListPullRequestCommentsToolArgsType = z.infer<
+	typeof ListPullRequestCommentsToolArgs
+>;

@@ -7,6 +7,8 @@ import {
 	ListPullRequestsToolArgsType,
 	GetPullRequestToolArgs,
 	GetPullRequestToolArgsType,
+	ListPullRequestCommentsToolArgs,
+	ListPullRequestCommentsToolArgsType,
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
@@ -113,6 +115,57 @@ async function getPullRequest(
 }
 
 /**
+ * MCP Tool: List Bitbucket Pull Request Comments
+ *
+ * Lists comments for a specific pull request, including general comments and inline code comments.
+ * Returns a formatted markdown response with comment details.
+ *
+ * @param args - Tool arguments containing workspace, repository, and PR identifiers
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted pull request comments
+ * @throws Will return error message if comment retrieval fails
+ */
+async function listPullRequestComments(
+	args: ListPullRequestCommentsToolArgsType,
+	_extra: RequestHandlerExtra,
+) {
+	const logPrefix =
+		'[src/tools/atlassian.pullrequests.tool.ts@listPullRequestComments]';
+
+	logger.debug(
+		`${logPrefix} Retrieving comments for pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
+		args,
+	);
+
+	try {
+		const message = await atlassianPullRequestsController.listComments({
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
+			prId: args.prId,
+			limit: args.limit,
+			cursor: args.cursor,
+		});
+
+		logger.debug(
+			`${logPrefix} Successfully retrieved pull request comments from controller`,
+			message,
+		);
+
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: message.content,
+				},
+			],
+		};
+	} catch (error) {
+		logger.error(`${logPrefix} Failed to get pull request comments`, error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register Atlassian Pull Requests MCP Tools
  *
  * Registers the list-pull-requests and get-pull-request tools with the MCP server.
@@ -188,6 +241,39 @@ function register(server: McpServer) {
         - Permission errors: Ensure access to view the specified pull request.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
+	);
+
+	// Register the list pull request comments tool
+	server.tool(
+		'list-pr-comments',
+		`List comments on a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
+
+        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
+
+        WHEN TO USE:
+        - When you need to see review feedback for a pull request
+        - When you want to view threaded discussions on a PR
+        - When you need to see inline code comments and their context
+        - After using 'list-pull-requests' to identify the target 'prId'
+        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'
+
+        WHEN NOT TO USE:
+        - When you don't know the 'prId' (use 'list-pull-requests' first)
+        - When you need general PR details (use 'get-pull-request' instead)
+        - When you need repository information (use repository tools)
+
+        RETURNS: Formatted list of comments including author, timestamp, content, and inline code context. Both general comments and code-specific comments are included. Supports pagination for PRs with many comments.
+
+        EXAMPLES:
+        - Get comments for a specific PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
+        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", limit: 50, cursor: "next-page-token" }
+
+        ERRORS:
+        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct
+        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'
+        - Permission errors: Ensure access to view the specified pull request comments`,
+		ListPullRequestCommentsToolArgs.shape,
+		listPullRequestComments,
 	);
 
 	logger.debug(

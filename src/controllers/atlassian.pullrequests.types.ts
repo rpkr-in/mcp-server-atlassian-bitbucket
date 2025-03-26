@@ -43,4 +43,29 @@ export interface ListPullRequestsOptions extends PaginationOptions {
 	 * Filter string to search for in pull request title, description, or author
 	 */
 	query?: string;
+
+	/**
+	 * Optional field to sort by (e.g., '-created_on', 'updated_on')
+	 */
+	sort?: string;
+}
+
+/**
+ * Options for listing comments on a pull request
+ */
+export interface ListPullRequestCommentsOptions extends PaginationOptions {
+	/**
+	 * The workspace slug
+	 */
+	workspaceSlug: string;
+
+	/**
+	 * The repository slug
+	 */
+	repoSlug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	prId: string;
 }

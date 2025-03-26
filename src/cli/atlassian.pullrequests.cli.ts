@@ -3,7 +3,10 @@ import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
 import { formatPagination } from '../utils/formatter.util.js';
-import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.types.js';
+import {
+	ListPullRequestsOptions,
+	ListPullRequestCommentsOptions,
+} from '../controllers/atlassian.pullrequests.types.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -24,6 +27,7 @@ function register(program: Command): void {
 
 	registerListPullRequestsCommand(program);
 	registerGetPullRequestCommand(program);
+	registerListPullRequestCommentsCommand(program);
 
 	logger.debug(`${logPrefix} CLI commands registered successfully`);
 }
@@ -40,11 +44,12 @@ function registerListPullRequestsCommand(program: Command): void {
 
         PURPOSE: Discover pull requests within a given repository, find their IDs, and get basic metadata like title, state, author, and branches. Requires workspace and repository slugs.
 
-        Use Case: Essential for finding the 'prId' needed for 'get-pull-request'. Allows filtering by state (OPEN, MERGED, etc.) or text query.
+        Use Case: Essential for finding the 'prId' needed for 'get-pull-request'. Shows all PR states by default, but allows filtering by state (OPEN, MERGED, etc.) or text query.
 
         Output: Formatted list of pull requests including ID, title, state, author, branches, description snippet, and URL. Supports filtering and sorting.
 
         Examples:
+  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api
   $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --state OPEN
   $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --limit 50 --state MERGED
   $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --query "bugfix" --cursor "next-page-token"`,
@@ -241,6 +246,144 @@ function registerGetPullRequestCommand(program: Command): void {
 				);
 
 				console.log(result.content);
+			} catch (error) {
+				logger.error(`${logPrefix} Operation failed:`, error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for listing comments on a specific pull request
+ * @param program - The Commander program instance
+ */
+function registerListPullRequestCommentsCommand(program: Command): void {
+	program
+		.command('list-pr-comments')
+		.description(
+			`List comments on a specific Bitbucket pull request.
+
+        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
+
+        Use Case: Essential for understanding reviewer feedback, code discussions, and decision rationale. Shows both general comments and inline code comments with file/line context.
+
+        Output: Formatted list of comments including author, timestamp, content, and inline code context. Supports pagination for PRs with many comments.
+
+        Examples:
+  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123
+  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123 --limit 50
+  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123 --cursor "next-page-token"`,
+		)
+		.requiredOption(
+			'--workspace <slug>',
+			'Workspace slug containing the repository',
+		)
+		.requiredOption(
+			'--repository <slug>',
+			'Repository slug containing the pull request',
+		)
+		.requiredOption(
+			'--pull-request <id>',
+			'Pull request ID to retrieve comments from',
+		)
+		.option(
+			'-l, --limit <number>',
+			'Maximum number of comments to return (1-100)',
+		)
+		.option(
+			'-c, --cursor <string>',
+			'Pagination cursor for retrieving the next set of results',
+		)
+		.action(async (options) => {
+			const logPrefix =
+				'[src/cli/atlassian.pullrequests.cli.ts@list-pr-comments]';
+			try {
+				logger.debug(
+					`${logPrefix} Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
+				);
+
+				// Prepare options from command parameters
+				const commentsOptions: ListPullRequestCommentsOptions = {
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
+					prId: options.pullRequest,
+				};
+
+				// Validate workspace slug
+				if (
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
+				) {
+					throw new Error(
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate repository slug
+				if (
+					!options.repository ||
+					typeof options.repository !== 'string' ||
+					options.repository.trim() === ''
+				) {
+					throw new Error(
+						'Repository slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate pull request ID
+				if (
+					!options.pullRequest ||
+					isNaN(parseInt(options.pullRequest, 10)) ||
+					parseInt(options.pullRequest, 10) <= 0
+				) {
+					throw new Error(
+						'Pull request ID must be a valid positive integer',
+					);
+				}
+
+				// Apply pagination options if provided
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0 || limit > 100) {
+						throw new Error(
+							'Limit must be a number between 1 and 100',
+						);
+					}
+					commentsOptions.limit = limit;
+				}
+
+				if (options.cursor) {
+					commentsOptions.cursor = options.cursor;
+				}
+
+				logger.debug(
+					`${logPrefix} Fetching comments with options:`,
+					commentsOptions,
+				);
+
+				const result =
+					await atlassianPullRequestsController.listComments(
+						commentsOptions,
+					);
+
+				logger.debug(
+					`${logPrefix} Successfully retrieved pull request comments`,
+				);
+
+				console.log(result.content);
+
+				// Display pagination information if available
+				if (result.pagination) {
+					console.log(
+						'\n' +
+							formatPagination(
+								result.pagination.count ?? 0,
+								result.pagination.hasMore,
+								result.pagination.nextCursor,
+							),
+					);
+				}
 			} catch (error) {
 				logger.error(`${logPrefix} Operation failed:`, error);
 				handleCliError(error);

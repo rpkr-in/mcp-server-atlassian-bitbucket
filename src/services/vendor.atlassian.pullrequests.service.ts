@@ -9,6 +9,8 @@ import {
 	PullRequestsResponse,
 	ListPullRequestsParams,
 	GetPullRequestParams,
+	GetPullRequestCommentsParams,
+	PullRequestCommentsResponse,
 } from './vendor.atlassian.pullrequests.types.js';
 
 /**
@@ -81,9 +83,6 @@ async function list(
 		} else {
 			queryParams.set('state', params.state);
 		}
-	} else {
-		// Default to OPEN if not specified
-		queryParams.set('state', 'OPEN');
 	}
 
 	// Add optional query parameters
@@ -156,4 +155,71 @@ async function get(params: GetPullRequestParams): Promise<PullRequestDetailed> {
 	return fetchAtlassian<PullRequestDetailed>(credentials, path);
 }
 
-export default { list, get };
+/**
+ * Get comments for a specific Bitbucket pull request
+ *
+ * Retrieves all comments on a specific pull request, including general comments and
+ * inline code review comments. Supports pagination.
+ *
+ * @async
+ * @memberof VendorAtlassianPullRequestsService
+ * @param {GetPullRequestCommentsParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {number} params.pull_request_id - The ID of the pull request
+ * @param {number} [params.page] - Page number for pagination
+ * @param {number} [params.pagelen] - Number of items per page
+ * @returns {Promise<PullRequestCommentsResponse>} Promise containing the pull request comments
+ * @throws {Error} If Atlassian credentials are missing or API request fails
+ * @example
+ * // Get comments for a pull request
+ * const comments = await getComments({
+ *   workspace: 'my-workspace',
+ *   repo_slug: 'my-repo',
+ *   pull_request_id: 123,
+ *   pagelen: 25
+ * });
+ */
+async function getComments(
+	params: GetPullRequestCommentsParams,
+): Promise<PullRequestCommentsResponse> {
+	const logPrefix =
+		'[src/services/vendor.atlassian.pullrequests.service.ts@getComments]';
+	logger.debug(
+		`${logPrefix} Getting comments for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	// Construct query parameters
+	const queryParams = new URLSearchParams();
+
+	if (params.pagelen) {
+		queryParams.set('pagelen', params.pagelen.toString());
+	}
+	if (params.page) {
+		queryParams.set('page', params.page.toString());
+	}
+
+	const queryString = queryParams.toString()
+		? `?${queryParams.toString()}`
+		: '';
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/comments${queryString}`;
+
+	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	return fetchAtlassian<PullRequestCommentsResponse>(credentials, path);
+}
+
+export default { list, get, getComments };

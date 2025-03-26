@@ -2,6 +2,7 @@ import {
 	Repository,
 	RepositoriesResponse,
 } from '../services/vendor.atlassian.repositories.types.js';
+import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	formatUrl,
 	formatHeading,
@@ -78,9 +79,13 @@ export function formatRepositoriesList(
 /**
  * Format detailed repository information for display
  * @param repositoryData - Raw repository data from the API
+ * @param pullRequestsData - Optional pull requests data for this repository
  * @returns Formatted string with repository details in markdown format
  */
-export function formatRepositoryDetails(repositoryData: Repository): string {
+export function formatRepositoryDetails(
+	repositoryData: Repository,
+	pullRequestsData?: PullRequestsResponse | null,
+): string {
 	// Create URL
 	const repoUrl = repositoryData.links?.html?.href || '';
 
@@ -135,6 +140,31 @@ export function formatRepositoryDetails(repositoryData: Repository): string {
 
 	if (repoUrl) {
 		lines.push(`- ${formatUrl(repoUrl, 'Open in Bitbucket')}`);
+	}
+
+	// Add recent pull requests section if available
+	if (
+		pullRequestsData &&
+		pullRequestsData.values &&
+		pullRequestsData.values.length > 0
+	) {
+		lines.push('');
+		lines.push(formatHeading('Recent Pull Requests', 2));
+
+		const prList = pullRequestsData.values.slice(0, 25); // Ensure max 25
+		const formattedPrList = formatNumberedList(prList, (pr) => {
+			return `**#${pr.id}**: [${pr.title}](${pr.links.html?.href || '#'}) - ${pr.state} by ${pr.author.display_name || 'Unknown'} (${formatDate(new Date(pr.updated_on))})`;
+		});
+
+		lines.push(formattedPrList);
+		lines.push('');
+		lines.push(`*Showing ${prList.length} recent pull requests.*`);
+
+		if (repoUrl) {
+			lines.push(
+				`*View all pull requests in Bitbucket: [${repositoryData.full_name}/pull-requests](${repoUrl}/pull-requests)*`,
+			);
+		}
 	}
 
 	// Add timestamp for when this information was retrieved

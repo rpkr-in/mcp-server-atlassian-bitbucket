@@ -1,4 +1,5 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
+import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
 import {
@@ -134,13 +135,42 @@ async function get(
 
 		methodLogger.debug('Using service parameters:', serviceParams);
 
+		// Fetch repository data
 		const repositoryData =
 			await atlassianRepositoriesService.get(serviceParams);
 
 		methodLogger.debug(`Retrieved repository: ${repositoryData.full_name}`);
 
+		// Also fetch recent pull requests for this repository (max 25)
+		let recentPullRequests = null;
+		try {
+			// Create pull request list parameters similar to how the PR controller would
+			const pullRequestsParams = {
+				workspace: workspaceSlug,
+				repo_slug: repoSlug,
+				pagelen: 25, // Limit to 25 PRs
+				sort: '-updated_on', // Sort by most recently updated
+				// No state filter to get all PRs regardless of state
+			};
+			methodLogger.debug(
+				'Fetching recent pull requests:',
+				pullRequestsParams,
+			);
+			recentPullRequests =
+				await atlassianPullRequestsService.list(pullRequestsParams);
+			methodLogger.debug(
+				`Retrieved ${recentPullRequests.values?.length || 0} recent pull requests`,
+			);
+		} catch (prError) {
+			methodLogger.warn('Failed to fetch pull requests:', prError);
+			// Continue with repository details even if PR fetch fails
+		}
+
 		// Format the repository data for display using the formatter
-		const formattedRepository = formatRepositoryDetails(repositoryData);
+		const formattedRepository = formatRepositoryDetails(
+			repositoryData,
+			recentPullRequests,
+		);
 
 		return {
 			content: formattedRepository,
