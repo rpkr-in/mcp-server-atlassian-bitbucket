@@ -36,12 +36,18 @@ function registerListWorkspacesCommand(program: Command): void {
 	program
 		.command('list-workspaces')
 		.description(
-			'List Bitbucket workspaces with optional filtering\n\n' +
-				'Retrieves workspaces the authenticated user has access to with pagination options.\n\n' +
-				'Examples:\n' +
-				'  $ list-workspaces --limit 50\n' +
-				'  $ list-workspaces --query "team" --sort "name"\n' +
-				'  $ list-workspaces --cursor "next-page-token"',
+			`List Bitbucket workspaces accessible to the authenticated user.
+
+        PURPOSE: Discover available workspaces, find their slugs for use in other commands, and get a high-level overview of permissions and access dates.
+
+        Use Case: Useful when you don't know the exact slug of a workspace you need to interact with, or when exploring available team/project containers.
+
+        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports filtering and sorting.
+
+        Examples:
+  $ mcp-bitbucket list-workspaces --limit 10
+  $ mcp-bitbucket list-workspaces --query "dev-team" --sort "-last_accessed"
+  $ mcp-bitbucket list-workspaces --cursor "some-cursor-value"`,
 		)
 		.option(
 			'-q, --query <text>',
@@ -113,7 +119,16 @@ function registerGetWorkspaceCommand(program: Command): void {
 	program
 		.command('get-workspace')
 		.description(
-			'Get detailed information about a specific Bitbucket workspace\n\n  Retrieves comprehensive details for a workspace including projects, permissions, and settings.',
+			`Get detailed information about a specific Bitbucket workspace using its slug.
+
+        PURPOSE: Retrieve comprehensive details for a *known* workspace, including its UUID, name, type, creation date, and links to related resources like repositories and projects.
+
+        Use Case: Useful when you have a specific workspace slug (often obtained via 'list-workspaces') and need its full metadata or links.
+
+        Output: Formatted details of the specified workspace. Fetches all available details by default.
+
+        Examples:
+  $ mcp-bitbucket get-workspace --workspace my-dev-team`,
 		)
 		.requiredOption(
 			'--workspace <slug>',

@@ -127,32 +127,34 @@ function register(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'list-pull-requests',
-		`List pull requests for a Bitbucket repository with optional filtering.
+		`List pull requests for a specific Bitbucket repository, with optional filtering by state or query text. Requires 'workspaceSlug' and 'repoSlug'.
 
-PURPOSE: Helps you discover and monitor pull requests within a repository, showing their status, authors, and other metadata.
+        PURPOSE: Discover pull requests within a given repository and retrieve their IDs, titles, states, authors, and branches. Essential for finding the 'prId' needed for the 'get-pull-request' tool.
 
-WHEN TO USE:
-- When you need to find all open, merged, or declined pull requests
-- When you need to see recent PR activity in a repository
-- When you need to check the status of specific PRs
-- When you need pull request IDs for use with other Bitbucket tools
+        WHEN TO USE:
+        - To find open, merged, declined, or superseded pull requests within a specific repository.
+        - To get a list of recent PR activity for a repository.
+        - To search for PRs containing specific text in their title or description ('query' parameter).
+        - To obtain 'prId' values for use with 'get-pull-request'.
+        - Requires known 'workspaceSlug' and 'repoSlug'.
 
-WHEN NOT TO USE:
-- When you need detailed information about a single PR (use get-pull-request instead)
-- When you need repository information (use get-repository instead)
-- When you need to search across multiple repositories (use multiple calls)
+        WHEN NOT TO USE:
+        - When you don't know the 'workspaceSlug' or 'repoSlug' (use workspace/repository listing tools first).
+        - When you already have the 'prId' and need full details (use 'get-pull-request').
+        - When you need repository information (use repository tools).
 
-RETURNS: Formatted list of pull requests with titles, IDs, status, authors, and URLs.
+        RETURNS: Formatted list of pull requests including ID, title, state, author, source/destination branches, a snippet of the description, and URL. Includes pagination details if applicable.
 
-EXAMPLES:
-- List open PRs: {workspaceSlug: "myteam", repoSlug: "project-api"}
-- Filter by state: {workspaceSlug: "myteam", repoSlug: "project-api", state: "MERGED"}
-- With pagination: {workspaceSlug: "myteam", repoSlug: "project-api", limit: 5, cursor: "next-page-token"}
-- Text search: {workspaceSlug: "myteam", repoSlug: "project-api", query: "bugfix"}
+        EXAMPLES:
+        - List open PRs: { workspaceSlug: "my-team", repoSlug: "backend-api", state: "OPEN" }
+        - List merged PRs: { workspaceSlug: "my-team", repoSlug: "backend-api", state: "MERGED" }
+        - Search PR titles/descriptions: { workspaceSlug: "my-team", repoSlug: "backend-api", query: "bugfix" }
+        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", limit: 10, cursor: "next-page-token" }
 
-ERRORS:
-- Repository not found: Verify workspace and repository slugs
-- Permission errors: Ensure you have access to the requested repository`,
+        ERRORS:
+        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
+        - Permission errors: Ensure access to the repository's pull requests.
+        - Invalid state: Ensure 'state' is one of OPEN, MERGED, DECLINED, SUPERSEDED.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -160,31 +162,30 @@ ERRORS:
 	// Register the get pull request details tool
 	server.tool(
 		'get-pull-request',
-		`Get detailed information about a specific Bitbucket pull request.
+		`Get detailed information about a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
 
-PURPOSE: Retrieves comprehensive details about a pull request including changes, reviews, comments, and status.
+        PURPOSE: Retrieves comprehensive details for a *known* pull request, including its full description, state, author, reviewers, source/destination branches, and links to related resources like commits and diffs.
 
-WHEN TO USE:
-- When you need detailed information about a specific pull request
-- When you need to check PR status, reviewers, or comments
-- When you need PR content details (diff, commits)
-- After using list-pull-requests to identify the relevant PR
+        WHEN TO USE:
+        - When you need the full context, description, or reviewer list for a *specific* pull request.
+        - After using 'list-pull-requests' to identify the target 'prId'.
+        - To get links to view the PR diff, commits, or comments in the browser.
+        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
-WHEN NOT TO USE:
-- When you don't know which PR to look for (use list-pull-requests first)
-- When you just need basic PR information (ID, title, status)
-- When you need repository information (use get-repository instead)
-- When you need information from multiple PRs (use list-pull-requests instead)
+        WHEN NOT TO USE:
+        - When you don't know the 'prId' (use 'list-pull-requests' first).
+        - When you only need a list of pull requests (use 'list-pull-requests').
+        - When you need repository information (use repository tools).
 
-RETURNS: Detailed pull request information including title, description, status, reviewers, comments, and links. All details are included by default for a comprehensive view.
+        RETURNS: Detailed pull request information including title, full description, state, author, reviewers, branches, and links. Fetches all available details by default.
 
-EXAMPLES:
-- Get PR: {workspaceSlug: "myteam", repoSlug: "project-api", prId: "42"}
+        EXAMPLES:
+        - Get details for a specific PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
 
-ERRORS:
-- PR not found: Verify workspace slug, repository slug, and PR ID
-- Permission errors: Ensure you have access to the requested PR
-- Rate limiting: Cache PR information when possible`,
+        ERRORS:
+        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct.
+        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
+        - Permission errors: Ensure access to view the specified pull request.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);

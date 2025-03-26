@@ -120,32 +120,32 @@ function register(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'list-workspaces',
-		`List Bitbucket workspaces with optional filtering.
+		`List Bitbucket workspaces accessible to the authenticated user, with optional filtering and pagination.
 
-PURPOSE: Find workspaces that you have access to, with their names, slugs, and URLs.
+        PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list-repositories, get-repository, list-pull-requests, get-pull-request).
 
-WHEN TO USE:
-- When you need to find available workspaces
-- When you need workspace slugs for use with other Bitbucket tools
-- When you're not sure which workspace contains a specific repository
-- When you want to explore all workspaces before looking at repositories
+        WHEN TO USE:
+        - To find the 'workspaceSlug' for a known workspace name.
+        - To explore all workspaces you have access to.
+        - To get a high-level overview before diving into specific repositories.
+        - When you don't know the exact slug required by other tools.
 
-WHEN NOT TO USE:
-- When you already know the specific workspace slug (use directly with other tools)
-- When you need detailed information about a single workspace (use get-workspace instead)
-- When you need to find repositories (use list-repositories after identifying the workspace)
+        WHEN NOT TO USE:
+        - When you already have the 'workspaceSlug'.
+        - When you need detailed information about a *single* workspace (use 'get-workspace').
+        - When you need repository or pull request information (use repository/pull-request tools with a known 'workspaceSlug').
 
-RETURNS: Formatted list of workspaces with names, slugs, and URLs.
+        RETURNS: Formatted list of workspace memberships, including workspace name, slug, UUID, your permission level, and access dates. Includes pagination details if applicable.
 
-EXAMPLES:
-- List all workspaces: {}
-- Filter by name: {query: "team"}
-- Sort by name: {sort: "name"}
-- With pagination: {limit: 10, cursor: "next-page-token"}
+        EXAMPLES:
+        - List all accessible workspaces: {}
+        - Filter by name fragment: { query: "devteam" }
+        - Sort by last accessed (descending): { sort: "-last_accessed" }
+        - Paginate results: { limit: 10, cursor: "some-cursor-value" }
 
-ERRORS:
-- Authentication failures: Check your Bitbucket credentials
-- No workspaces: You may not have access to any workspaces`,
+        ERRORS:
+        - Authentication failures: Check Bitbucket credentials.
+        - No workspaces found: You may not have access to any workspaces, or filters are too restrictive.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);
@@ -153,31 +153,28 @@ ERRORS:
 	// Register the get workspace details tool
 	server.tool(
 		'get-workspace',
-		`Get detailed information about a specific Bitbucket workspace by slug.
+		`Get detailed information about a specific Bitbucket workspace using its slug.
 
-PURPOSE: Retrieves comprehensive workspace metadata including projects, permissions, and configuration.
+        PURPOSE: Retrieves comprehensive metadata for a *known* workspace, including UUID, name, type, creation date, and links to related resources like repositories and projects.
 
-WHEN TO USE:
-- When you need detailed information about a specific workspace
-- When you need to check workspace permissions or membership
-- When you need to verify workspace settings or configuration
-- After using list-workspaces to identify the relevant workspace
-- Before performing operations that require detailed workspace context
+        WHEN TO USE:
+        - When you need full details about a *specific* workspace and you already know its 'workspaceSlug'.
+        - After using 'list-workspaces' to identify the target workspace slug.
+        - To get quick links to a workspace's repositories, projects, or members page.
 
-WHEN NOT TO USE:
-- When you don't know which workspace to look for (use list-workspaces first)
-- When you just need basic workspace information (slug, name)
-- When you're only interested in repositories (use list-repositories directly)
+        WHEN NOT TO USE:
+        - When you don't know the workspace slug (use 'list-workspaces' first).
+        - When you only need a list of workspaces (use 'list-workspaces').
+        - When you need information about repositories *within* the workspace (use repository tools).
 
-RETURNS: Detailed workspace information including slug, name, type, description, projects, and permission levels.
+        RETURNS: Detailed workspace information including slug, name, UUID, type, creation date, and links. Fetches all available details by default.
 
-EXAMPLES:
-- Get workspace: {workspaceSlug: "myteam"}
+        EXAMPLES:
+        - Get details for a workspace: { workspaceSlug: "my-dev-team" }
 
-ERRORS:
-- Workspace not found: Verify the workspace slug is correct
-- Permission errors: Ensure you have access to the requested workspace
-- Rate limiting: Cache workspace information when possible`,
+        ERRORS:
+        - Workspace not found: Verify the 'workspaceSlug' is correct and exists.
+        - Permission errors: Ensure you have access to view the specified workspace.`,
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,
 	);

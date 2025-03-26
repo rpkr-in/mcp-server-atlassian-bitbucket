@@ -36,12 +36,18 @@ function registerListRepositoriesCommand(program: Command): void {
 	program
 		.command('list-repositories')
 		.description(
-			'List repositories within a Bitbucket workspace\n\n' +
-				'Retrieves repositories from the specified workspace with filtering and pagination options.\n\n' +
-				'Examples:\n' +
-				'  $ list-repositories --workspace myworkspace --limit 25\n' +
-				'  $ list-repositories --workspace myworkspace --query "api" --role admin\n' +
-				'  $ list-repositories --workspace myworkspace --cursor "next-page-token"',
+			`List repositories within a specific Bitbucket workspace.
+
+        PURPOSE: Discover repositories within a given workspace, find their slugs, and get basic metadata like owner, description, and URLs. Requires the workspace slug as input.
+
+        Use Case: Essential for finding the 'repoSlug' needed for pull request commands or 'get-repository'. Allows filtering by name, role, and sorting.
+
+        Output: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Supports filtering and sorting.
+
+        Examples:
+  $ mcp-bitbucket list-repositories --workspace my-team --limit 25
+  $ mcp-bitbucket list-repositories --workspace my-team --query "backend-api" --role contributor
+  $ mcp-bitbucket list-repositories --workspace my-team --sort "-updated_on" --cursor "next-page-token"`,
 		)
 		.requiredOption(
 			'--workspace <slug>',
@@ -139,10 +145,16 @@ function registerGetRepositoryCommand(program: Command): void {
 	program
 		.command('get-repository')
 		.description(
-			'Get detailed information about a specific Bitbucket repository\n\n' +
-				'Retrieves comprehensive details for a repository including branches, permissions, and settings.\n\n' +
-				'Examples:\n' +
-				'  $ get-repository --workspace myworkspace --repository myrepo',
+			`Get detailed information about a specific Bitbucket repository using its workspace and repository slugs.
+
+        PURPOSE: Retrieve comprehensive details for a *known* repository, including its UUID, owner, description, language, size, dates, and links. Requires both workspace and repository slugs.
+
+        Use Case: Useful when you have a specific repository identified (via 'list-repositories' or prior knowledge) and need its full metadata.
+
+        Output: Formatted details of the specified repository. Fetches all available details by default.
+
+        Examples:
+  $ mcp-bitbucket get-repository --workspace my-team --repository backend-api`,
 		)
 		.requiredOption(
 			'--workspace <slug>',

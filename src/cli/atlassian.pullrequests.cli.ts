@@ -36,12 +36,18 @@ function registerListPullRequestsCommand(program: Command): void {
 	program
 		.command('list-pull-requests')
 		.description(
-			'List pull requests within a Bitbucket repository\n\n' +
-				'Retrieves pull requests from the specified repository with filtering and pagination options.\n\n' +
-				'Examples:\n' +
-				'  $ list-pull-requests --workspace my-workspace --repository my-repo --state OPEN\n' +
-				'  $ list-pull-requests --workspace my-workspace --repository my-repo --limit 50 --state MERGED\n' +
-				'  $ list-pull-requests --workspace my-workspace --repository my-repo --query "title:feature"',
+			`List pull requests within a specific Bitbucket repository.
+
+        PURPOSE: Discover pull requests within a given repository, find their IDs, and get basic metadata like title, state, author, and branches. Requires workspace and repository slugs.
+
+        Use Case: Essential for finding the 'prId' needed for 'get-pull-request'. Allows filtering by state (OPEN, MERGED, etc.) or text query.
+
+        Output: Formatted list of pull requests including ID, title, state, author, branches, description snippet, and URL. Supports filtering and sorting.
+
+        Examples:
+  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --state OPEN
+  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --limit 50 --state MERGED
+  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --query "bugfix" --cursor "next-page-token"`,
 		)
 		.requiredOption(
 			'--workspace <slug>',
@@ -166,8 +172,16 @@ function registerGetPullRequestCommand(program: Command): void {
 	program
 		.command('get-pull-request')
 		.description(
-			'Get detailed information about a specific Bitbucket pull request\n\n' +
-				'Retrieves comprehensive details for a pull request including description, reviewers, and diff statistics.',
+			`Get detailed information about a specific Bitbucket pull request using its workspace, repository, and PR ID.
+
+        PURPOSE: Retrieve comprehensive details for a *known* pull request, including its description, state, author, reviewers, branches, and links to diffs/commits. Requires workspace slug, repository slug, and pull request ID.
+
+        Use Case: Essential for understanding the full context of a specific PR identified via 'list-pull-requests' or prior knowledge.
+
+        Output: Formatted details of the specified pull request. Fetches all available details by default.
+
+        Examples:
+  $ mcp-bitbucket get-pull-request --workspace my-team --repository backend-api --pull-request 42`,
 		)
 		.requiredOption(
 			'--workspace <slug>',
