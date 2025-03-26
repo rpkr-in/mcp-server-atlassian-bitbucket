@@ -7,7 +7,7 @@ import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
 import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
 
 // Get the version from package.json
-const VERSION = '1.5.0'; // This should match the version in src/index.ts
+const VERSION = '1.6.0'; // This should match the version in src/index.ts
 const NAME = '@aashari/mcp-server-atlassian-bitbucket';
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
