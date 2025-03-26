@@ -68,4 +68,9 @@ export interface ListPullRequestCommentsOptions extends PaginationOptions {
 	 * The pull request ID
 	 */
 	prId: string;
+
+	/**
+	 * Optional field to sort by (e.g., '-created_on', 'updated_on')
+	 */
+	sort?: string;
 }

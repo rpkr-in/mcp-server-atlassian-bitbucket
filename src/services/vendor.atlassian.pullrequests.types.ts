@@ -179,6 +179,11 @@ export interface GetPullRequestCommentsParams {
 	 * Number of items per page
 	 */
 	pagelen?: number;
+
+	/**
+	 * Property to sort by (e.g., 'created_on', '-updated_on')
+	 */
+	sort?: string;
 }
 
 /**

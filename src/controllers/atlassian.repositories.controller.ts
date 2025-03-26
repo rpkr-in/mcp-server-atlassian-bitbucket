@@ -68,10 +68,11 @@ async function list(
 			pagelen: options.limit || DEFAULT_PAGE_SIZE,
 			// Map cursor to page for page-based pagination
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			// Set default sort to updated_on descending if not specified
+			sort: options.sort || '-updated_on',
 			// Optional filter parameters
 			...(formattedQuery && { q: formattedQuery }),
 			...(options.role && { role: options.role }),
-			...(options.sort && { sort: options.sort }),
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);

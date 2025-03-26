@@ -55,6 +55,7 @@ async function list(
 		const serviceParams: ListWorkspacesParams = {
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH, // Default page length
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
+			...(options.sort && { sort: options.sort }), // Only add sort if specified by user
 		};
 
 		controllerLogger.debug(`${source} Using filters:`, serviceParams);

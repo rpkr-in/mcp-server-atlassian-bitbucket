@@ -208,6 +208,7 @@ async function listComments(
 			pull_request_id: prId,
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			sort: options.sort || '-updated_on',
 		};
 
 		logger.debug(`${source} Using service parameters:`, serviceParams);

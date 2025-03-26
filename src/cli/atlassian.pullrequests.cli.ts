@@ -284,7 +284,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 		)
 		.requiredOption(
 			'--pull-request <id>',
-			'Pull request ID to retrieve comments from',
+			'Pull request ID to retrieve comments for',
 		)
 		.option(
 			'-l, --limit <number>',
@@ -294,6 +294,10 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
+		.option(
+			'-S, --sort <string>',
+			'Field to sort results by (e.g., "created_on", "-updated_on")',
+		)
 		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.pullrequests.cli.ts@list-pr-comments]';
@@ -302,69 +306,25 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 					`${logPrefix} Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
 				);
 
-				// Prepare options from command parameters
-				const commentsOptions: ListPullRequestCommentsOptions = {
+				const commentOptions: ListPullRequestCommentsOptions = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
 					prId: options.pullRequest,
+					...(options.limit && {
+						limit: parseInt(options.limit, 10),
+					}),
+					...(options.cursor && { cursor: options.cursor }),
+					...(options.sort && { sort: options.sort }),
 				};
-
-				// Validate workspace slug
-				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
-				) {
-					throw new Error(
-						'Workspace slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate repository slug
-				if (
-					!options.repository ||
-					typeof options.repository !== 'string' ||
-					options.repository.trim() === ''
-				) {
-					throw new Error(
-						'Repository slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate pull request ID
-				if (
-					!options.pullRequest ||
-					isNaN(parseInt(options.pullRequest, 10)) ||
-					parseInt(options.pullRequest, 10) <= 0
-				) {
-					throw new Error(
-						'Pull request ID must be a valid positive integer',
-					);
-				}
-
-				// Apply pagination options if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0 || limit > 100) {
-						throw new Error(
-							'Limit must be a number between 1 and 100',
-						);
-					}
-					commentsOptions.limit = limit;
-				}
-
-				if (options.cursor) {
-					commentsOptions.cursor = options.cursor;
-				}
 
 				logger.debug(
 					`${logPrefix} Fetching comments with options:`,
-					commentsOptions,
+					commentOptions,
 				);
 
 				const result =
 					await atlassianPullRequestsController.listComments(
-						commentsOptions,
+						commentOptions,
 					);
 
 				logger.debug(

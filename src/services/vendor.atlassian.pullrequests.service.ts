@@ -202,14 +202,19 @@ async function getComments(
 		);
 	}
 
-	// Construct query parameters
+	// Build query parameters
 	const queryParams = new URLSearchParams();
 
+	// Add pagination parameters if provided
 	if (params.pagelen) {
 		queryParams.set('pagelen', params.pagelen.toString());
 	}
 	if (params.page) {
 		queryParams.set('page', params.page.toString());
+	}
+	// Add sort parameter if provided
+	if (params.sort) {
+		queryParams.set('sort', params.sort);
 	}
 
 	const queryString = queryParams.toString()
