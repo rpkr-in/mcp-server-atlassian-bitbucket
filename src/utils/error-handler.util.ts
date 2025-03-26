@@ -1,5 +1,5 @@
 import { createApiError, McpError } from './error.util.js';
-import { logger } from './logger.util.js';
+import { Logger } from './logger.util.js';
 
 /**
  * Standard error codes for consistent handling
@@ -13,31 +13,31 @@ export enum ErrorCode {
 }
 
 /**
- * Error context for better error messages
+ * Context information for error handling
  */
 export interface ErrorContext {
 	/**
-	 * The type of entity being operated on (e.g., 'Project', 'Issue')
-	 */
-	entityType?: string;
-
-	/**
-	 * The ID or identifier of the entity
-	 */
-	entityId?: string | Record<string, string>;
-
-	/**
-	 * The operation being performed (e.g., 'retrieving', 'listing')
-	 */
-	operation?: string;
-
-	/**
-	 * Where the error occurred (e.g., 'projects.get')
+	 * Source of the error (e.g., file path and function)
 	 */
 	source?: string;
 
 	/**
-	 * Any additional contextual information
+	 * Type of entity being processed (e.g., 'Repository', 'PullRequest')
+	 */
+	entityType?: string;
+
+	/**
+	 * Identifier of the entity being processed
+	 */
+	entityId?: string | Record<string, string>;
+
+	/**
+	 * Operation being performed (e.g., 'listing', 'creating')
+	 */
+	operation?: string;
+
+	/**
+	 * Additional information for debugging
 	 */
 	additionalInfo?: Record<string, unknown>;
 }
@@ -52,7 +52,12 @@ export function detectErrorType(
 	error: unknown,
 	context: ErrorContext = {},
 ): { code: ErrorCode; statusCode: number } {
-	logger.debug(`[${context.source}] Detecting error type`, error);
+	const methodLogger = Logger.forContext(
+		'utils/error-handler.util.ts',
+		'detectErrorType',
+	);
+	methodLogger.debug(`Detecting error type`, { error, context });
+
 	const errorMessage = error instanceof Error ? error.message : String(error);
 	const statusCode =
 		error instanceof Error && 'statusCode' in error
@@ -123,6 +128,10 @@ export function createUserFriendlyErrorMessage(
 	context: ErrorContext = {},
 	originalMessage?: string,
 ): string {
+	const methodLogger = Logger.forContext(
+		'utils/error-handler.util.ts',
+		'createUserFriendlyErrorMessage',
+	);
 	const { entityType, entityId, operation } = context;
 
 	// Format entity ID for display
@@ -173,6 +182,10 @@ export function createUserFriendlyErrorMessage(
 		message += ` Error details: ${originalMessage}`;
 	}
 
+	methodLogger.debug(`Created user-friendly message: ${message}`, {
+		code,
+		context,
+	});
 	return message;
 }
 
@@ -186,15 +199,28 @@ export function handleControllerError(
 	error: unknown,
 	context: ErrorContext = {},
 ): never {
-	const source = context.source || 'unknown';
+	const methodLogger = Logger.forContext(
+		'utils/error-handler.util.ts',
+		'handleControllerError',
+	);
+
 	const entityType = context.entityType || 'resource';
 	const operation = context.operation || 'processing';
 
-	// Log the error
-	logger.error(`[${source}] Error ${operation} ${entityType}`, error);
+	// Log detailed error information at debug level for troubleshooting
+	methodLogger.debug(`Processing error for ${entityType}`, {
+		error,
+		context,
+		stack: error instanceof Error ? error.stack : undefined,
+	});
 
 	// Pass through McpErrors
 	if (error instanceof McpError) {
+		// Log with standard format
+		methodLogger.error(
+			`Error ${operation} ${entityType}: ${error.message}`,
+			error,
+		);
 		throw error;
 	}
 
@@ -207,8 +233,21 @@ export function handleControllerError(
 	// Generate user-friendly message
 	const message = createUserFriendlyErrorMessage(code, context, errorMessage);
 
-	// Log the specific error type
-	logger.warn(`[${source}] Detected error type: ${code}`);
+	// Log the error with standard format - error level for unexpected errors,
+	// warn level for client errors (400 range)
+	if (statusCode >= 500) {
+		methodLogger.error(`Error ${operation} ${entityType}: ${message}`, {
+			code,
+			statusCode,
+			additionalInfo: context.additionalInfo,
+		});
+	} else {
+		methodLogger.warn(`Error ${operation} ${entityType}: ${message}`, {
+			code,
+			statusCode,
+			additionalInfo: context.additionalInfo,
+		});
+	}
 
 	// Throw appropriate error
 	throw createApiError(message, statusCode, error);

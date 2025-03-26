@@ -1,4 +1,4 @@
-import { logger } from './logger.util.js';
+import { Logger } from './logger.util.js';
 
 /**
  * Error types for classification
@@ -102,11 +102,13 @@ export function ensureMcpError(error: unknown): McpError {
 export function formatErrorForMcpTool(error: unknown): {
 	content: Array<{ type: 'text'; text: string }>;
 } {
-	const mcpError = ensureMcpError(error);
-	logger.error(
-		`[src/utils/error.util.ts@formatErrorForMcpTool] ${mcpError.type} error`,
-		mcpError,
+	const methodLogger = Logger.forContext(
+		'utils/error.util.ts',
+		'formatErrorForMcpTool',
 	);
+	const mcpError = ensureMcpError(error);
+
+	methodLogger.error(`${mcpError.type} error`, mcpError);
 
 	return {
 		content: [
@@ -132,11 +134,13 @@ export function formatErrorForMcpResource(
 		description?: string;
 	}>;
 } {
-	const mcpError = ensureMcpError(error);
-	logger.error(
-		`[src/utils/error.util.ts@formatErrorForMcpResource] ${mcpError.type} error`,
-		mcpError,
+	const methodLogger = Logger.forContext(
+		'utils/error.util.ts',
+		'formatErrorForMcpResource',
 	);
+	const mcpError = ensureMcpError(error);
+
+	methodLogger.error(`${mcpError.type} error`, mcpError);
 
 	return {
 		contents: [
@@ -152,13 +156,41 @@ export function formatErrorForMcpResource(
 
 /**
  * Handle error in CLI context
+ * @param error The error to handle
+ * @param source Optional source information for better error messages
  */
-export function handleCliError(error: unknown): never {
-	const mcpError = ensureMcpError(error);
-	logger.error(
-		`[src/utils/error.util.ts@handleCliError] ${mcpError.type} error`,
-		mcpError,
+export function handleCliError(error: unknown, source?: string): never {
+	const methodLogger = Logger.forContext(
+		'utils/error.util.ts',
+		'handleCliError',
 	);
+	const mcpError = ensureMcpError(error);
+
+	// Log detailed information at different levels based on error type
+	if (mcpError.statusCode && mcpError.statusCode >= 500) {
+		methodLogger.error(`${mcpError.type} error occurred`, {
+			message: mcpError.message,
+			statusCode: mcpError.statusCode,
+			source,
+			stack: mcpError.stack,
+		});
+	} else {
+		methodLogger.warn(`${mcpError.type} error occurred`, {
+			message: mcpError.message,
+			statusCode: mcpError.statusCode,
+			source,
+		});
+	}
+
+	// Log additional debug information if DEBUG is enabled
+	methodLogger.debug('Error details', {
+		type: mcpError.type,
+		statusCode: mcpError.statusCode,
+		originalError: mcpError.originalError,
+		stack: mcpError.stack,
+	});
+
+	// Display user-friendly message to console
 	console.error(`Error: ${mcpError.message}`);
 	process.exit(1);
 }
