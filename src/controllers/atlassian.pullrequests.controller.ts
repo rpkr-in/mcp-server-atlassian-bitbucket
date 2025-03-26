@@ -9,7 +9,6 @@ import {
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListPullRequestsOptions,
-	GetPullRequestOptions,
 	PullRequestIdentifier,
 } from './atlassian.pullrequests.types.js';
 import {
@@ -110,19 +109,16 @@ async function list(
  * @param identifier.parentId - The workspace slug containing the repository
  * @param identifier.entityId - The repository slug containing the pull request
  * @param identifier.prId - The pull request ID
- * @param options - Options for retrieving the pull request details
  * @returns Promise with formatted pull request details content
  * @throws Error if pull request retrieval fails
  */
 async function get(
 	identifier: PullRequestIdentifier,
-	options: GetPullRequestOptions = {},
 ): Promise<ControllerResponse> {
 	const { parentId, entityId, prId } = identifier;
 
 	logger.debug(
 		`[src/controllers/atlassian.pullrequests.controller.ts@get] Getting pull request details for ${parentId}/${entityId}/${prId}...`,
-		options,
 	);
 
 	try {
@@ -153,7 +149,6 @@ async function get(
 			entityId: identifier,
 			operation: 'retrieving',
 			source: 'src/controllers/atlassian.pullrequests.controller.ts@get',
-			additionalInfo: { options },
 		});
 	}
 }

@@ -8,7 +8,6 @@ import {
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListRepositoriesOptions,
-	GetRepositoryOptions,
 	RepositoryIdentifier,
 } from './atlassian.repositories.types.js';
 import {
@@ -105,12 +104,10 @@ async function list(
 /**
  * Gets details of a specific Bitbucket repository
  * @param identifier - Repository identifier containing parentId and entityId
- * @param options - Options for retrieving repository details
  * @returns Formatted repository details
  */
 async function get(
 	identifier: RepositoryIdentifier,
-	options: GetRepositoryOptions = {},
 ): Promise<ControllerResponse> {
 	const { parentId, entityId } = identifier;
 	const methodLogger = Logger.forContext(
@@ -120,7 +117,6 @@ async function get(
 
 	methodLogger.debug(
 		`Getting repository details for ${parentId}/${entityId}...`,
-		options,
 	);
 
 	try {

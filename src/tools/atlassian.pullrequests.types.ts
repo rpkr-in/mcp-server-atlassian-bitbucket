@@ -111,16 +111,6 @@ export const GetPullRequestToolArgs = z.object({
 		.describe(
 			'Numeric ID of the pull request to retrieve. Must be a valid pull request ID in the specified repository. Example: 42',
 		),
-
-	/**
-	 * Whether to include comments in the response
-	 */
-	includeComments: z
-		.boolean()
-		.optional()
-		.describe(
-			'Whether to include comments in the response. When true, includes all comments on the pull request. If omitted, defaults to false.',
-		),
 });
 
 export type GetPullRequestToolArgsType = z.infer<typeof GetPullRequestToolArgs>;

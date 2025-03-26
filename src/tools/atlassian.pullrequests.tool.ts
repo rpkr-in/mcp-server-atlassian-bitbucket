@@ -87,16 +87,11 @@ async function getPullRequest(
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.get(
-			{
-				parentId: args.workspaceSlug,
-				entityId: args.repoSlug,
-				prId: args.prId,
-			},
-			{
-				includeComments: args.includeComments,
-			},
-		);
+		const message = await atlassianPullRequestsController.get({
+			parentId: args.workspaceSlug,
+			entityId: args.repoSlug,
+			prId: args.prId,
+		});
 
 		logger.debug(
 			`${logPrefix} Successfully retrieved pull request details from controller`,

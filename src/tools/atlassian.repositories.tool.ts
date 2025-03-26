@@ -87,17 +87,10 @@ async function getRepository(
 	);
 
 	try {
-		const message = await atlassianRepositoriesController.get(
-			{
-				parentId: args.workspaceSlug,
-				entityId: args.repoSlug,
-			},
-			{
-				includeBranches: args.includeBranches,
-				includeCommits: args.includeCommits,
-				includePullRequests: args.includePullRequests,
-			},
-		);
+		const message = await atlassianRepositoriesController.get({
+			parentId: args.workspaceSlug,
+			entityId: args.repoSlug,
+		});
 
 		logger.debug(
 			`${logPrefix} Successfully retrieved repository details from controller`,

@@ -47,30 +47,3 @@ export interface RepositoryIdentifier extends EntityIdentifier {
 	 */
 	entityId: string;
 }
-
-/**
- * Options for getting detailed repository information.
- * These options control what additional data is included in the response.
- */
-export interface GetRepositoryOptions {
-	/**
-	 * Whether to include branches in the response.
-	 * When true, retrieves branch information for the repository.
-	 * Default: false
-	 */
-	includeBranches?: boolean;
-
-	/**
-	 * Whether to include commits in the response.
-	 * When true, retrieves recent commit information for the repository.
-	 * Default: false
-	 */
-	includeCommits?: boolean;
-
-	/**
-	 * Whether to include pull requests in the response.
-	 * When true, retrieves open pull request information for the repository.
-	 * Default: false
-	 */
-	includePullRequests?: boolean;
-}

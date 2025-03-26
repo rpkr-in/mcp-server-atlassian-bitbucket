@@ -44,13 +44,3 @@ export interface ListPullRequestsOptions extends PaginationOptions {
 	 */
 	query?: string;
 }
-
-/**
- * Options for getting pull request details
- */
-export interface GetPullRequestOptions {
-	/**
-	 * Whether to include comments in the response
-	 */
-	includeComments?: boolean;
-}

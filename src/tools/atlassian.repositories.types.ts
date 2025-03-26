@@ -99,36 +99,6 @@ export const GetRepositoryToolArgs = z.object({
 		.describe(
 			'Repository slug to retrieve. This must be a valid repository in the specified workspace. Example: "project-api"',
 		),
-
-	/**
-	 * Whether to include branches in the response
-	 */
-	includeBranches: z
-		.boolean()
-		.optional()
-		.describe(
-			'When true, includes information about repository branches in the response. If omitted, defaults to false.',
-		),
-
-	/**
-	 * Whether to include commits in the response
-	 */
-	includeCommits: z
-		.boolean()
-		.optional()
-		.describe(
-			'When true, includes recent commits information in the response. If omitted, defaults to false.',
-		),
-
-	/**
-	 * Whether to include pull requests in the response
-	 */
-	includePullRequests: z
-		.boolean()
-		.optional()
-		.describe(
-			'When true, includes open pull requests information in the response. If omitted, defaults to false.',
-		),
 });
 
 export type GetRepositoryToolArgsType = z.infer<typeof GetRepositoryToolArgs>;
