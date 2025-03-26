@@ -15,11 +15,6 @@ export interface WorkspaceIdentifier extends EntityIdentifier {
  */
 export interface ListWorkspacesOptions extends PaginationOptions {
 	/**
-	 * Optional query to filter workspaces by name
-	 */
-	query?: string;
-
-	/**
 	 * Optional sort parameter
 	 */
 	sort?: string;

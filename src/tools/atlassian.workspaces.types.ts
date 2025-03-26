@@ -27,16 +27,6 @@ const PaginationArgs = {
  */
 export const ListWorkspacesToolArgs = z.object({
 	/**
-	 * Filter query for workspaces by name
-	 */
-	query: z
-		.string()
-		.optional()
-		.describe(
-			'Query string to filter workspaces by name (text search). Performs a partial text match on workspace names. Example: "team" would match "my-team" and "team-project". If omitted, returns all accessible workspaces.',
-		),
-
-	/**
 	 * Sort parameter for ordering results
 	 */
 	sort: z

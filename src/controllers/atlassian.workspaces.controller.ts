@@ -36,7 +36,6 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
 /**
  * List Bitbucket workspaces with optional filtering
  * @param options - Options for listing workspaces
- * @param options.query - Query to filter workspaces
  * @param options.sort - Sort parameter
  * @param options.limit - Maximum number of workspaces to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
@@ -57,11 +56,6 @@ async function list(
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH, // Default page length
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
 		};
-
-		// Add the filter (q) parameter if provided
-		if (options.query) {
-			serviceParams.q = options.query;
-		}
 
 		controllerLogger.debug(`${source} Using filters:`, serviceParams);
 

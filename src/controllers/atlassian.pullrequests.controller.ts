@@ -19,6 +19,7 @@ import {
 	ListPullRequestsParams,
 	GetPullRequestParams,
 } from '../services/vendor.atlassian.pullrequests.types.js';
+import { formatBitbucketQuery } from '../utils/query.util.js';
 
 // Default constants
 const DEFAULT_PAGE_LENGTH = 25;
@@ -52,6 +53,17 @@ async function list(
 			);
 		}
 
+		// Process the query parameter
+		let queryParam: string | undefined;
+
+		// State filter takes precedence over free-text query
+		if (options.state) {
+			queryParam = `state="${options.state}"`;
+		} else if (options.query) {
+			// Format the free-text query using the utility function
+			queryParam = formatBitbucketQuery(options.query, 'title');
+		}
+
 		// Map controller filters to service params
 		const serviceParams: ListPullRequestsParams = {
 			// Required parameters
@@ -59,7 +71,7 @@ async function list(
 			repo_slug: options.repoSlug,
 
 			// Optional parameters
-			q: options.state ? `state="${options.state}"` : options.query,
+			...(queryParam && { q: queryParam }),
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 		};

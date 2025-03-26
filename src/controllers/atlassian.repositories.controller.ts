@@ -19,6 +19,7 @@ import {
 	GetRepositoryParams,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
+import { formatBitbucketQuery } from '../utils/query.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -53,6 +54,11 @@ async function list(
 	);
 
 	try {
+		// Format the query for Bitbucket API if provided
+		const formattedQuery = options.query
+			? formatBitbucketQuery(options.query)
+			: undefined;
+
 		// Map controller options to service parameters
 		const serviceParams: ListRepositoriesParams = {
 			// Required workspace
@@ -62,7 +68,7 @@ async function list(
 			// Map cursor to page for page-based pagination
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 			// Optional filter parameters
-			...(options.query && { q: options.query }),
+			...(formattedQuery && { q: formattedQuery }),
 			...(options.role && { role: options.role }),
 			...(options.sort && { sort: options.sort }),
 		};

@@ -42,16 +42,12 @@ function registerListWorkspacesCommand(program: Command): void {
 
         Use Case: Useful when you don't know the exact slug of a workspace you need to interact with, or when exploring available team/project containers.
 
-        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports filtering and sorting.
+        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports sorting and pagination.
 
         Examples:
   $ mcp-bitbucket list-workspaces --limit 10
-  $ mcp-bitbucket list-workspaces --query "dev-team" --sort "-last_accessed"
+  $ mcp-bitbucket list-workspaces --sort "-last_accessed"
   $ mcp-bitbucket list-workspaces --cursor "some-cursor-value"`,
-		)
-		.option(
-			'-q, --query <text>',
-			'Filter workspaces by name or other properties (simple text search, not query language)',
 		)
 		.option(
 			'-S, --sort <string>',
@@ -70,7 +66,6 @@ function registerListWorkspacesCommand(program: Command): void {
 				'[src/cli/atlassian.workspaces.cli.ts@list-workspaces]';
 			try {
 				const filterOptions: ListWorkspacesOptions = {
-					query: options.query,
 					sort: options.sort,
 				};
 
