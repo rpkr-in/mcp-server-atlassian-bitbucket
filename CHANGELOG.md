@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.2...v1.5.0) (2025-03-26)
+
+
+### Features
+
+* improve CLI interface by using named parameters instead of positional arguments ([99318be](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/99318bee1cc2f4706b63072800431e43b0c051a4))
+
 ## [1.4.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.1...v1.4.2) (2025-03-26)
 
 
