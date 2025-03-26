@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.3...v1.8.0) (2025-03-26)
+
+
+### Features
+
+* **bitbucket:** add default -updated_on sort to list operations ([ee5dbca](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ee5dbcae32484b61e67f5852e21d5e63ed2ea4a4))
+* **bitbucket:** add pull request comments and enhance repository details ([72a91c8](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/72a91c89c7ce54aedbdf457ba818af83414c43a6))
+
 ## [1.7.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.2...v1.7.3) (2025-03-26)
 
 
