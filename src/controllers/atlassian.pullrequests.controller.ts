@@ -60,7 +60,7 @@ async function list(
 			repo_slug: options.entityId,
 
 			// Optional parameters
-			q: options.state ? `state="${options.state}"` : options.filter,
+			q: options.state ? `state="${options.state}"` : options.query,
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 		};
@@ -83,10 +83,7 @@ async function list(
 		);
 
 		// Format the pull requests data for display using the formatter
-		const formattedPullRequests = formatPullRequestsList(
-			pullRequestsData,
-			pagination,
-		);
+		const formattedPullRequests = formatPullRequestsList(pullRequestsData);
 
 		return {
 			content: formattedPullRequests,

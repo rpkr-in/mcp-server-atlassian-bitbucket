@@ -42,7 +42,7 @@ export interface ListPullRequestsOptions extends PaginationOptions {
 	/**
 	 * Filter string to search for in pull request title, description, or author
 	 */
-	filter?: string;
+	query?: string;
 }
 
 /**

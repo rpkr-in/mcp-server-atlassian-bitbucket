@@ -25,7 +25,7 @@ describe('Atlassian Workspaces Controller', () => {
 			}
 
 			// Call the function
-			const result = await atlassianWorkspacesController.list();
+			const result = await atlassianWorkspacesController.list({});
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
@@ -36,7 +36,7 @@ describe('Atlassian Workspaces Controller', () => {
 				expect(result.content).toContain('# Bitbucket Workspaces');
 				expect(result.content).toContain('**UUID**');
 				expect(result.content).toContain('**Slug**');
-				expect(result.content).toContain('**Permission**');
+				expect(result.content).toContain('**Permission Level**');
 			}
 		}, 15000); // Increase timeout for API call
 
@@ -87,7 +87,7 @@ describe('Atlassian Workspaces Controller', () => {
 			}
 
 			// First, get a list of workspaces to find a valid slug
-			const workspaces = await atlassianWorkspacesController.list();
+			const workspaces = await atlassianWorkspacesController.list({});
 
 			// Skip if no workspaces are available
 			if (workspaces.content === 'No Bitbucket workspaces found.') {

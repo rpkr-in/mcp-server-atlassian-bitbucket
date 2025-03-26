@@ -40,7 +40,7 @@ function registerListRepositoriesCommand(program: Command): void {
 				'Retrieves repositories from the specified workspace with filtering and pagination options.\n\n' +
 				'Examples:\n' +
 				'  $ list-repositories myworkspace --limit 25\n' +
-				'  $ list-repositories myworkspace --filter "api" --role admin\n' +
+				'  $ list-repositories myworkspace --query "api" --role admin\n' +
 				'  $ list-repositories myworkspace --cursor "next-page-token"',
 		)
 		.argument(
@@ -48,8 +48,8 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Workspace slug (e.g., myteam) to list repositories from',
 		)
 		.option(
-			'-f, --filter <string>',
-			'Filter repositories by name or other properties',
+			'-q, --query <text>',
+			'Filter repositories by name or other properties (text search)',
 		)
 		.option(
 			'-r, --role <string>',
@@ -71,9 +71,14 @@ function registerListRepositoriesCommand(program: Command): void {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
+				logger.debug(
+					`${logPrefix} Listing repositories for workspace: ${parentId}`,
+				);
+
+				// Prepare filter options from command parameters
 				const filterOptions: ListRepositoriesOptions = {
 					parentId,
-					filter: options.filter,
+					query: options.query,
 					role: options.role,
 					sort: options.sort,
 				};
@@ -102,11 +107,11 @@ function registerListRepositoriesCommand(program: Command): void {
 				console.log(result.content);
 
 				// Display pagination information if available
-				if (result.pagination?.hasMore) {
+				if (result.pagination) {
 					console.log(
 						'\n' +
 							formatPagination(
-								result.pagination.count || 0,
+								result.pagination.count ?? 0,
 								result.pagination.hasMore,
 								result.pagination.nextCursor,
 							),

@@ -35,7 +35,7 @@ async function listWorkspaces(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianWorkspacesController.list({
-			filter: args.filter,
+			query: args.query,
 			sort: args.sort,
 			limit: args.limit,
 			cursor: args.cursor,
@@ -120,34 +120,32 @@ function register(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'list-workspaces',
-		`List Bitbucket workspaces available to your account.
+		`List Bitbucket workspaces with optional filtering.
 
-PURPOSE: Discovers workspaces you have access to with their slugs, names, and permission levels to help navigate Bitbucket's organization structure.
+PURPOSE: Find workspaces that you have access to, with their names, slugs, and URLs.
 
 WHEN TO USE:
-- When you need to discover what workspaces exist in your Bitbucket account
-- When you want to find the slugs needed for other Bitbucket operations
-- When you need to check what workspaces you have access to and their permission levels
-- Before accessing repositories or pull requests that require workspace information
-- When you're unfamiliar with the workspace organization structure
+- When you need to find available workspaces
+- When you need workspace slugs for use with other Bitbucket tools
+- When you're not sure which workspace contains a specific repository
+- When you want to explore all workspaces before looking at repositories
 
 WHEN NOT TO USE:
-- When you already know the workspace slug (use get-workspace or list-repositories instead)
-- When you need detailed workspace information (use get-workspace instead)
-- When you need to find specific repositories (use list-repositories after identifying the workspace)
+- When you already know the specific workspace slug (use directly with other tools)
+- When you need detailed information about a single workspace (use get-workspace instead)
+- When you need to find repositories (use list-repositories after identifying the workspace)
 
-RETURNS: Formatted list of workspaces with slugs, names, and permission information, plus pagination details if available.
+RETURNS: Formatted list of workspaces with names, slugs, and URLs.
 
 EXAMPLES:
 - List all workspaces: {}
-- With sorting: {sort: "name"}
-- Filter by name: {filter: "team"}
+- Filter by name: {query: "team"}
+- Sort by name: {sort: "name"}
 - With pagination: {limit: 10, cursor: "next-page-token"}
 
 ERRORS:
 - Authentication failures: Check your Bitbucket credentials
-- No workspaces found: You might not have access to any workspaces
-- Rate limiting: Use pagination and reduce query frequency`,
+- No workspaces: You may not have access to any workspaces`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);

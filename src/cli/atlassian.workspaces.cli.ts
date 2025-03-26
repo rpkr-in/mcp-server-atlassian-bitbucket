@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
 import { ListWorkspacesOptions } from '../controllers/atlassian.workspaces.types.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket workspaces.
@@ -35,11 +36,16 @@ function registerListWorkspacesCommand(program: Command): void {
 	program
 		.command('list-workspaces')
 		.description(
-			'List Bitbucket workspaces with optional filtering\n\n  Retrieves workspaces the authenticated user has access to with pagination options.',
+			'List Bitbucket workspaces with optional filtering\n\n' +
+				'Retrieves workspaces the authenticated user has access to with pagination options.\n\n' +
+				'Examples:\n' +
+				'  $ list-workspaces --limit 50\n' +
+				'  $ list-workspaces --query "team" --sort "name"\n' +
+				'  $ list-workspaces --cursor "next-page-token"',
 		)
 		.option(
-			'-f, --filter <string>',
-			'Filter workspaces by name or other properties',
+			'-q, --query <text>',
+			'Filter workspaces by name or other properties (text search)',
 		)
 		.option(
 			'-s, --sort <string>',
@@ -58,7 +64,7 @@ function registerListWorkspacesCommand(program: Command): void {
 				'[src/cli/atlassian.workspaces.cli.ts@list-workspaces]';
 			try {
 				const filterOptions: ListWorkspacesOptions = {
-					filter: options.filter,
+					query: options.query,
 					sort: options.sort,
 				};
 
@@ -80,6 +86,18 @@ function registerListWorkspacesCommand(program: Command): void {
 				logger.debug(`${logPrefix} Successfully retrieved workspaces`);
 
 				console.log(result.content);
+
+				// Display pagination information if available
+				if (result.pagination) {
+					console.log(
+						'\n' +
+							formatPagination(
+								result.pagination.count ?? 0,
+								result.pagination.hasMore,
+								result.pagination.nextCursor,
+							),
+					);
+				}
 			} catch (error) {
 				logger.error(`${logPrefix} Operation failed:`, error);
 				handleCliError(error);

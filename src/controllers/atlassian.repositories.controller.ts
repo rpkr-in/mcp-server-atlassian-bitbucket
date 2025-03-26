@@ -63,7 +63,7 @@ async function list(
 			// Map cursor to page for page-based pagination
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 			// Optional filter parameters
-			...(options.filter && { q: options.filter }),
+			...(options.query && { q: options.query }),
 			...(options.role && { role: options.role }),
 			...(options.sort && { sort: options.sort }),
 		};
@@ -85,9 +85,7 @@ async function list(
 		);
 
 		// Format the repositories data for display using the formatter
-		const formattedRepositories = formatRepositoriesList(
-			repositoriesData.values,
-		);
+		const formattedRepositories = formatRepositoriesList(repositoriesData);
 
 		return {
 			content: formattedRepositories,

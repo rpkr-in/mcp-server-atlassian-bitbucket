@@ -36,14 +36,14 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
 /**
  * List Bitbucket workspaces with optional filtering
  * @param options - Options for listing workspaces
- * @param options.filter - Query to filter workspaces
+ * @param options.query - Query to filter workspaces
  * @param options.sort - Sort parameter
  * @param options.limit - Maximum number of workspaces to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
  * @returns Promise with formatted workspace list content and pagination information
  */
 async function list(
-	options: ListWorkspacesOptions = {},
+	options: ListWorkspacesOptions,
 ): Promise<ControllerResponse> {
 	const source = `[src/controllers/atlassian.workspaces.controller.ts@list]`;
 	controllerLogger.debug(
@@ -59,8 +59,8 @@ async function list(
 		};
 
 		// Add the filter (q) parameter if provided
-		if (options.filter) {
-			serviceParams.q = options.filter;
+		if (options.query) {
+			serviceParams.q = options.query;
 		}
 
 		controllerLogger.debug(`${source} Using filters:`, serviceParams);
@@ -82,10 +82,7 @@ async function list(
 		);
 
 		// Format the workspaces data for display using the formatter
-		const formattedWorkspaces = formatWorkspacesList(
-			workspacesData,
-			pagination.nextCursor,
-		);
+		const formattedWorkspaces = formatWorkspacesList(workspacesData);
 
 		return {
 			content: formattedWorkspaces,

@@ -15,7 +15,7 @@ export interface ListRepositoriesOptions extends PaginationOptions {
 	 * Filter repositories by query.
 	 * Performs a case-insensitive partial match on repository names and descriptions.
 	 */
-	filter?: string;
+	query?: string;
 
 	/**
 	 * The field to sort repositories by.

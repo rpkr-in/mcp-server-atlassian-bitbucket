@@ -41,7 +41,7 @@ function registerListPullRequestsCommand(program: Command): void {
 				'Examples:\n' +
 				'  $ list-pull-requests my-workspace my-repo --state OPEN\n' +
 				'  $ list-pull-requests my-workspace my-repo --limit 50 --state MERGED\n' +
-				'  $ list-pull-requests my-workspace my-repo --filter "title:feature"',
+				'  $ list-pull-requests my-workspace my-repo --query "title:feature"',
 		)
 		.argument('<parent-id>', 'Workspace slug containing the repository')
 		.argument('<entity-id>', 'Repository slug to list pull requests from')
@@ -50,8 +50,8 @@ function registerListPullRequestsCommand(program: Command): void {
 			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
 		)
 		.option(
-			'-f, --filter <string>',
-			'Filter pull requests by title, description, or other properties',
+			'-q, --query <text>',
+			'Filter pull requests by title, description, or other properties (text search)',
 		)
 		.option(
 			'-l, --limit <number>',
@@ -61,10 +61,22 @@ function registerListPullRequestsCommand(program: Command): void {
 			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
-		.action(async (parentId, entityId, options) => {
+		.action(async (parentId: string, entityId: string, options) => {
 			const logPrefix =
 				'[src/cli/atlassian.pullrequests.cli.ts@list-pull-requests]';
 			try {
+				logger.debug(
+					`${logPrefix} Listing pull requests for repository: ${parentId}/${entityId}`,
+				);
+
+				// Prepare filter options from command parameters
+				const filterOptions: ListPullRequestsOptions = {
+					parentId,
+					entityId,
+					state: options.state?.toUpperCase() as any,
+					query: options.query,
+				};
+
 				// Validate parentId
 				if (
 					!parentId ||
@@ -99,13 +111,6 @@ function registerListPullRequestsCommand(program: Command): void {
 					);
 				}
 
-				const filterOptions: ListPullRequestsOptions = {
-					parentId,
-					entityId,
-					state: options.state?.toUpperCase(),
-					filter: options.filter,
-				};
-
 				// Apply pagination options if provided
 				if (options.limit) {
 					filterOptions.limit = parseInt(options.limit, 10);
@@ -130,11 +135,11 @@ function registerListPullRequestsCommand(program: Command): void {
 				console.log(result.content);
 
 				// Display pagination information if available
-				if (result.pagination?.hasMore) {
+				if (result.pagination) {
 					console.log(
 						'\n' +
 							formatPagination(
-								result.pagination.count || 0,
+								result.pagination.count ?? 0,
 								result.pagination.hasMore,
 								result.pagination.nextCursor,
 							),

@@ -17,7 +17,7 @@ export interface ListWorkspacesOptions extends PaginationOptions {
 	/**
 	 * Optional query to filter workspaces by name
 	 */
-	filter?: string;
+	query?: string;
 
 	/**
 	 * Optional sort parameter

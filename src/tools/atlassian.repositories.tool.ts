@@ -34,12 +34,12 @@ async function listRepositories(
 	);
 
 	try {
-		// Pass the filter options to the controller
+		// Pass the options to the controller
 		const message = await atlassianRepositoriesController.list({
 			parentId: args.parentId,
-			filter: args.filter,
-			sort: args.sort,
+			query: args.query,
 			role: args.role,
+			sort: args.sort,
 			limit: args.limit,
 			cursor: args.cursor,
 		});
@@ -133,36 +133,36 @@ function register(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'list-repositories',
-		`List Bitbucket repositories within a specific workspace.
+		`List repositories within a Bitbucket workspace with optional filtering.
 
-PURPOSE: Discovers repositories in a workspace with their slugs, names, and URLs to help navigate code resources.
+PURPOSE: Helps you discover repositories within a workspace with their names, descriptions, and URLs.
 
 WHEN TO USE:
-- When you need to find repositories within a specific workspace
-- When you need repository slugs for other Bitbucket operations
-- When you want to explore available repositories before accessing specific content
-- When you need to check repository visibility and access levels
-- When looking for repositories with specific characteristics (language, size, etc.)
+- When you need to find all repositories in a workspace
+- When you need to filter repositories by name or description
+- When you need to get repository slugs for use with other Bitbucket tools
+- When you need to sort repositories by specific criteria
+- When you need repositories where you have a specific role
 
 WHEN NOT TO USE:
-- When you don't know which workspace to look for repos in (use list-workspaces first)
-- When you already know the repository slug (use get-repository instead)
-- When you need detailed repository information (use get-repository instead)
-- When you need to access pull requests or branches (use dedicated tools after identifying the repo)
+- When you already know the specific repository slug (use get-repository instead)
+- When you need detailed information about a single repository (use get-repository instead)
+- When you need to find pull requests (use list-pull-requests instead)
+- When you need to search across multiple workspaces (use multiple calls)
 
-RETURNS: Formatted list of repositories with slugs, names, descriptions, URLs, and metadata, plus pagination info.
+RETURNS: Formatted list of repositories with names, slugs, descriptions, and URLs.
 
 EXAMPLES:
-- List all repos in workspace: {parentId: "myteam"}
-- With sorting: {parentId: "myteam", sort: "name"}
-- With filtering: {parentId: "myteam", filter: "api"}
-- With pagination: {parentId: "myteam", limit: 10, cursor: "next-page-token"}
+- List all repositories: {parentId: "myworkspace"}
+- Filter by name: {parentId: "myworkspace", query: "api"}
+- Filter by role: {parentId: "myworkspace", role: "admin"}
+- Sort by update time: {parentId: "myworkspace", sort: "-updated_on"}
+- With pagination: {parentId: "myworkspace", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct
 - Authentication failures: Check your Bitbucket credentials
-- Permission errors: Ensure you have access to the requested workspace
-- Rate limiting: Use pagination and reduce query frequency`,
+- No repositories: You may not have permission to view repositories`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);

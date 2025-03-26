@@ -1,155 +1,149 @@
-import { Repository } from '../services/vendor.atlassian.repositories.types.js';
+import {
+	Repository,
+	RepositoriesResponse,
+} from '../services/vendor.atlassian.repositories.types.js';
 import {
 	formatUrl,
-	formatPagination,
 	formatHeading,
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
+	formatDate,
 } from '../utils/formatter.util.js';
 
 /**
  * Format a list of repositories for display
- * @param repositories - Array of repositories from the API response
- * @param nextCursor - Pagination cursor for retrieving the next set of results
+ * @param repositoriesData - Raw repositories data from the API
  * @returns Formatted string with repositories information in markdown format
  */
 export function formatRepositoriesList(
-	repositories: Repository[],
-	nextCursor?: string,
+	repositoriesData: RepositoriesResponse,
 ): string {
-	if (!repositories || repositories.length === 0) {
-		return 'No Bitbucket repositories found.';
+	const repositories = repositoriesData.values || [];
+
+	if (repositories.length === 0) {
+		return 'No repositories found matching your criteria.';
 	}
 
 	const lines: string[] = [formatHeading('Bitbucket Repositories', 1), ''];
 
-	// Use the numbered list formatter for consistent formatting
-	const formattedList = formatNumberedList(repositories, (repo) => {
+	// Format each repository with its details
+	const formattedList = formatNumberedList(repositories, (repo, index) => {
 		const itemLines: string[] = [];
-
-		// Basic information
 		itemLines.push(formatHeading(repo.name, 2));
 
-		// Create an object with all the properties to display
+		// Basic information
 		const properties: Record<string, unknown> = {
-			UUID: repo.uuid,
+			Name: repo.name,
 			'Full Name': repo.full_name,
-			Type: repo.type || 'Not specified',
+			Owner:
+				repo.owner?.display_name || repo.owner?.username || 'Unknown',
+			Description: repo.description || 'No description provided',
+			'Project Key': repo.project?.key || 'N/A',
 			Private: repo.is_private ? 'Yes' : 'No',
-			'Created On': repo.created_on,
-			'Updated On': repo.updated_on,
-			Language: repo.language,
-			Size: repo.size !== undefined ? formatSize(repo.size) : undefined,
-			'Web URL': repo.links.html?.href
-				? {
-						url: repo.links.html.href,
-						title: repo.full_name,
-					}
-				: undefined,
-			Description: repo.description,
+			Created: repo.created_on
+				? formatDate(new Date(repo.created_on))
+				: 'N/A',
+			Updated: repo.updated_on
+				? formatDate(new Date(repo.updated_on))
+				: 'N/A',
+			URL: repo.links?.html?.href
+				? formatUrl(repo.links.html.href, repo.full_name)
+				: 'N/A',
 		};
 
-		// Format as a bullet list with proper formatting for each value type
+		// Format as a bullet list
 		itemLines.push(formatBulletList(properties, (key) => key));
+
+		// Add separator between repositories except for the last one
+		if (index < repositories.length - 1) {
+			itemLines.push('');
+			itemLines.push(formatSeparator());
+		}
 
 		return itemLines.join('\n');
 	});
 
 	lines.push(formattedList);
 
-	// Add pagination information
-	if (nextCursor) {
-		lines.push('');
-		lines.push(formatSeparator());
-		lines.push('');
-		lines.push(formatPagination(repositories.length, true, nextCursor));
-	}
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Repository information retrieved at ${formatDate(new Date())}*`,
+	);
 
 	return lines.join('\n');
 }
 
 /**
  * Format detailed repository information for display
- * @param repository - Raw repository data from the API
+ * @param repositoryData - Raw repository data from the API
  * @returns Formatted string with repository details in markdown format
  */
-export function formatRepositoryDetails(repository: Repository): string {
+export function formatRepositoryDetails(repositoryData: Repository): string {
+	// Create URL
+	const repoUrl = repositoryData.links?.html?.href || '';
+
 	const lines: string[] = [
-		formatHeading(`Repository: ${repository.name}`, 1),
+		formatHeading(`Repository: ${repositoryData.name}`, 1),
+		'',
+		`> A ${repositoryData.is_private ? 'private' : 'public'} repository in the \`${repositoryData.full_name}\` workspace.`,
 		'',
 		formatHeading('Basic Information', 2),
 	];
 
 	// Format basic information as a bullet list
 	const basicProperties: Record<string, unknown> = {
-		UUID: repository.uuid,
-		'Full Name': repository.full_name,
-		Type: repository.type || 'Not specified',
-		Private: repository.is_private ? 'Yes' : 'No',
-		'Default Branch': repository.mainbranch?.name || 'Not set',
-		'Created On': repository.created_on,
-		'Updated On': repository.updated_on,
-		Size:
-			repository.size !== undefined
-				? formatSize(repository.size)
-				: undefined,
-		Language: repository.language,
+		Name: repositoryData.name,
+		'Full Name': repositoryData.full_name,
+		UUID: repositoryData.uuid,
+		Description: repositoryData.description || 'No description provided',
+		Language: repositoryData.language || 'Not specified',
+		Private: repositoryData.is_private ? 'Yes' : 'No',
+		Size: repositoryData.size
+			? `${(repositoryData.size / 1024).toFixed(2)} KB`
+			: 'Unknown',
+		'Created On': repositoryData.created_on
+			? formatDate(new Date(repositoryData.created_on))
+			: 'N/A',
+		'Updated On': repositoryData.updated_on
+			? formatDate(new Date(repositoryData.updated_on))
+			: 'N/A',
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
 
-	// Description if available
-	if (repository.description) {
+	// Owner information
+	if (repositoryData.owner) {
 		lines.push('');
-		lines.push(formatHeading('Description', 2));
-		lines.push(repository.description);
+		lines.push(formatHeading('Owner', 2));
+
+		const ownerProperties: Record<string, unknown> = {
+			Name:
+				repositoryData.owner.display_name ||
+				repositoryData.owner.username ||
+				'Unknown',
+			Type: repositoryData.owner.type || 'Not specified',
+		};
+
+		lines.push(formatBulletList(ownerProperties, (key) => key));
 	}
 
 	// Links section
 	lines.push('');
 	lines.push(formatHeading('Links', 2));
 
-	const links: string[] = [];
-
-	if (repository.links.html?.href) {
-		links.push(
-			`- ${formatUrl(repository.links.html.href, 'View in Browser')}`,
-		);
+	if (repoUrl) {
+		lines.push(`- ${formatUrl(repoUrl, 'Open in Bitbucket')}`);
 	}
 
-	if (repository.links.clone) {
-		links.push('- **Clone URLs**:');
-		repository.links.clone.forEach((clone) => {
-			links.push(`  - ${clone.name}: \`${clone.href}\``);
-		});
-	}
-
-	if (repository.links.commits?.href) {
-		links.push(`- ${formatUrl(repository.links.commits.href, 'Commits')}`);
-	}
-
-	if (repository.links.pullrequests?.href) {
-		links.push(
-			`- ${formatUrl(repository.links.pullrequests.href, 'Pull Requests')}`,
-		);
-	}
-
-	lines.push(links.join('\n'));
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(formatSeparator());
+	lines.push(
+		`*Repository information retrieved at ${formatDate(new Date())}*`,
+	);
+	lines.push(`*To view this repository in Bitbucket, visit: ${repoUrl}*`);
 
 	return lines.join('\n');
-}
-
-/**
- * Format a file size in bytes to a human-readable string
- * @param bytes - Size in bytes
- * @returns Formatted size string (e.g., "1.5 MB")
- */
-function formatSize(bytes: number): string {
-	if (bytes === 0) return '0 Bytes';
-
-	const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-	const i = Math.floor(Math.log(bytes) / Math.log(1024));
-
-	return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
 }

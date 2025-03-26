@@ -39,7 +39,7 @@ async function listPullRequests(
 			parentId: args.parentId,
 			entityId: args.entityId,
 			state: args.state,
-			filter: args.filter,
+			query: args.query,
 			limit: args.limit,
 			cursor: args.cursor,
 		});
@@ -132,35 +132,35 @@ function register(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'list-pull-requests',
-		`List Bitbucket pull requests with optional filtering capabilities.
+		`List pull requests within a Bitbucket repository with optional filtering.
 
-PURPOSE: Allows you to find and browse pull requests across repositories with filtering options.
+PURPOSE: Find open, merged, or declined pull requests within a specific repository to track code changes and reviews.
 
 WHEN TO USE:
-- When you need to find pull requests within a specific repository
-- When you want to check PR status (open, merged, declined, etc.)
-- When you need to track code review activity and progress
-- When you need PR IDs for other Bitbucket operations
-- When monitoring contributions from specific authors
+- When you need to find open pull requests that require review
+- When you need to check recently merged changes
+- When you need to filter pull requests by state or content
+- When you need pull request IDs for use with other Bitbucket tools
+- When you need to track progress of code reviews
 
 WHEN NOT TO USE:
-- When you don't know which repository to look in (use list-repositories first)
-- When you already know the PR ID (use get-pull-request instead)
-- When you need detailed PR content or comments (use get-pull-request instead)
-- When you need to browse repositories rather than PRs (use list-repositories)
+- When you already know the specific pull request ID (use get-pull-request instead)
+- When you need detailed information about a single pull request (use get-pull-request instead)
+- When you need to know which repository to look in first (use list-repositories instead)
+- When you need to search across multiple repositories (use multiple calls)
 
-RETURNS: Formatted list of pull requests with IDs, titles, states, authors, branch information, and URLs, plus pagination info.
+RETURNS: Formatted list of pull requests with IDs, titles, authors, states, and URLs.
 
 EXAMPLES:
-- List all PRs in a repo: {parentId: "myteam", entityId: "project-api"}
-- Filter by state: {parentId: "myteam", entityId: "project-api", state: "OPEN"}
-- With pagination: {parentId: "myteam", entityId: "project-api", limit: 10, cursor: "next-page-token"}
+- List all PRs: {parentId: "myworkspace", entityId: "myrepo"}
+- Filter by state: {parentId: "myworkspace", entityId: "myrepo", state: "OPEN"}
+- Filter by title/content: {parentId: "myworkspace", entityId: "myrepo", query: "feature"}
+- With pagination: {parentId: "myworkspace", entityId: "myrepo", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
-- Repository not found: Verify workspace and repository slugs
+- Repository not found: Verify the workspace and repository slugs
 - Authentication failures: Check your Bitbucket credentials
-- Permission errors: Ensure you have access to the requested repository
-- Rate limiting: Use pagination and reduce query frequency`,
+- No results: Repository may not have any pull requests matching your criteria`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);

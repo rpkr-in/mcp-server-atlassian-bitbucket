@@ -59,11 +59,11 @@ export const ListPullRequestsToolArgs = z.object({
 	/**
 	 * Filter query for pull requests
 	 */
-	filter: z
+	query: z
 		.string()
 		.optional()
 		.describe(
-			'Filter pull requests by title, description, or author. Uses Bitbucket query syntax.',
+			'Filter pull requests by title, description, or author (text search). Uses Bitbucket query syntax.',
 		),
 
 	/**

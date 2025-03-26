@@ -1,75 +1,78 @@
-import { PullRequest } from '../services/vendor.atlassian.pullrequests.types.js';
+import {
+	PullRequest,
+	PullRequestsResponse,
+} from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	formatUrl,
-	formatPagination,
 	formatHeading,
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
+	formatDate,
 } from '../utils/formatter.util.js';
 
 /**
  * Format a list of pull requests for display
  * @param pullRequestsData - Raw pull requests data from the API
- * @param pagination - Pagination information including count and next cursor
  * @returns Formatted string with pull requests information in markdown format
  */
 export function formatPullRequestsList(
-	pullRequestsData: { values?: PullRequest[] },
-	pagination?: { nextCursor?: string; hasMore: boolean; count?: number },
+	pullRequestsData: PullRequestsResponse,
 ): string {
 	const pullRequests = pullRequestsData.values || [];
 
 	if (pullRequests.length === 0) {
-		return 'No pull requests found.';
+		return 'No pull requests found matching your criteria.';
 	}
 
 	const lines: string[] = [formatHeading('Bitbucket Pull Requests', 1), ''];
 
-	// Use the numbered list formatter for consistent formatting
-	const formattedList = formatNumberedList(pullRequests, (pr) => {
+	// Format each pull request with its details
+	const formattedList = formatNumberedList(pullRequests, (pr, index) => {
 		const itemLines: string[] = [];
-
-		// Basic information
 		itemLines.push(formatHeading(`#${pr.id}: ${pr.title}`, 2));
 
-		// Create an object with all the properties to display
+		// Prepare the description (truncated if too long)
+		let description =
+			pr.summary?.raw || pr.summary?.markup || 'No description provided';
+		if (description.length > 150) {
+			description = description.substring(0, 150) + '...';
+		}
+
+		// Basic information
 		const properties: Record<string, unknown> = {
 			ID: pr.id,
-			Title: pr.title,
 			State: pr.state,
-			'Created On': pr.created_on,
-			'Updated On': pr.updated_on,
-			Author: pr.author?.display_name || pr.author?.nickname,
-			Source: `${pr.source.branch.name} (${pr.source.repository.name})`,
-			Destination: `${pr.destination.branch.name} (${pr.destination.repository.name})`,
-			URL: {
-				url: pr.links.html?.href || '',
-				title: `PR #${pr.id}`,
-			},
+			Author: pr.author?.display_name || pr.author?.nickname || 'Unknown',
+			Created: formatDate(new Date(pr.created_on)),
+			Updated: formatDate(new Date(pr.updated_on)),
+			'Source Branch': pr.source?.branch?.name || 'Unknown',
+			'Destination Branch': pr.destination?.branch?.name || 'Unknown',
+			Description: description,
+			URL: pr.links?.html?.href
+				? formatUrl(pr.links.html.href, `PR #${pr.id}`)
+				: 'N/A',
 		};
 
-		// Format as a bullet list with proper formatting for each value type
+		// Format as a bullet list
 		itemLines.push(formatBulletList(properties, (key) => key));
+
+		// Add separator between pull requests except for the last one
+		if (index < pullRequests.length - 1) {
+			itemLines.push('');
+			itemLines.push(formatSeparator());
+		}
 
 		return itemLines.join('\n');
 	});
 
 	lines.push(formattedList);
 
-	// Add pagination information if available
-	if (pagination) {
-		lines.push('');
-		lines.push(formatSeparator());
-		lines.push('');
-		lines.push(
-			formatPagination(
-				pagination.count || pullRequests.length,
-				pagination.hasMore,
-				pagination.nextCursor,
-			),
-		);
-	}
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Pull request information retrieved at ${formatDate(new Date())}*`,
+	);
 
 	return lines.join('\n');
 }

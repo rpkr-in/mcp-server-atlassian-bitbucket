@@ -39,11 +39,11 @@ export const ListRepositoriesToolArgs = z.object({
 	/**
 	 * Optional query to filter repositories
 	 */
-	filter: z
+	query: z
 		.string()
 		.optional()
 		.describe(
-			'Query string to filter repositories. Example: "api" for repositories with "api" in the name/description. If omitted, returns all repositories.',
+			'Query string to filter repositories by name or other properties (text search). Example: "api" for repositories with "api" in the name/description. If omitted, returns all repositories.',
 		),
 
 	/**

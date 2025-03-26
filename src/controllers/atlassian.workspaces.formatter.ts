@@ -5,57 +5,68 @@ import {
 } from '../services/vendor.atlassian.workspaces.types.js';
 import {
 	formatUrl,
-	formatPagination,
 	formatHeading,
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
+	formatDate,
 } from '../utils/formatter.util.js';
 
 /**
  * Format a list of workspaces for display
  * @param workspacesData - Raw workspaces data from the API
- * @param nextCursor - Pagination cursor for retrieving the next set of results
  * @returns Formatted string with workspaces information in markdown format
  */
 export function formatWorkspacesList(
 	workspacesData: WorkspacePermissionsResponse,
-	nextCursor?: string,
 ): string {
-	if (!workspacesData.values || workspacesData.values.length === 0) {
-		return 'No Bitbucket workspaces found.';
+	const workspaces = workspacesData.values || [];
+
+	if (workspaces.length === 0) {
+		return 'No workspaces found matching your criteria.';
 	}
 
 	const lines: string[] = [formatHeading('Bitbucket Workspaces', 1), ''];
 
-	// Use the numbered list formatter for consistent formatting
+	// Format each workspace with its details
 	const formattedList = formatNumberedList(
-		workspacesData.values,
-		(membership) => {
+		workspaces,
+		(membership, index) => {
 			const workspace = membership.workspace;
 			const itemLines: string[] = [];
-
-			// Basic information
 			itemLines.push(formatHeading(workspace.name, 2));
 
-			// Create an object with all the properties to display
+			// Basic information
 			const properties: Record<string, unknown> = {
 				UUID: workspace.uuid,
 				Slug: workspace.slug,
-				Permission: membership.permission,
-				'Last Accessed': membership.last_accessed,
-				'Added On': membership.added_on,
-				'Web URL': workspace.links.html?.href
-					? {
-							url: workspace.links.html.href,
-							title: workspace.slug,
-						}
-					: undefined,
-				User: membership.user?.display_name,
+				'Permission Level': membership.permission || 'Unknown',
+				'Last Accessed': membership.last_accessed
+					? formatDate(new Date(membership.last_accessed))
+					: 'N/A',
+				'Added On': membership.added_on
+					? formatDate(new Date(membership.added_on))
+					: 'N/A',
+				'Web URL': workspace.links?.html?.href
+					? formatUrl(workspace.links.html.href, workspace.slug)
+					: formatUrl(
+							`https://bitbucket.org/${workspace.slug}/`,
+							workspace.slug,
+						),
+				User:
+					membership.user?.display_name ||
+					membership.user?.nickname ||
+					'Unknown',
 			};
 
-			// Format as a bullet list with proper formatting for each value type
+			// Format as a bullet list
 			itemLines.push(formatBulletList(properties, (key) => key));
+
+			// Add separator between workspaces except for the last one
+			if (index < workspaces.length - 1) {
+				itemLines.push('');
+				itemLines.push(formatSeparator());
+			}
 
 			return itemLines.join('\n');
 		},
@@ -63,15 +74,11 @@ export function formatWorkspacesList(
 
 	lines.push(formattedList);
 
-	// Add pagination information
-	if (nextCursor) {
-		lines.push('');
-		lines.push(formatSeparator());
-		lines.push('');
-		lines.push(
-			formatPagination(workspacesData.values.length, true, nextCursor),
-		);
-	}
+	// Add timestamp for when this information was retrieved
+	lines.push('');
+	lines.push(
+		`*Workspace information retrieved at ${formatDate(new Date())}*`,
+	);
 
 	return lines.join('\n');
 }
