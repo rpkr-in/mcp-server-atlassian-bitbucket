@@ -27,9 +27,9 @@ const PaginationArgs = {
  */
 export const ListPullRequestsToolArgs = z.object({
 	/**
-	 * Parent identifier (workspace slug containing the repository)
+	 * Workspace slug containing the repository
 	 */
-	parentId: z
+	workspaceSlug: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -37,9 +37,9 @@ export const ListPullRequestsToolArgs = z.object({
 		),
 
 	/**
-	 * Entity identifier (repository slug containing the pull requests)
+	 * Repository slug containing the pull requests
 	 */
-	entityId: z
+	repoSlug: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(
@@ -81,9 +81,9 @@ export type ListPullRequestsToolArgsType = z.infer<
  */
 export const GetPullRequestToolArgs = z.object({
 	/**
-	 * Parent identifier (workspace slug containing the repository)
+	 * Workspace slug containing the repository
 	 */
-	parentId: z
+	workspaceSlug: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -91,9 +91,9 @@ export const GetPullRequestToolArgs = z.object({
 		),
 
 	/**
-	 * Entity identifier (repository slug containing the pull request)
+	 * Repository slug containing the pull request
 	 */
-	entityId: z
+	repoSlug: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(

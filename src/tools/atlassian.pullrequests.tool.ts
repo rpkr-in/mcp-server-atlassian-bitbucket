@@ -5,8 +5,8 @@ import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListPullRequestsToolArgs,
 	ListPullRequestsToolArgsType,
-	GetPullRequestToolArgsType,
 	GetPullRequestToolArgs,
+	GetPullRequestToolArgsType,
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
@@ -14,7 +14,7 @@ import atlassianPullRequestsController from '../controllers/atlassian.pullreques
 /**
  * MCP Tool: List Bitbucket Pull Requests
  *
- * Lists Bitbucket pull requests for a repository with optional filtering by state.
+ * Lists pull requests for a specific repository with optional filtering.
  * Returns a formatted markdown response with pull request details.
  *
  * @param args - Tool arguments for filtering pull requests
@@ -36,8 +36,8 @@ async function listPullRequests(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianPullRequestsController.list({
-			parentId: args.parentId,
-			entityId: args.entityId,
+			parentId: args.workspaceSlug,
+			entityId: args.repoSlug,
 			state: args.state,
 			query: args.query,
 			limit: args.limit,
@@ -69,7 +69,7 @@ async function listPullRequests(
  * Retrieves detailed information about a specific Bitbucket pull request.
  * Returns a formatted markdown response with pull request metadata.
  *
- * @param args - Tool arguments containing the workspace, repository slug, and pull request ID
+ * @param args - Tool arguments containing workspace, repository, and PR identifiers
  * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted pull request details
  * @throws Will return error message if pull request retrieval fails
@@ -82,16 +82,16 @@ async function getPullRequest(
 		'[src/tools/atlassian.pullrequests.tool.ts@getPullRequest]';
 
 	logger.debug(
-		`${logPrefix} Retrieving pull request details for ${args.parentId}/${args.entityId}/${args.prId}`,
+		`${logPrefix} Retrieving pull request details for ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianPullRequestsController.get(
 			{
-				parentId: args.parentId,
-				entityId: args.entityId,
-				prId: String(args.prId),
+				parentId: args.workspaceSlug,
+				entityId: args.repoSlug,
+				prId: args.prId,
 			},
 			{
 				includeComments: args.includeComments,
@@ -120,7 +120,7 @@ async function getPullRequest(
 /**
  * Register Atlassian Pull Requests MCP Tools
  *
- * Registers the list-pullrequests and get-pullrequest tools with the MCP server.
+ * Registers the list-pull-requests and get-pull-request tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
  * @param server - The MCP server instance to register tools with
@@ -132,35 +132,32 @@ function register(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'list-pull-requests',
-		`List pull requests within a Bitbucket repository with optional filtering.
+		`List pull requests for a Bitbucket repository with optional filtering.
 
-PURPOSE: Find open, merged, or declined pull requests within a specific repository to track code changes and reviews.
+PURPOSE: Helps you discover and monitor pull requests within a repository, showing their status, authors, and other metadata.
 
 WHEN TO USE:
-- When you need to find open pull requests that require review
-- When you need to check recently merged changes
-- When you need to filter pull requests by state or content
+- When you need to find all open, merged, or declined pull requests
+- When you need to see recent PR activity in a repository
+- When you need to check the status of specific PRs
 - When you need pull request IDs for use with other Bitbucket tools
-- When you need to track progress of code reviews
 
 WHEN NOT TO USE:
-- When you already know the specific pull request ID (use get-pull-request instead)
-- When you need detailed information about a single pull request (use get-pull-request instead)
-- When you need to know which repository to look in first (use list-repositories instead)
+- When you need detailed information about a single PR (use get-pull-request instead)
+- When you need repository information (use get-repository instead)
 - When you need to search across multiple repositories (use multiple calls)
 
-RETURNS: Formatted list of pull requests with IDs, titles, authors, states, and URLs.
+RETURNS: Formatted list of pull requests with titles, IDs, status, authors, and URLs.
 
 EXAMPLES:
-- List all PRs: {parentId: "myworkspace", entityId: "myrepo"}
-- Filter by state: {parentId: "myworkspace", entityId: "myrepo", state: "OPEN"}
-- Filter by title/content: {parentId: "myworkspace", entityId: "myrepo", query: "feature"}
-- With pagination: {parentId: "myworkspace", entityId: "myrepo", limit: 10, cursor: "next-page-token"}
+- List open PRs: {workspaceSlug: "myteam", repoSlug: "project-api"}
+- Filter by state: {workspaceSlug: "myteam", repoSlug: "project-api", state: "MERGED"}
+- With pagination: {workspaceSlug: "myteam", repoSlug: "project-api", limit: 5, cursor: "next-page-token"}
+- Text search: {workspaceSlug: "myteam", repoSlug: "project-api", query: "bugfix"}
 
 ERRORS:
-- Repository not found: Verify the workspace and repository slugs
-- Authentication failures: Check your Bitbucket credentials
-- No results: Repository may not have any pull requests matching your criteria`,
+- Repository not found: Verify workspace and repository slugs
+- Permission errors: Ensure you have access to the requested repository`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -170,30 +167,30 @@ ERRORS:
 		'get-pull-request',
 		`Get detailed information about a specific Bitbucket pull request.
 
-PURPOSE: Retrieves comprehensive PR data including description, comments, diff stats, reviewers, and branch information.
+PURPOSE: Retrieves comprehensive details about a pull request including changes, reviews, comments, and status.
 
 WHEN TO USE:
-- When you need the full description and context of a specific PR
-- When you need to see comments, reviews, or approvals
-- When you need details about the source and destination branches
-- When you need diff statistics or changed files information
-- After using list-pull-requests to identify the relevant PR ID
+- When you need detailed information about a specific pull request
+- When you need to check PR status, reviewers, or comments
+- When you need PR content details (diff, commits)
+- After using list-pull-requests to identify the relevant PR
 
 WHEN NOT TO USE:
 - When you don't know which PR to look for (use list-pull-requests first)
-- When you need to browse multiple PRs (use list-pull-requests instead)
-- When you only need basic PR information without comments or details
-- When you need repository information rather than PR details (use get-repository)
+- When you just need basic PR information (ID, title, status)
+- When you need repository information (use get-repository instead)
+- When you need information from multiple PRs (use list-pull-requests instead)
 
-RETURNS: Detailed PR information including title, description, status, author, reviewers, branches, comments, and related timestamps.
+RETURNS: Detailed pull request information including title, description, status, reviewers, comments, and links.
 
 EXAMPLES:
-- Get PR details: {parentId: "myteam", entityId: "project-api", prId: 42}
+- Get PR: {workspaceSlug: "myteam", repoSlug: "project-api", prId: "42"}
+- With comments: {workspaceSlug: "myteam", repoSlug: "project-api", prId: "42", includeComments: true}
 
 ERRORS:
-- PR not found: Verify workspace, repository slugs, and PR ID
+- PR not found: Verify workspace slug, repository slug, and PR ID
 - Permission errors: Ensure you have access to the requested PR
-- Rate limiting: Cache PR information when possible for frequently referenced PRs`,
+- Rate limiting: Cache PR information when possible`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);

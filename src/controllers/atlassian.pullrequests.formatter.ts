@@ -33,8 +33,17 @@ export function formatPullRequestsList(
 		itemLines.push(formatHeading(`#${pr.id}: ${pr.title}`, 2));
 
 		// Prepare the description (truncated if too long)
-		let description =
-			pr.summary?.raw || pr.summary?.markup || 'No description provided';
+		let description = 'No description provided';
+		if (pr.summary?.raw && pr.summary.raw.trim() !== '') {
+			description = pr.summary.raw;
+		} else if (
+			pr.summary?.markup &&
+			pr.summary.markup.trim() !== '' &&
+			pr.summary.markup !== 'markdown'
+		) {
+			description = pr.summary.markup;
+		}
+
 		if (description.length > 150) {
 			description = description.substring(0, 150) + '...';
 		}

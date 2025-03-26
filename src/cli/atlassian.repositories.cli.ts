@@ -39,12 +39,12 @@ function registerListRepositoriesCommand(program: Command): void {
 			'List repositories within a Bitbucket workspace\n\n' +
 				'Retrieves repositories from the specified workspace with filtering and pagination options.\n\n' +
 				'Examples:\n' +
-				'  $ list-repositories myworkspace --limit 25\n' +
-				'  $ list-repositories myworkspace --query "api" --role admin\n' +
-				'  $ list-repositories myworkspace --cursor "next-page-token"',
+				'  $ list-repositories --workspace-slug myworkspace --limit 25\n' +
+				'  $ list-repositories --workspace-slug myworkspace --query "api" --role admin\n' +
+				'  $ list-repositories --workspace-slug myworkspace --cursor "next-page-token"',
 		)
-		.argument(
-			'<parent-id>',
+		.requiredOption(
+			'--workspace-slug <slug>',
 			'Workspace slug (e.g., myteam) to list repositories from',
 		)
 		.option(
@@ -56,7 +56,7 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Filter repositories by the user\'s role (e.g., "owner", "admin", "contributor")',
 		)
 		.option(
-			'-s, --sort <string>',
+			'-S, --sort <string>',
 			'Field to sort results by (e.g., "name", "-updated_on")',
 		)
 		.option(
@@ -67,17 +67,17 @@ function registerListRepositoriesCommand(program: Command): void {
 			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
-		.action(async (parentId: string, options) => {
+		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
 				logger.debug(
-					`${logPrefix} Listing repositories for workspace: ${parentId}`,
+					`${logPrefix} Listing repositories for workspace: ${options.workspaceSlug}`,
 				);
 
 				// Prepare filter options from command parameters
 				const filterOptions: ListRepositoriesOptions = {
-					parentId,
+					parentId: options.workspaceSlug,
 					query: options.query,
 					role: options.role,
 					sort: options.sort,
@@ -135,21 +135,27 @@ function registerGetRepositoryCommand(program: Command): void {
 			'Get detailed information about a specific Bitbucket repository\n\n' +
 				'Retrieves comprehensive details for a repository including branches, permissions, and settings.\n\n' +
 				'Examples:\n' +
-				'  $ get-repository myworkspace myrepo',
+				'  $ get-repository --workspace-slug myworkspace --repo-slug myrepo',
 		)
-		.argument('<parent-id>', 'Workspace slug containing the repository')
-		.argument('<entity-id>', 'Slug of the repository to retrieve')
-		.action(async (parentId: string, entityId: string) => {
+		.requiredOption(
+			'--workspace-slug <slug>',
+			'Workspace slug containing the repository',
+		)
+		.requiredOption(
+			'--repo-slug <slug>',
+			'Slug of the repository to retrieve',
+		)
+		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@get-repository]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for repository: ${parentId}/${entityId}`,
+					`${logPrefix} Fetching details for repository: ${options.workspaceSlug}/${options.repoSlug}`,
 				);
 
 				const result = await atlassianRepositoriesController.get({
-					parentId,
-					entityId,
+					parentId: options.workspaceSlug,
+					entityId: options.repoSlug,
 				});
 
 				logger.debug(

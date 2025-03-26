@@ -59,9 +59,9 @@ export type ListWorkspacesToolArgsType = z.infer<typeof ListWorkspacesToolArgs>;
  */
 export const GetWorkspaceToolArgs = z.object({
 	/**
-	 * Entity identifier (workspace slug to retrieve)
+	 * Workspace slug to retrieve
 	 */
-	entityId: z
+	workspaceSlug: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(

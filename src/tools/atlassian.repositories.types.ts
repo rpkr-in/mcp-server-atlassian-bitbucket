@@ -27,9 +27,9 @@ const PaginationArgs = {
  */
 export const ListRepositoriesToolArgs = z.object({
 	/**
-	 * Parent identifier (workspace slug containing the repositories)
+	 * Workspace slug containing the repositories
 	 */
-	parentId: z
+	workspaceSlug: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -81,9 +81,9 @@ export type ListRepositoriesToolArgsType = z.infer<
  */
 export const GetRepositoryToolArgs = z.object({
 	/**
-	 * Parent identifier (workspace slug containing the repository)
+	 * Workspace slug containing the repository
 	 */
-	parentId: z
+	workspaceSlug: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -91,9 +91,9 @@ export const GetRepositoryToolArgs = z.object({
 		),
 
 	/**
-	 * Entity identifier (repository slug to retrieve)
+	 * Repository slug to retrieve
 	 */
-	entityId: z
+	repoSlug: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(

@@ -36,7 +36,7 @@ async function listRepositories(
 	try {
 		// Pass the options to the controller
 		const message = await atlassianRepositoriesController.list({
-			parentId: args.parentId,
+			parentId: args.workspaceSlug,
 			query: args.query,
 			role: args.role,
 			sort: args.sort,
@@ -82,15 +82,15 @@ async function getRepository(
 		'[src/tools/atlassian.repositories.tool.ts@getRepository]';
 
 	logger.debug(
-		`${logPrefix} Retrieving repository details for ${args.parentId}/${args.entityId}`,
+		`${logPrefix} Retrieving repository details for ${args.workspaceSlug}/${args.repoSlug}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianRepositoriesController.get(
 			{
-				parentId: args.parentId,
-				entityId: args.entityId,
+				parentId: args.workspaceSlug,
+				entityId: args.repoSlug,
 			},
 			{
 				includeBranches: args.includeBranches,
@@ -153,11 +153,11 @@ WHEN NOT TO USE:
 RETURNS: Formatted list of repositories with names, slugs, descriptions, and URLs.
 
 EXAMPLES:
-- List all repositories: {parentId: "myworkspace"}
-- Filter by name: {parentId: "myworkspace", query: "api"}
-- Filter by role: {parentId: "myworkspace", role: "admin"}
-- Sort by update time: {parentId: "myworkspace", sort: "-updated_on"}
-- With pagination: {parentId: "myworkspace", limit: 10, cursor: "next-page-token"}
+- List all repositories: {workspaceSlug: "myworkspace"}
+- Filter by name: {workspaceSlug: "myworkspace", query: "api"}
+- Filter by role: {workspaceSlug: "myworkspace", role: "admin"}
+- Sort by update time: {workspaceSlug: "myworkspace", sort: "-updated_on"}
+- With pagination: {workspaceSlug: "myworkspace", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct
@@ -190,7 +190,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed repository information including slug, name, description, URLs, branch information, and settings.
 
 EXAMPLES:
-- Get repository: {parentId: "myteam", entityId: "project-api"}
+- Get repository: {workspaceSlug: "myteam", repoSlug: "project-api"}
 
 ERRORS:
 - Repository not found: Verify workspace and repository slugs

@@ -78,13 +78,13 @@ async function getWorkspace(
 	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@getWorkspace]';
 
 	logger.debug(
-		`${logPrefix} Retrieving workspace details for ${args.entityId}`,
+		`${logPrefix} Retrieving workspace details for ${args.workspaceSlug}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianWorkspacesController.get({
-			entityId: args.entityId,
+			entityId: args.workspaceSlug,
 		});
 		logger.debug(
 			`${logPrefix} Successfully retrieved workspace details from controller`,
@@ -172,7 +172,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed workspace information including slug, name, type, description, projects, and permission levels.
 
 EXAMPLES:
-- Get workspace: {entityId: "myteam"}
+- Get workspace: {workspaceSlug: "myteam"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct
