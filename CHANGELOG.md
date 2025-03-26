@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.5.0...v1.6.0) (2025-03-26)
+
+
+### Features
+
+* standardize CLI flags for consistent naming patterns ([b2ee0ba](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/b2ee0ba05dbd386ee3adb42c3fe82287d2b735ab))
+
 # [1.5.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.4.2...v1.5.0) (2025-03-26)
 
 
