@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.2...v1.7.3) (2025-03-26)
+
+
+### Bug Fixes
+
+* empty commit to trigger patch version bump ([260911a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/260911a1a2927aaadbe38e77fe04281a45d75334))
+
 ## [1.7.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.1...v1.7.2) (2025-03-26)
 
 
