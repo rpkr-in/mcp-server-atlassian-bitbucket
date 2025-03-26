@@ -1,6 +1,6 @@
 {
 	"name": "@aashari/mcp-server-atlassian-bitbucket",
-	"version": "1.7.0",
+	"version": "1.7.1",
 	"description": "A TypeScript-based Model Context Protocol (MCP) server for Atlassian Bitbucket integration. Provides tools for accessing and managing Bitbucket repositories, pull requests, and content to connect Claude/Anthropic AI systems to Bitbucket version control.",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",

@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.0...v1.7.1) (2025-03-26)
+
+
+### Bug Fixes
+
+* standardize parameter naming conventions in Bitbucket module ([458a6e2](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/458a6e2ce714420794a83b334476c135353639fb))
+
 # [1.7.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.6.0...v1.7.0) (2025-03-26)
 
 
