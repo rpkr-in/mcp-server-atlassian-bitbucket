@@ -2,7 +2,7 @@ import {
 	ControllerResponse,
 	PaginationOptions,
 	EntityIdentifier,
-} from './atlassian.type.js';
+} from '../types/common.types.js';
 
 /**
  * Options for listing Bitbucket repositories.
