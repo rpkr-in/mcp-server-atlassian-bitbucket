@@ -78,6 +78,5 @@ export interface GetRepositoryOptions {
 	 */
 	includePullRequests?: boolean;
 }
-
 // Re-export from base types for backward compatibility
 export type { ControllerResponse };

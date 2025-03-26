@@ -6,10 +6,10 @@ import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
+import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListPullRequestsOptions,
 	GetPullRequestOptions,
-	ControllerResponse,
 	PullRequestIdentifier,
 } from './atlassian.pullrequests.type.js';
 import {

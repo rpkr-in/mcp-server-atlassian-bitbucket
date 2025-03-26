@@ -5,10 +5,10 @@ import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
+import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListRepositoriesOptions,
 	GetRepositoryOptions,
-	ControllerResponse,
 	RepositoryIdentifier,
 } from './atlassian.repositories.type.js';
 import {

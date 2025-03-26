@@ -1,8 +1,4 @@
-import {
-	ControllerResponse,
-	PaginationOptions,
-	EntityIdentifier,
-} from '../types/common.types.js';
+import { PaginationOptions, EntityIdentifier } from '../types/common.types.js';
 
 /**
  * Pull request identifier for retrieving specific pull requests
@@ -53,6 +49,3 @@ export interface GetPullRequestOptions {
 	 */
 	includeComments?: boolean;
 }
-
-// Re-export ControllerResponse for backward compatibility
-export type { ControllerResponse };

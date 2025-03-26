@@ -203,8 +203,6 @@ class Logger {
 	}
 }
 
-// Export a default instance for backward compatibility
+// Export the default logger instance and the Logger class
 export const logger = new Logger();
-
-// Also export the Logger class for contextual usage
 export { Logger };

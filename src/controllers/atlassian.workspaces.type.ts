@@ -1,8 +1,4 @@
-import {
-	ControllerResponse,
-	PaginationOptions,
-	EntityIdentifier,
-} from '../types/common.types.js';
+import { PaginationOptions, EntityIdentifier } from '../types/common.types.js';
 
 /**
  * Workspace identifier for retrieving specific workspaces
@@ -34,6 +30,3 @@ export interface ListWorkspacesOptions extends PaginationOptions {
  * @remarks This is a placeholder for future extensions
  */
 export type GetWorkspaceOptions = Record<string, never>;
-
-// Re-export ControllerResponse for backward compatibility
-export type { ControllerResponse };
