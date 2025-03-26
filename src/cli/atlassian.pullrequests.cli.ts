@@ -39,16 +39,16 @@ function registerListPullRequestsCommand(program: Command): void {
 			'List pull requests within a Bitbucket repository\n\n' +
 				'Retrieves pull requests from the specified repository with filtering and pagination options.\n\n' +
 				'Examples:\n' +
-				'  $ list-pull-requests --workspace-slug my-workspace --repo-slug my-repo --state OPEN\n' +
-				'  $ list-pull-requests --workspace-slug my-workspace --repo-slug my-repo --limit 50 --state MERGED\n' +
-				'  $ list-pull-requests --workspace-slug my-workspace --repo-slug my-repo --query "title:feature"',
+				'  $ list-pull-requests --workspace my-workspace --repository my-repo --state OPEN\n' +
+				'  $ list-pull-requests --workspace my-workspace --repository my-repo --limit 50 --state MERGED\n' +
+				'  $ list-pull-requests --workspace my-workspace --repository my-repo --query "title:feature"',
 		)
 		.requiredOption(
-			'--workspace-slug <slug>',
+			'--workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repo-slug <slug>',
+			'--repository <slug>',
 			'Repository slug to list pull requests from',
 		)
 		.option(
@@ -57,7 +57,7 @@ function registerListPullRequestsCommand(program: Command): void {
 		)
 		.option(
 			'-q, --query <text>',
-			'Filter pull requests by title, description, or other properties (text search)',
+			'Filter pull requests by title, description, or other properties (simple text search, not query language)',
 		)
 		.option(
 			'-l, --limit <number>',
@@ -72,22 +72,22 @@ function registerListPullRequestsCommand(program: Command): void {
 				'[src/cli/atlassian.pullrequests.cli.ts@list-pull-requests]';
 			try {
 				logger.debug(
-					`${logPrefix} Listing pull requests for repository: ${options.workspaceSlug}/${options.repoSlug}`,
+					`${logPrefix} Listing pull requests for repository: ${options.workspace}/${options.repository}`,
 				);
 
 				// Prepare filter options from command parameters
 				const filterOptions: ListPullRequestsOptions = {
-					parentId: options.workspaceSlug,
-					entityId: options.repoSlug,
+					parentId: options.workspace,
+					entityId: options.repository,
 					state: options.state?.toUpperCase() as ListPullRequestsOptions['state'],
 					query: options.query,
 				};
 
 				// Validate workspace slug
 				if (
-					!options.workspaceSlug ||
-					typeof options.workspaceSlug !== 'string' ||
-					options.workspaceSlug.trim() === ''
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
 				) {
 					throw new Error(
 						'Workspace slug must be a valid non-empty string',
@@ -96,9 +96,9 @@ function registerListPullRequestsCommand(program: Command): void {
 
 				// Validate repository slug
 				if (
-					!options.repoSlug ||
-					typeof options.repoSlug !== 'string' ||
-					options.repoSlug.trim() === ''
+					!options.repository ||
+					typeof options.repository !== 'string' ||
+					options.repository.trim() === ''
 				) {
 					throw new Error(
 						'Repository slug must be a valid non-empty string',
@@ -170,27 +170,27 @@ function registerGetPullRequestCommand(program: Command): void {
 				'Retrieves comprehensive details for a pull request including description, reviewers, and diff statistics.',
 		)
 		.requiredOption(
-			'--workspace-slug <slug>',
+			'--workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repo-slug <slug>',
+			'--repository <slug>',
 			'Repository slug containing the pull request',
 		)
-		.requiredOption('--pr-id <id>', 'Pull request ID to retrieve')
+		.requiredOption('--pull-request <id>', 'Pull request ID to retrieve')
 		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.pullrequests.cli.ts@get-pull-request]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for pull request: ${options.workspaceSlug}/${options.repoSlug}/${options.prId}`,
+					`${logPrefix} Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
 				);
 
 				// Validate workspace slug
 				if (
-					!options.workspaceSlug ||
-					typeof options.workspaceSlug !== 'string' ||
-					options.workspaceSlug.trim() === ''
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
 				) {
 					throw new Error(
 						'Workspace slug must be a valid non-empty string',
@@ -199,9 +199,9 @@ function registerGetPullRequestCommand(program: Command): void {
 
 				// Validate repository slug
 				if (
-					!options.repoSlug ||
-					typeof options.repoSlug !== 'string' ||
-					options.repoSlug.trim() === ''
+					!options.repository ||
+					typeof options.repository !== 'string' ||
+					options.repository.trim() === ''
 				) {
 					throw new Error(
 						'Repository slug must be a valid non-empty string',
@@ -209,7 +209,7 @@ function registerGetPullRequestCommand(program: Command): void {
 				}
 
 				// Validate PR ID
-				const prIdNum = parseInt(options.prId, 10);
+				const prIdNum = parseInt(options.pullRequest, 10);
 				if (isNaN(prIdNum) || prIdNum <= 0) {
 					throw new Error(
 						'Pull request ID must be a positive integer',
@@ -217,9 +217,9 @@ function registerGetPullRequestCommand(program: Command): void {
 				}
 
 				const result = await atlassianPullRequestsController.get({
-					parentId: options.workspaceSlug,
-					entityId: options.repoSlug,
-					prId: options.prId,
+					parentId: options.workspace,
+					entityId: options.repository,
+					prId: options.pullRequest,
 				});
 
 				logger.debug(

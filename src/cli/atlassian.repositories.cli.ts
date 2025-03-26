@@ -39,17 +39,17 @@ function registerListRepositoriesCommand(program: Command): void {
 			'List repositories within a Bitbucket workspace\n\n' +
 				'Retrieves repositories from the specified workspace with filtering and pagination options.\n\n' +
 				'Examples:\n' +
-				'  $ list-repositories --workspace-slug myworkspace --limit 25\n' +
-				'  $ list-repositories --workspace-slug myworkspace --query "api" --role admin\n' +
-				'  $ list-repositories --workspace-slug myworkspace --cursor "next-page-token"',
+				'  $ list-repositories --workspace myworkspace --limit 25\n' +
+				'  $ list-repositories --workspace myworkspace --query "api" --role admin\n' +
+				'  $ list-repositories --workspace myworkspace --cursor "next-page-token"',
 		)
 		.requiredOption(
-			'--workspace-slug <slug>',
+			'--workspace <slug>',
 			'Workspace slug (e.g., myteam) to list repositories from',
 		)
 		.option(
 			'-q, --query <text>',
-			'Filter repositories by name or other properties (text search)',
+			'Filter repositories by name or other properties (simple text search, not query language)',
 		)
 		.option(
 			'-r, --role <string>',
@@ -72,12 +72,12 @@ function registerListRepositoriesCommand(program: Command): void {
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
 				logger.debug(
-					`${logPrefix} Listing repositories for workspace: ${options.workspaceSlug}`,
+					`${logPrefix} Listing repositories for workspace: ${options.workspace}`,
 				);
 
 				// Prepare filter options from command parameters
 				const filterOptions: ListRepositoriesOptions = {
-					parentId: options.workspaceSlug,
+					parentId: options.workspace,
 					query: options.query,
 					role: options.role,
 					sort: options.sort,
@@ -135,14 +135,14 @@ function registerGetRepositoryCommand(program: Command): void {
 			'Get detailed information about a specific Bitbucket repository\n\n' +
 				'Retrieves comprehensive details for a repository including branches, permissions, and settings.\n\n' +
 				'Examples:\n' +
-				'  $ get-repository --workspace-slug myworkspace --repo-slug myrepo',
+				'  $ get-repository --workspace myworkspace --repository myrepo',
 		)
 		.requiredOption(
-			'--workspace-slug <slug>',
+			'--workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repo-slug <slug>',
+			'--repository <slug>',
 			'Slug of the repository to retrieve',
 		)
 		.action(async (options) => {
@@ -150,12 +150,12 @@ function registerGetRepositoryCommand(program: Command): void {
 				'[src/cli/atlassian.repositories.cli.ts@get-repository]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for repository: ${options.workspaceSlug}/${options.repoSlug}`,
+					`${logPrefix} Fetching details for repository: ${options.workspace}/${options.repository}`,
 				);
 
 				const result = await atlassianRepositoriesController.get({
-					parentId: options.workspaceSlug,
-					entityId: options.repoSlug,
+					parentId: options.workspace,
+					entityId: options.repository,
 				});
 
 				logger.debug(

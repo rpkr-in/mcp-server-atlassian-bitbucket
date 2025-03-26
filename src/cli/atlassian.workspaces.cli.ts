@@ -45,7 +45,7 @@ function registerListWorkspacesCommand(program: Command): void {
 		)
 		.option(
 			'-q, --query <text>',
-			'Filter workspaces by name or other properties (text search)',
+			'Filter workspaces by name or other properties (simple text search, not query language)',
 		)
 		.option(
 			'-S, --sort <string>',
@@ -116,18 +116,18 @@ function registerGetWorkspaceCommand(program: Command): void {
 			'Get detailed information about a specific Bitbucket workspace\n\n  Retrieves comprehensive details for a workspace including projects, permissions, and settings.',
 		)
 		.requiredOption(
-			'--workspace-slug <slug>',
-			'Slug of the workspace to retrieve',
+			'--workspace <slug>',
+			'Slug of the workspace to retrieve (identifies the workspace)',
 		)
 		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.workspaces.cli.ts@get-workspace]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for workspace slug: ${options.workspaceSlug}`,
+					`${logPrefix} Fetching details for workspace slug: ${options.workspace}`,
 				);
 				const result = await atlassianWorkspacesController.get({
-					entityId: options.workspaceSlug,
+					entityId: options.workspace,
 				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved workspace details`,
