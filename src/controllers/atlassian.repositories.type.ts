@@ -1,8 +1,4 @@
-import {
-	ControllerResponse,
-	PaginationOptions,
-	EntityIdentifier,
-} from '../types/common.types.js';
+import { PaginationOptions, EntityIdentifier } from '../types/common.types.js';
 
 /**
  * Options for listing Bitbucket repositories.
@@ -78,5 +74,3 @@ export interface GetRepositoryOptions {
 	 */
 	includePullRequests?: boolean;
 }
-// Re-export from base types for backward compatibility
-export type { ControllerResponse };
