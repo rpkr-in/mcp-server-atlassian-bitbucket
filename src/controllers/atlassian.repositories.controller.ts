@@ -35,20 +35,20 @@ controllerLogger.debug('Bitbucket repositories controller initialized');
 
 /**
  * Lists repositories for a specific workspace with pagination and filtering options
- * @param options - Options for listing repositories including parentId
+ * @param options - Options for listing repositories including workspaceSlug
  * @returns Formatted list of repositories with pagination information
  */
 async function list(
 	options: ListRepositoriesOptions,
 ): Promise<ControllerResponse> {
-	const { parentId } = options;
+	const { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'list',
 	);
 
 	methodLogger.debug(
-		`Listing repositories for workspace: ${parentId}...`,
+		`Listing repositories for workspace: ${workspaceSlug}...`,
 		options,
 	);
 
@@ -56,7 +56,7 @@ async function list(
 		// Map controller options to service parameters
 		const serviceParams: ListRepositoriesParams = {
 			// Required workspace
-			workspace: parentId,
+			workspace: workspaceSlug,
 			// Handle limit with default value
 			pagelen: options.limit || DEFAULT_PAGE_SIZE,
 			// Map cursor to page for page-based pagination
@@ -103,27 +103,27 @@ async function list(
 
 /**
  * Gets details of a specific Bitbucket repository
- * @param identifier - Repository identifier containing parentId and entityId
+ * @param identifier - Repository identifier containing workspaceSlug and repoSlug
  * @returns Formatted repository details
  */
 async function get(
 	identifier: RepositoryIdentifier,
 ): Promise<ControllerResponse> {
-	const { parentId, entityId } = identifier;
+	const { workspaceSlug, repoSlug } = identifier;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'get',
 	);
 
 	methodLogger.debug(
-		`Getting repository details for ${parentId}/${entityId}...`,
+		`Getting repository details for ${workspaceSlug}/${repoSlug}...`,
 	);
 
 	try {
 		// Map controller options to service parameters
 		const serviceParams: GetRepositoryParams = {
-			workspace: parentId,
-			repo_slug: entityId,
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);
@@ -144,7 +144,7 @@ async function get(
 			source: 'controllers/atlassian.repositories.controller.ts@get',
 			entityType: 'Repository',
 			operation: 'retrieving',
-			entityId: { parentId, entityId },
+			entityId: { workspaceSlug, repoSlug },
 		});
 	}
 }

@@ -31,8 +31,8 @@ const DEFAULT_PAGE_LENGTH = 25;
 /**
  * List Bitbucket pull requests with optional filtering
  * @param options - Options for listing pull requests
- * @param options.parentId - The workspace slug containing the repository
- * @param options.entityId - The repository slug to list pull requests from
+ * @param options.workspaceSlug - The workspace slug containing the repository
+ * @param options.repoSlug - The repository slug to list pull requests from
  * @param options.state - Pull request state filter
  * @param options.limit - Maximum number of pull requests to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
@@ -46,17 +46,17 @@ async function list(
 	logger.debug(`${source} Listing Bitbucket pull requests...`, options);
 
 	try {
-		if (!options.parentId || !options.entityId) {
+		if (!options.workspaceSlug || !options.repoSlug) {
 			throw createApiError(
-				'Both parentId and entityId parameters are required',
+				'Both workspaceSlug and repoSlug parameters are required',
 			);
 		}
 
 		// Map controller filters to service params
 		const serviceParams: ListPullRequestsParams = {
 			// Required parameters
-			workspace: options.parentId,
-			repo_slug: options.entityId,
+			workspace: options.workspaceSlug,
+			repo_slug: options.repoSlug,
 
 			// Optional parameters
 			q: options.state ? `state="${options.state}"` : options.query,
@@ -96,8 +96,8 @@ async function list(
 			source: 'src/controllers/atlassian.pullrequests.controller.ts@list',
 			additionalInfo: {
 				options,
-				parentId: options.parentId,
-				entityId: options.entityId,
+				workspaceSlug: options.workspaceSlug,
+				repoSlug: options.repoSlug,
 			},
 		});
 	}
@@ -106,8 +106,8 @@ async function list(
 /**
  * Get details of a specific Bitbucket pull request
  * @param identifier - Object containing pull request identifiers
- * @param identifier.parentId - The workspace slug containing the repository
- * @param identifier.entityId - The repository slug containing the pull request
+ * @param identifier.workspaceSlug - The workspace slug containing the repository
+ * @param identifier.repoSlug - The repository slug containing the pull request
  * @param identifier.prId - The pull request ID
  * @returns Promise with formatted pull request details content
  * @throws Error if pull request retrieval fails
@@ -115,17 +115,17 @@ async function list(
 async function get(
 	identifier: PullRequestIdentifier,
 ): Promise<ControllerResponse> {
-	const { parentId, entityId, prId } = identifier;
+	const { workspaceSlug, repoSlug, prId } = identifier;
 
 	logger.debug(
-		`[src/controllers/atlassian.pullrequests.controller.ts@get] Getting pull request details for ${parentId}/${entityId}/${prId}...`,
+		`[src/controllers/atlassian.pullrequests.controller.ts@get] Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
 	);
 
 	try {
 		// Get basic pull request information
 		const params: GetPullRequestParams = {
-			workspace: parentId,
-			repo_slug: entityId,
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
 			pull_request_id: parseInt(prId, 10),
 		};
 

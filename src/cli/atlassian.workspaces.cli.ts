@@ -124,10 +124,10 @@ function registerGetWorkspaceCommand(program: Command): void {
 				'[src/cli/atlassian.workspaces.cli.ts@get-workspace]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for workspace slug: ${options.workspace}`,
+					`${logPrefix} Fetching details for workspace: ${options.workspace}`,
 				);
 				const result = await atlassianWorkspacesController.get({
-					entityId: options.workspace,
+					workspaceSlug: options.workspace,
 				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved workspace details`,

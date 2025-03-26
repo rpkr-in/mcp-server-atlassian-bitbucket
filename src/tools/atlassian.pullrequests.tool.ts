@@ -36,8 +36,8 @@ async function listPullRequests(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianPullRequestsController.list({
-			parentId: args.workspaceSlug,
-			entityId: args.repoSlug,
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
 			state: args.state,
 			query: args.query,
 			limit: args.limit,
@@ -88,8 +88,8 @@ async function getPullRequest(
 
 	try {
 		const message = await atlassianPullRequestsController.get({
-			parentId: args.workspaceSlug,
-			entityId: args.repoSlug,
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
 			prId: args.prId,
 		});
 

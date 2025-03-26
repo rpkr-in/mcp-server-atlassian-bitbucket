@@ -102,7 +102,7 @@ async function list(
 /**
  * Get details of a specific Bitbucket workspace
  * @param identifier - Object containing the workspace slug
- * @param identifier.entityId - The slug of the workspace to retrieve
+ * @param identifier.workspaceSlug - The slug of the workspace to retrieve
  * @param options - Options for retrieving the workspace (not currently used)
  * @returns Promise with formatted workspace details content
  * @throws Error if workspace retrieval fails
@@ -111,14 +111,15 @@ async function get(
 	identifier: WorkspaceIdentifier,
 	options: GetWorkspaceOptions = {},
 ): Promise<ControllerResponse> {
-	const { entityId } = identifier;
+	const { workspaceSlug } = identifier;
 
 	controllerLogger.debug(
-		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${entityId}...`,
+		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${workspaceSlug}...`,
 	);
 
 	try {
-		const workspaceData = await atlassianWorkspacesService.get(entityId);
+		const workspaceData =
+			await atlassianWorkspacesService.get(workspaceSlug);
 		controllerLogger.debug(
 			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.slug}`,
 		);

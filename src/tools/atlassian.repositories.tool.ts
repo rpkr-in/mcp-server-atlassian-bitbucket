@@ -36,7 +36,7 @@ async function listRepositories(
 	try {
 		// Pass the options to the controller
 		const message = await atlassianRepositoriesController.list({
-			parentId: args.workspaceSlug,
+			workspaceSlug: args.workspaceSlug,
 			query: args.query,
 			role: args.role,
 			sort: args.sort,
@@ -88,8 +88,8 @@ async function getRepository(
 
 	try {
 		const message = await atlassianRepositoriesController.get({
-			parentId: args.workspaceSlug,
-			entityId: args.repoSlug,
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
 		});
 
 		logger.debug(

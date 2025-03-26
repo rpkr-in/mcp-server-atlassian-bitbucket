@@ -77,11 +77,18 @@ function registerListRepositoriesCommand(program: Command): void {
 
 				// Prepare filter options from command parameters
 				const filterOptions: ListRepositoriesOptions = {
-					parentId: options.workspace,
-					query: options.query,
-					role: options.role,
-					sort: options.sort,
+					workspaceSlug: options.workspace,
+					...(options.query && { query: options.query }),
 				};
+
+				// Apply the optional filter parameters if provided
+				if (options.role) {
+					filterOptions.role = options.role;
+				}
+
+				if (options.sort) {
+					filterOptions.sort = options.sort;
+				}
 
 				// Apply pagination options if provided
 				if (options.limit) {
@@ -154,8 +161,8 @@ function registerGetRepositoryCommand(program: Command): void {
 				);
 
 				const result = await atlassianRepositoriesController.get({
-					parentId: options.workspace,
-					entityId: options.repository,
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
 				});
 
 				logger.debug(

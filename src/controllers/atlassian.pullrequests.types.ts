@@ -7,12 +7,12 @@ export interface PullRequestIdentifier extends EntityIdentifier {
 	/**
 	 * The workspace slug
 	 */
-	parentId: string;
+	workspaceSlug: string;
 
 	/**
 	 * The repository slug
 	 */
-	entityId: string;
+	repoSlug: string;
 
 	/**
 	 * The pull request ID
@@ -27,12 +27,12 @@ export interface ListPullRequestsOptions extends PaginationOptions {
 	/**
 	 * The workspace slug to list pull requests for
 	 */
-	parentId: string;
+	workspaceSlug: string;
 
 	/**
 	 * The repository slug to list pull requests for
 	 */
-	entityId: string;
+	repoSlug: string;
 
 	/**
 	 * Filter by pull request state

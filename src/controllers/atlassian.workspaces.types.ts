@@ -7,7 +7,7 @@ export interface WorkspaceIdentifier extends EntityIdentifier {
 	/**
 	 * The workspace slug to retrieve
 	 */
-	entityId: string;
+	workspaceSlug: string;
 }
 
 /**

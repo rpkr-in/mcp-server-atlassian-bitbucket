@@ -77,8 +77,8 @@ function registerListPullRequestsCommand(program: Command): void {
 
 				// Prepare filter options from command parameters
 				const filterOptions: ListPullRequestsOptions = {
-					parentId: options.workspace,
-					entityId: options.repository,
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
 					state: options.state?.toUpperCase() as ListPullRequestsOptions['state'],
 					query: options.query,
 				};
@@ -217,8 +217,8 @@ function registerGetPullRequestCommand(program: Command): void {
 				}
 
 				const result = await atlassianPullRequestsController.get({
-					parentId: options.workspace,
-					entityId: options.repository,
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
 					prId: options.pullRequest,
 				});
 

@@ -84,7 +84,7 @@ async function getWorkspace(
 
 	try {
 		const message = await atlassianWorkspacesController.get({
-			entityId: args.workspaceSlug,
+			workspaceSlug: args.workspaceSlug,
 		});
 		logger.debug(
 			`${logPrefix} Successfully retrieved workspace details from controller`,
