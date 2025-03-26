@@ -38,28 +38,38 @@ function registerListWorkspacesCommand(program: Command): void {
 			'List Bitbucket workspaces with optional filtering\n\n  Retrieves workspaces the authenticated user has access to with pagination options.',
 		)
 		.option(
+			'-f, --filter <string>',
+			'Filter workspaces by name or other properties',
+		)
+		.option(
+			'-s, --sort <string>',
+			'Field to sort results by (e.g., "name", "-created_on")',
+		)
+		.option(
 			'-l, --limit <number>',
-			'Maximum number of workspaces to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
+			'Maximum number of workspaces to return (1-100)',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
+			'Pagination cursor for retrieving the next set of results',
 		)
 		.action(async (options) => {
 			const logPrefix =
 				'[src/cli/atlassian.workspaces.cli.ts@list-workspaces]';
 			try {
-				logger.debug(
-					`${logPrefix} Processing command options:`,
-					options,
-				);
-
 				const filterOptions: ListWorkspacesOptions = {
-					...(options.limit && {
-						limit: parseInt(options.limit, 10),
-					}),
-					...(options.cursor ? { cursor: options.cursor } : {}),
+					filter: options.filter,
+					sort: options.sort,
 				};
+
+				// Apply pagination options if provided
+				if (options.limit) {
+					filterOptions.limit = parseInt(options.limit, 10);
+				}
+
+				if (options.cursor) {
+					filterOptions.cursor = options.cursor;
+				}
 
 				logger.debug(
 					`${logPrefix} Fetching workspaces with filters:`,
@@ -87,16 +97,16 @@ function registerGetWorkspaceCommand(program: Command): void {
 		.description(
 			'Get detailed information about a specific Bitbucket workspace\n\n  Retrieves comprehensive details for a workspace including projects, permissions, and settings.',
 		)
-		.argument('<workspace-slug>', 'Slug of the workspace to retrieve')
-		.action(async (workspaceSlug: string) => {
+		.argument('<entity-id>', 'Slug of the workspace to retrieve')
+		.action(async (entityId: string) => {
 			const logPrefix =
 				'[src/cli/atlassian.workspaces.cli.ts@get-workspace]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for workspace slug: ${workspaceSlug}`,
+					`${logPrefix} Fetching details for workspace slug: ${entityId}`,
 				);
 				const result = await atlassianWorkspacesController.get({
-					workspace: workspaceSlug,
+					entityId,
 				});
 				logger.debug(
 					`${logPrefix} Successfully retrieved workspace details`,

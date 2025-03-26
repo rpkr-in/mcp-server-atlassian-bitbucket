@@ -34,14 +34,10 @@ async function listRepositories(
 	);
 
 	try {
-		// Handle both new standardized parameters and legacy parameters
-		const workspace = args.parentId || args.workspace;
-		const query = args.filter || args.q;
-
 		// Pass the filter options to the controller
 		const message = await atlassianRepositoriesController.list({
-			workspace,
-			q: query,
+			parentId: args.parentId,
+			filter: args.filter,
 			sort: args.sort,
 			role: args.role,
 			limit: args.limit,
@@ -85,20 +81,16 @@ async function getRepository(
 	const logPrefix =
 		'[src/tools/atlassian.repositories.tool.ts@getRepository]';
 
-	// Handle both new standardized parameters and legacy parameters
-	const workspace = args.parentId || args.workspace;
-	const repoSlug = args.entityId || args.repoSlug;
-
 	logger.debug(
-		`${logPrefix} Retrieving repository details for ${workspace}/${repoSlug}`,
+		`${logPrefix} Retrieving repository details for ${args.parentId}/${args.entityId}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianRepositoriesController.get(
 			{
-				workspace,
-				repoSlug,
+				parentId: args.parentId,
+				entityId: args.entityId,
 			},
 			{
 				includeBranches: args.includeBranches,
@@ -161,9 +153,9 @@ WHEN NOT TO USE:
 RETURNS: Formatted list of repositories with slugs, names, descriptions, URLs, and metadata, plus pagination info.
 
 EXAMPLES:
-- List all repos in workspace: {parentId: "myteam"} or {workspace: "myteam"}
+- List all repos in workspace: {parentId: "myteam"}
 - With sorting: {parentId: "myteam", sort: "name"}
-- With filtering: {parentId: "myteam", filter: "api"} or {workspace: "myteam", q: "api"}
+- With filtering: {parentId: "myteam", filter: "api"}
 - With pagination: {parentId: "myteam", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
@@ -198,7 +190,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed repository information including slug, name, description, URLs, branch information, and settings.
 
 EXAMPLES:
-- Get repository: {parentId: "myteam", entityId: "project-api"} or {workspace: "myteam", repoSlug: "project-api"}
+- Get repository: {parentId: "myteam", entityId: "project-api"}
 
 ERRORS:
 - Repository not found: Verify workspace and repository slugs

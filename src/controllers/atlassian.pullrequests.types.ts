@@ -7,17 +7,17 @@ export interface PullRequestIdentifier extends EntityIdentifier {
 	/**
 	 * The workspace slug
 	 */
-	workspace: string;
+	parentId: string;
 
 	/**
 	 * The repository slug
 	 */
-	repoSlug: string;
+	entityId: string;
 
 	/**
 	 * The pull request ID
 	 */
-	pullRequestId: string;
+	prId: string;
 }
 
 /**
@@ -27,17 +27,22 @@ export interface ListPullRequestsOptions extends PaginationOptions {
 	/**
 	 * The workspace slug to list pull requests for
 	 */
-	workspace: string;
+	parentId: string;
 
 	/**
 	 * The repository slug to list pull requests for
 	 */
-	repoSlug: string;
+	entityId: string;
 
 	/**
 	 * Filter by pull request state
 	 */
 	state?: 'OPEN' | 'MERGED' | 'DECLINED' | 'SUPERSEDED';
+
+	/**
+	 * Filter string to search for in pull request title, description, or author
+	 */
+	filter?: string;
 }
 
 /**

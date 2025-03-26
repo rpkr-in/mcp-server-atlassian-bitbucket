@@ -9,13 +9,13 @@ export interface ListRepositoriesOptions extends PaginationOptions {
 	 * The workspace slug to list repositories for.
 	 * This is a required parameter for identifying the workspace.
 	 */
-	workspace: string;
+	parentId: string;
 
 	/**
 	 * Filter repositories by query.
 	 * Performs a case-insensitive partial match on repository names and descriptions.
 	 */
-	q?: string;
+	filter?: string;
 
 	/**
 	 * The field to sort repositories by.
@@ -39,13 +39,13 @@ export interface RepositoryIdentifier extends EntityIdentifier {
 	 * The workspace slug containing the repository.
 	 * This identifies the team or account that owns the repository.
 	 */
-	workspace: string;
+	parentId: string;
 
 	/**
 	 * The repository slug.
 	 * This is the unique identifier for the repository within the workspace.
 	 */
-	repoSlug: string;
+	entityId: string;
 }
 
 /**

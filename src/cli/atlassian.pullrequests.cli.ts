@@ -2,9 +2,8 @@ import { Command } from 'commander';
 import { logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
+import { formatPagination } from '../utils/formatter.util.js';
 import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.types.js';
-import { PullRequestState } from '../services/vendor.atlassian.pullrequests.types.js';
-import { formatHeading, formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -30,97 +29,108 @@ function register(program: Command): void {
 }
 
 /**
- * Register the command for listing Bitbucket pull requests
+ * Register the command for listing pull requests within a repository
  * @param program - The Commander program instance
  */
 function registerListPullRequestsCommand(program: Command): void {
 	program
 		.command('list-pull-requests')
 		.description(
-			'List Bitbucket pull requests with optional filtering\n\n' +
-				'Retrieves pull requests from a specific repository with filtering and pagination options.\n\n' +
+			'List pull requests within a Bitbucket repository\n\n' +
+				'Retrieves pull requests from the specified repository with filtering and pagination options.\n\n' +
 				'Examples:\n' +
 				'  $ list-pull-requests my-workspace my-repo --state OPEN\n' +
 				'  $ list-pull-requests my-workspace my-repo --limit 50 --state MERGED\n' +
 				'  $ list-pull-requests my-workspace my-repo --filter "title:feature"',
 		)
-		.argument('<workspace>', 'Workspace slug containing the repository')
-		.argument('<repo-slug>', 'Repository slug to list pull requests from')
+		.argument('<parent-id>', 'Workspace slug containing the repository')
+		.argument('<entity-id>', 'Repository slug to list pull requests from')
+		.option(
+			'-s, --state <state>',
+			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
+		)
+		.option(
+			'-f, --filter <string>',
+			'Filter pull requests by title, description, or other properties',
+		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return (1-100)',
-			'25',
+			'Maximum number of pull requests to return (1-100)',
 		)
 		.option(
 			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
-		.option(
-			'-f, --filter <string>',
-			'Filter pull requests by title, description, or author',
-		)
-		.option(
-			'-s, --state <string>',
-			'Filter by state: OPEN, MERGED, DECLINED, or SUPERSEDED',
-			'OPEN',
-		)
-		.action(async (workspace, repoSlug, options) => {
+		.action(async (parentId, entityId, options) => {
 			const logPrefix =
 				'[src/cli/atlassian.pullrequests.cli.ts@list-pull-requests]';
 			try {
-				logger.debug(`${logPrefix} Processing command options:`, {
-					workspace,
-					repoSlug,
-					...options,
-				});
-
-				// Validate state option
-				const validStates = [
-					'OPEN',
-					'MERGED',
-					'DECLINED',
-					'SUPERSEDED',
-				];
+				// Validate parentId
 				if (
-					options.state &&
-					!validStates.includes(options.state.toUpperCase())
+					!parentId ||
+					typeof parentId !== 'string' ||
+					parentId.trim() === ''
 				) {
 					throw new Error(
-						`Invalid state value. Must be one of: ${validStates.join(
-							', ',
-						)}`,
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate entityId
+				if (
+					!entityId ||
+					typeof entityId !== 'string' ||
+					entityId.trim() === ''
+				) {
+					throw new Error(
+						'Repository slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate state if provided
+				if (
+					options.state &&
+					!['OPEN', 'MERGED', 'DECLINED', 'SUPERSEDED'].includes(
+						options.state.toUpperCase(),
+					)
+				) {
+					throw new Error(
+						'State must be one of: OPEN, MERGED, DECLINED, SUPERSEDED',
 					);
 				}
 
 				const filterOptions: ListPullRequestsOptions = {
-					workspace,
-					repoSlug,
-					...(options.state && {
-						state: options.state.toUpperCase() as PullRequestState,
-					}),
-					...(options.limit && {
-						limit: parseInt(options.limit, 10),
-					}),
-					...(options.cursor && { cursor: options.cursor }),
-					...(options.filter && { filter: options.filter }),
+					parentId,
+					entityId,
+					state: options.state?.toUpperCase(),
+					filter: options.filter,
 				};
+
+				// Apply pagination options if provided
+				if (options.limit) {
+					filterOptions.limit = parseInt(options.limit, 10);
+				}
+
+				if (options.cursor) {
+					filterOptions.cursor = options.cursor;
+				}
 
 				logger.debug(
 					`${logPrefix} Fetching pull requests with filters:`,
 					filterOptions,
 				);
+
 				const result =
 					await atlassianPullRequestsController.list(filterOptions);
+
 				logger.debug(
 					`${logPrefix} Successfully retrieved pull requests`,
 				);
 
-				// Print the main content
-				console.log(formatHeading('Pull Requests', 2));
 				console.log(result.content);
 
-				// Print pagination information if available
-				if (result.pagination) {
+				// Display pagination information if available
+				if (result.pagination?.hasMore) {
 					console.log(
 						'\n' +
 							formatPagination(
@@ -145,29 +155,56 @@ function registerGetPullRequestCommand(program: Command): void {
 	program
 		.command('get-pull-request')
 		.description(
-			'Get detailed information about a specific Bitbucket pull request\n\n  Retrieves comprehensive details for a pull request including description, comments, and branch information.',
+			'Get detailed information about a specific Bitbucket pull request\n\n' +
+				'Retrieves comprehensive details for a pull request including description, reviewers, and diff statistics.',
 		)
-		.argument('<workspace>', 'Workspace slug containing the repository')
-		.argument('<repo-slug>', 'Repository slug containing the pull request')
-		.argument('<id>', 'Pull request ID to retrieve')
-		.action(async (workspace, repoSlug, id) => {
+		.argument('<parent-id>', 'Workspace slug containing the repository')
+		.argument('<entity-id>', 'Repository slug containing the pull request')
+		.argument('<pr-id>', 'Pull request ID to retrieve')
+		.action(async (parentId, entityId, prId) => {
 			const logPrefix =
 				'[src/cli/atlassian.pullrequests.cli.ts@get-pull-request]';
 			try {
 				logger.debug(
-					`${logPrefix} Fetching details for pull request: ${workspace}/${repoSlug}/${id}`,
+					`${logPrefix} Fetching details for pull request: ${parentId}/${entityId}/${prId}`,
 				);
 
-				const pullRequestId = parseInt(id, 10);
-				if (isNaN(pullRequestId)) {
-					throw new Error('Pull request ID must be a number');
+				// Validate parentId
+				if (
+					!parentId ||
+					typeof parentId !== 'string' ||
+					parentId.trim() === ''
+				) {
+					throw new Error(
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate entityId
+				if (
+					!entityId ||
+					typeof entityId !== 'string' ||
+					entityId.trim() === ''
+				) {
+					throw new Error(
+						'Repository slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate PR ID
+				const prIdNum = parseInt(prId, 10);
+				if (isNaN(prIdNum) || prIdNum <= 0) {
+					throw new Error(
+						'Pull request ID must be a positive integer',
+					);
 				}
 
 				const result = await atlassianPullRequestsController.get({
-					workspace,
-					repoSlug,
-					pullRequestId: id,
+					parentId,
+					entityId,
+					prId,
 				});
+
 				logger.debug(
 					`${logPrefix} Successfully retrieved pull request details`,
 				);

@@ -108,7 +108,7 @@ describe('Atlassian Workspaces Controller', () => {
 
 			// Call the function with the extracted slug
 			const result = await atlassianWorkspacesController.get({
-				workspace: workspaceSlug,
+				entityId: workspaceSlug,
 			});
 
 			// Verify the response structure
@@ -134,7 +134,7 @@ describe('Atlassian Workspaces Controller', () => {
 
 			// Expect an error to be thrown
 			await expect(
-				atlassianWorkspacesController.get({ workspace: invalidSlug }),
+				atlassianWorkspacesController.get({ entityId: invalidSlug }),
 			).rejects.toThrow();
 		}, 15000); // Increase timeout for API call
 	});

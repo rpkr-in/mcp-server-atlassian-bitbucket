@@ -48,40 +48,44 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Workspace slug (e.g., myteam) to list repositories from',
 		)
 		.option(
-			'-r, --role <role>',
-			"Filter by the authenticated user's role on the repositories. Values: owner, admin, contributor, member",
+			'-f, --filter <string>',
+			'Filter repositories by name or other properties',
 		)
 		.option(
-			'-f, --filter <filter>',
-			'Filter the list by a substring of the name',
+			'-r, --role <string>',
+			'Filter repositories by the user\'s role (e.g., "owner", "admin", "contributor")',
+		)
+		.option(
+			'-s, --sort <string>',
+			'Field to sort results by (e.g., "name", "-updated_on")',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return (1-100)',
-			'25',
+			'Maximum number of repositories to return (1-100)',
 		)
 		.option(
-			'-c, --cursor <cursor>',
+			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
 		.action(async (parentId: string, options) => {
 			const logPrefix =
 				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
 			try {
-				logger.debug(
-					`${logPrefix} Processing command options:`,
-					options,
-				);
-
 				const filterOptions: ListRepositoriesOptions = {
-					workspace: parentId,
-					...(options.role && { role: options.role }),
-					...(options.filter && { query: options.filter }),
-					...(options.limit && {
-						limit: parseInt(options.limit, 10),
-					}),
-					...(options.cursor && { cursor: options.cursor }),
+					parentId,
+					filter: options.filter,
+					role: options.role,
+					sort: options.sort,
 				};
+
+				// Apply pagination options if provided
+				if (options.limit) {
+					filterOptions.limit = parseInt(options.limit, 10);
+				}
+
+				if (options.cursor) {
+					filterOptions.cursor = options.cursor;
+				}
 
 				logger.debug(
 					`${logPrefix} Fetching repositories with filters:`,
@@ -90,11 +94,11 @@ function registerListRepositoriesCommand(program: Command): void {
 
 				const result =
 					await atlassianRepositoriesController.list(filterOptions);
+
 				logger.debug(
 					`${logPrefix} Successfully retrieved repositories`,
 				);
 
-				// Print the main content
 				console.log(result.content);
 
 				// Display pagination information if available
@@ -139,8 +143,8 @@ function registerGetRepositoryCommand(program: Command): void {
 				);
 
 				const result = await atlassianRepositoriesController.get({
-					workspace: parentId,
-					repoSlug: entityId,
+					parentId,
+					entityId,
 				});
 
 				logger.debug(

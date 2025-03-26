@@ -34,17 +34,6 @@ export const ListRepositoriesToolArgs = z.object({
 		.min(1, 'Workspace slug is required')
 		.describe(
 			'Workspace slug containing the repositories. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
-		)
-		.optional(),
-
-	/**
-	 * For backward compatibility - same as parentId
-	 */
-	workspace: z
-		.string()
-		.min(1, 'Workspace slug is required')
-		.describe(
-			'Workspace slug containing the repositories. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		),
 
 	/**
@@ -55,16 +44,6 @@ export const ListRepositoriesToolArgs = z.object({
 		.optional()
 		.describe(
 			'Query string to filter repositories. Example: "api" for repositories with "api" in the name/description. If omitted, returns all repositories.',
-		),
-
-	/**
-	 * For backward compatibility - same as filter
-	 */
-	q: z
-		.string()
-		.optional()
-		.describe(
-			'Query string to filter repositories using Bitbucket query syntax. Example: "name ~ \\"api\\"" for repositories with "api" in the name. If omitted, returns all repositories.',
 		),
 
 	/**
@@ -109,34 +88,12 @@ export const GetRepositoryToolArgs = z.object({
 		.min(1, 'Workspace slug is required')
 		.describe(
 			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
-		)
-		.optional(),
-
-	/**
-	 * For backward compatibility - same as parentId
-	 */
-	workspace: z
-		.string()
-		.min(1, 'Workspace slug is required')
-		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		),
 
 	/**
 	 * Entity identifier (repository slug to retrieve)
 	 */
 	entityId: z
-		.string()
-		.min(1, 'Repository slug is required')
-		.describe(
-			'Repository slug to retrieve. This must be a valid repository in the specified workspace. Example: "project-api"',
-		)
-		.optional(),
-
-	/**
-	 * For backward compatibility - same as entityId
-	 */
-	repoSlug: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(

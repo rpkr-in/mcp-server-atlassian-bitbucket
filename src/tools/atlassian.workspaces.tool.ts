@@ -5,8 +5,8 @@ import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListWorkspacesToolArgs,
 	ListWorkspacesToolArgsType,
-	GetWorkspaceToolArgs,
 	GetWorkspaceToolArgsType,
+	GetWorkspaceToolArgs,
 } from './atlassian.workspaces.types.js';
 
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
@@ -35,7 +35,7 @@ async function listWorkspaces(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianWorkspacesController.list({
-			q: args.q,
+			filter: args.filter,
 			sort: args.sort,
 			limit: args.limit,
 			cursor: args.cursor,
@@ -76,14 +76,15 @@ async function getWorkspace(
 	_extra: RequestHandlerExtra,
 ) {
 	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@getWorkspace]';
+
 	logger.debug(
-		`${logPrefix} Retrieving workspace details for ${args.workspace}`,
+		`${logPrefix} Retrieving workspace details for ${args.entityId}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianWorkspacesController.get({
-			workspace: args.workspace,
+			entityId: args.entityId,
 		});
 		logger.debug(
 			`${logPrefix} Successfully retrieved workspace details from controller`,
@@ -140,6 +141,7 @@ RETURNS: Formatted list of workspaces with slugs, names, and permission informat
 EXAMPLES:
 - List all workspaces: {}
 - With sorting: {sort: "name"}
+- Filter by name: {filter: "team"}
 - With pagination: {limit: 10, cursor: "next-page-token"}
 
 ERRORS:
@@ -172,7 +174,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed workspace information including slug, name, type, description, projects, and permission levels.
 
 EXAMPLES:
-- Get workspace: {workspace: "myteam"}
+- Get workspace: {entityId: "myteam"}
 
 ERRORS:
 - Workspace not found: Verify the workspace slug is correct

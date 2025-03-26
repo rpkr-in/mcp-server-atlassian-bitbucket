@@ -7,7 +7,7 @@ export interface WorkspaceIdentifier extends EntityIdentifier {
 	/**
 	 * The workspace slug to retrieve
 	 */
-	workspace: string;
+	entityId: string;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface ListWorkspacesOptions extends PaginationOptions {
 	/**
 	 * Optional query to filter workspaces by name
 	 */
-	q?: string;
+	filter?: string;
 
 	/**
 	 * Optional sort parameter

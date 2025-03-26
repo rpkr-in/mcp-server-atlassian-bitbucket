@@ -1,13 +1,35 @@
 import { z } from 'zod';
 
 /**
+ * Base pagination arguments for all tools
+ */
+const PaginationArgs = {
+	limit: z
+		.number()
+		.int()
+		.positive()
+		.max(100)
+		.optional()
+		.describe(
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
+		),
+
+	cursor: z
+		.string()
+		.optional()
+		.describe(
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
+		),
+};
+
+/**
  * Schema for list-workspaces tool arguments
  */
 export const ListWorkspacesToolArgs = z.object({
 	/**
-	 * Query to filter workspaces by name
+	 * Filter query for workspaces by name
 	 */
-	q: z
+	filter: z
 		.string()
 		.optional()
 		.describe(
@@ -25,27 +47,9 @@ export const ListWorkspacesToolArgs = z.object({
 		),
 
 	/**
-	 * Maximum number of workspaces to return (default: 50)
+	 * Maximum number of workspaces to return and pagination
 	 */
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.max(100)
-		.optional()
-		.describe(
-			'Maximum number of workspaces to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
-		),
-
-	/**
-	 * Pagination cursor for retrieving the next set of results
-	 */
-	cursor: z
-		.string()
-		.optional()
-		.describe(
-			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
-		),
+	...PaginationArgs,
 });
 
 export type ListWorkspacesToolArgsType = z.infer<typeof ListWorkspacesToolArgs>;
@@ -55,9 +59,9 @@ export type ListWorkspacesToolArgsType = z.infer<typeof ListWorkspacesToolArgs>;
  */
 export const GetWorkspaceToolArgs = z.object({
 	/**
-	 * Workspace slug to retrieve
+	 * Entity identifier (workspace slug to retrieve)
 	 */
-	workspace: z
+	entityId: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(

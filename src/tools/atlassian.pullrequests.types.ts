@@ -1,13 +1,35 @@
 import { z } from 'zod';
 
 /**
+ * Base pagination arguments for all tools
+ */
+const PaginationArgs = {
+	limit: z
+		.number()
+		.int()
+		.positive()
+		.max(100)
+		.optional()
+		.describe(
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
+		),
+
+	cursor: z
+		.string()
+		.optional()
+		.describe(
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
+		),
+};
+
+/**
  * Schema for list-pull-requests tool arguments
  */
 export const ListPullRequestsToolArgs = z.object({
 	/**
-	 * Workspace slug containing the repository
+	 * Parent identifier (workspace slug containing the repository)
 	 */
-	workspace: z
+	parentId: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -15,9 +37,9 @@ export const ListPullRequestsToolArgs = z.object({
 		),
 
 	/**
-	 * Repository slug containing the pull requests
+	 * Entity identifier (repository slug containing the pull requests)
 	 */
-	repoSlug: z
+	entityId: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(
@@ -35,27 +57,19 @@ export const ListPullRequestsToolArgs = z.object({
 		),
 
 	/**
-	 * Maximum number of pull requests to return (default: 50)
+	 * Filter query for pull requests
 	 */
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.max(100)
-		.optional()
-		.describe(
-			'Maximum number of pull requests to return (1-100). Use this to control the response size. If omitted, defaults to 25.',
-		),
-
-	/**
-	 * Pagination cursor for retrieving the next set of results
-	 */
-	cursor: z
+	filter: z
 		.string()
 		.optional()
 		.describe(
-			'Pagination cursor for retrieving the next set of results. Obtain this value from the previous response when more results are available.',
+			'Filter pull requests by title, description, or author. Uses Bitbucket query syntax.',
 		),
+
+	/**
+	 * Maximum number of pull requests to return (default: 50)
+	 */
+	...PaginationArgs,
 });
 
 export type ListPullRequestsToolArgsType = z.infer<
@@ -67,9 +81,9 @@ export type ListPullRequestsToolArgsType = z.infer<
  */
 export const GetPullRequestToolArgs = z.object({
 	/**
-	 * Workspace slug containing the repository
+	 * Parent identifier (workspace slug containing the repository)
 	 */
-	workspace: z
+	parentId: z
 		.string()
 		.min(1, 'Workspace slug is required')
 		.describe(
@@ -77,9 +91,9 @@ export const GetPullRequestToolArgs = z.object({
 		),
 
 	/**
-	 * Repository slug containing the pull request
+	 * Entity identifier (repository slug containing the pull request)
 	 */
-	repoSlug: z
+	entityId: z
 		.string()
 		.min(1, 'Repository slug is required')
 		.describe(
@@ -87,12 +101,13 @@ export const GetPullRequestToolArgs = z.object({
 		),
 
 	/**
-	 * Pull request ID to retrieve
+	 * Pull request identifier
 	 */
-	pullRequestId: z
-		.number()
-		.int()
-		.positive()
+	prId: z
+		.union([z.string(), z.number()])
+		.transform((value) =>
+			typeof value === 'string' ? value : String(value),
+		)
 		.describe(
 			'Numeric ID of the pull request to retrieve. Must be a valid pull request ID in the specified repository. Example: 42',
 		),

@@ -36,7 +36,7 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
 /**
  * List Bitbucket workspaces with optional filtering
  * @param options - Options for listing workspaces
- * @param options.q - Query to filter workspaces
+ * @param options.filter - Query to filter workspaces
  * @param options.sort - Sort parameter
  * @param options.limit - Maximum number of workspaces to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
@@ -57,6 +57,11 @@ async function list(
 			pagelen: options.limit || DEFAULT_PAGE_LENGTH, // Default page length
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
 		};
+
+		// Add the filter (q) parameter if provided
+		if (options.filter) {
+			serviceParams.q = options.filter;
+		}
 
 		controllerLogger.debug(`${source} Using filters:`, serviceParams);
 
@@ -100,7 +105,7 @@ async function list(
 /**
  * Get details of a specific Bitbucket workspace
  * @param identifier - Object containing the workspace slug
- * @param identifier.workspace - The slug of the workspace to retrieve
+ * @param identifier.entityId - The slug of the workspace to retrieve
  * @param options - Options for retrieving the workspace (not currently used)
  * @returns Promise with formatted workspace details content
  * @throws Error if workspace retrieval fails
@@ -109,14 +114,14 @@ async function get(
 	identifier: WorkspaceIdentifier,
 	options: GetWorkspaceOptions = {},
 ): Promise<ControllerResponse> {
-	const { workspace } = identifier;
+	const { entityId } = identifier;
 
 	controllerLogger.debug(
-		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${workspace}...`,
+		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${entityId}...`,
 	);
 
 	try {
-		const workspaceData = await atlassianWorkspacesService.get(workspace);
+		const workspaceData = await atlassianWorkspacesService.get(entityId);
 		controllerLogger.debug(
 			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.slug}`,
 		);

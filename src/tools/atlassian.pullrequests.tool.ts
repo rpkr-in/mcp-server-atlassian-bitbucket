@@ -5,8 +5,8 @@ import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListPullRequestsToolArgs,
 	ListPullRequestsToolArgsType,
-	GetPullRequestToolArgs,
 	GetPullRequestToolArgsType,
+	GetPullRequestToolArgs,
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
@@ -36,9 +36,10 @@ async function listPullRequests(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianPullRequestsController.list({
-			workspace: args.workspace,
-			repoSlug: args.repoSlug,
+			parentId: args.parentId,
+			entityId: args.entityId,
 			state: args.state,
+			filter: args.filter,
 			limit: args.limit,
 			cursor: args.cursor,
 		});
@@ -79,17 +80,18 @@ async function getPullRequest(
 ) {
 	const logPrefix =
 		'[src/tools/atlassian.pullrequests.tool.ts@getPullRequest]';
+
 	logger.debug(
-		`${logPrefix} Retrieving pull request details for ${args.workspace}/${args.repoSlug}/${args.pullRequestId}`,
+		`${logPrefix} Retrieving pull request details for ${args.parentId}/${args.entityId}/${args.prId}`,
 		args,
 	);
 
 	try {
 		const message = await atlassianPullRequestsController.get(
 			{
-				workspace: args.workspace,
-				repoSlug: args.repoSlug,
-				pullRequestId: String(args.pullRequestId),
+				parentId: args.parentId,
+				entityId: args.entityId,
+				prId: String(args.prId),
 			},
 			{
 				includeComments: args.includeComments,
@@ -150,9 +152,9 @@ WHEN NOT TO USE:
 RETURNS: Formatted list of pull requests with IDs, titles, states, authors, branch information, and URLs, plus pagination info.
 
 EXAMPLES:
-- List all PRs in a repo: {workspace: "myteam", repoSlug: "project-api"}
-- Filter by state: {workspace: "myteam", repoSlug: "project-api", state: "OPEN"}
-- With pagination: {workspace: "myteam", repoSlug: "project-api", limit: 10, cursor: "next-page-token"}
+- List all PRs in a repo: {parentId: "myteam", entityId: "project-api"}
+- Filter by state: {parentId: "myteam", entityId: "project-api", state: "OPEN"}
+- With pagination: {parentId: "myteam", entityId: "project-api", limit: 10, cursor: "next-page-token"}
 
 ERRORS:
 - Repository not found: Verify workspace and repository slugs
@@ -186,7 +188,7 @@ WHEN NOT TO USE:
 RETURNS: Detailed PR information including title, description, status, author, reviewers, branches, comments, and related timestamps.
 
 EXAMPLES:
-- Get PR details: {workspace: "myteam", repoSlug: "project-api", id: 42}
+- Get PR details: {parentId: "myteam", entityId: "project-api", prId: 42}
 
 ERRORS:
 - PR not found: Verify workspace, repository slugs, and PR ID
