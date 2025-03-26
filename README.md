@@ -4,7 +4,7 @@ This project provides a Model Context Protocol (MCP) server that acts as a bridg
 
 ## What is MCP and Why Use This Server?
 
-Model Context Protocol (MCP) is an open standard enabling AI models to connect securely to external tools and data sources. This server implements MCP specifically for Bitbucket.
+Model Context Protocol (MCP) is an open standard enabling AI models to connect securely to external tools and data sources. This server implements MCP specifically for Bitbucket Cloud.
 
 **Benefits:**
 
@@ -15,30 +15,60 @@ Model Context Protocol (MCP) is an open standard enabling AI models to connect s
 
 ## Available Tools
 
-This MCP server exposes the following capabilities as standardized "Tools" for AI assistants:
+This MCP server provides the following tools for your AI assistant:
 
-| Tool Name            | Key Parameter(s)                                               | Description                                    | Example Conversational Use                  | AI Tool Call Example (Simplified)                           |
-| :------------------- | :------------------------------------------------------------- | :--------------------------------------------- | :------------------------------------------ | :---------------------------------------------------------- |
-| `list-workspaces`    | _None required_                                                | List available Bitbucket workspaces.           | "Show me all my Bitbucket workspaces"       | `{}`                                                        |
-| `get-workspace`      | `workspaceSlug` (string)                                       | Get detailed information about a workspace.    | "Tell me about the 'acme' workspace"        | `{ workspaceSlug: "acme" }`                                 |
-| `list-repositories`  | `workspaceSlug` (string)                                       | List repositories in a specific workspace.     | "Show repositories in the 'acme' workspace" | `{ workspaceSlug: "acme" }`                                 |
-| `get-repository`     | `workspaceSlug` (string), `repoSlug` (string)                  | Get detailed information about a repository.   | "Show me details of the acme/api repo"      | `{ workspaceSlug: "acme", repoSlug: "api" }`                |
-| `list-pull-requests` | `workspaceSlug` (string), `repoSlug` (string)                  | List pull requests for a specific repository.  | "Show open PRs in acme/api repo"            | `{ workspaceSlug: "acme", repoSlug: "api", state: "OPEN" }` |
-| `get-pull-request`   | `workspaceSlug` (string), `repoSlug` (string), `prId` (string) | Get detailed information about a pull request. | "Tell me about PR #123 in acme/api repo"    | `{ workspaceSlug: "acme", repoSlug: "api", prId: "123" }`   |
+- **List Workspaces (`list-workspaces`)**
 
-## Interface Philosophy: Minimal Interface, Maximal Detail
+    - **Purpose:** Discover available Bitbucket workspaces you have access to and find their 'slugs' (unique identifiers).
+    - **Use When:** You need to know which workspaces are available or find the slug for a specific workspace to use with other tools.
+    - **Conversational Example:** "Show me all my Bitbucket workspaces."
+    - **Parameter Example:** `{}` (no parameters needed for basic list) or `{ query: "devteam" }` (to filter).
 
-This server is designed to be simple for both humans (via CLI) and AI (via MCP Tools) to use, while providing rich information:
+- **Get Workspace (`get-workspace`)**
 
-1.  **Simple Commands/Tools:** Interfaces require only the essential identifiers or filters (like `workspaceSlug`, `repoSlug`, `prId`).
-2.  **Comprehensive Results by Default:** Operations that retrieve a specific item (`get-workspace`, `get-repository`, `get-pull-request`) automatically fetch and return all relevant details (metadata, owner, links, reviewers, etc.) without needing extra "include" flags.
+    - **Purpose:** Retrieve detailed information about a _specific_ workspace using its slug.
+    - **Use When:** You know the workspace slug and need its full details or links to its contents.
+    - **Conversational Example:** "Tell me more about the 'acme-corp' workspace."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp" }`
 
-This philosophy ensures you get the full picture without complex commands, letting the AI focus on using the information rather than configuring requests.
+- **List Repositories (`list-repositories`)**
+
+    - **Purpose:** List repositories within a specific workspace and find their 'slugs'. Requires the workspace slug.
+    - **Use When:** You need to find repositories within a known workspace or get the slug for a specific repository.
+    - **Conversational Example:** "List the repositories in the 'acme-corp' workspace."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp" }` or `{ workspaceSlug: "acme-corp", query: "backend" }` (to filter).
+
+- **Get Repository (`get-repository`)**
+
+    - **Purpose:** Retrieve detailed information about a _specific_ repository using its workspace and repository slugs.
+    - **Use When:** You know the workspace and repository slugs and need full details like description, language, owner, etc.
+    - **Conversational Example:** "Show me details for the 'backend-api' repository in the 'acme-corp' workspace."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "backend-api" }`
+
+- **List Pull Requests (`list-pull-requests`)**
+
+    - **Purpose:** List pull requests within a specific repository. Requires workspace and repository slugs.
+    - **Use When:** You need to find open/merged/etc. pull requests in a known repository or get the ID for a specific PR.
+    - **Conversational Example:** "Show me the open pull requests for the 'acme-corp/frontend-app' repository."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", state: "OPEN" }`
+
+- **Get Pull Request (`get-pull-request`)**
+    - **Purpose:** Retrieve detailed information about a _specific_ pull request using its workspace slug, repository slug, and PR ID.
+    - **Use When:** You know the identifiers for a specific PR and need its full description, reviewers, status, branches, etc.
+    - **Conversational Example:** "Get the details for pull request #42 in the 'acme-corp/frontend-app' repo."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42" }`
+
+## Interface Philosophy: Simple Input, Rich Output
+
+This server follows a "Minimal Interface, Maximal Detail" approach:
+
+1.  **Simple Tools:** Ask for only essential identifiers (like `workspaceSlug`, `repoSlug`, `prId`).
+2.  **Rich Details:** When you ask for a specific item (like `get-repository`), the server provides all relevant information by default (description, owner, links, etc.) without needing extra flags.
 
 ## Prerequisites
 
 - **Node.js and npm:** Ensure you have Node.js (which includes npm) installed. Download from [nodejs.org](https://nodejs.org/).
-- **Atlassian Account:** An active Atlassian account with access to the Bitbucket workspaces and repositories you want to connect to.
+- **Bitbucket Account:** An active Bitbucket Cloud account with access to the workspaces and repositories you want to connect to.
 
 ## Quick Start Guide
 
@@ -48,18 +78,7 @@ Follow these steps to connect your AI assistant to Bitbucket:
 
 You have two options for authenticating with Bitbucket:
 
-#### Option A: Get Your Atlassian API Token (Recommended if you use other Atlassian MCP servers)
-
-**Important:** Treat your API token like a password. Do not share it or commit it to version control.
-
-1.  Go to your Atlassian API token management page:
-    [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-2.  Click **Create API token**.
-3.  Give it a descriptive **Label** (e.g., `mcp-bitbucket-access`).
-4.  Click **Create**.
-5.  **Immediately copy the generated API token.** You won't be able to see it again. Store it securely (e.g., in a password manager).
-
-#### Option B: Create a Bitbucket App Password
+#### Option A: Bitbucket App Password (Recommended for Bitbucket-only use)
 
 **Important:** Treat your App Password like a password. Do not share it or commit it to version control.
 
@@ -74,38 +93,28 @@ You have two options for authenticating with Bitbucket:
 5.  Click **Create**.
 6.  **Immediately copy the generated App Password.** You won't be able to see it again. Store it securely.
 
+#### Option B: Atlassian API Token (Use if connecting other Atlassian tools like Jira/Confluence)
+
+**Important:** Treat your API token like a password.
+
+1.  Go to your Atlassian API token management page:
+    [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+2.  Click **Create API token**.
+3.  Give it a descriptive **Label** (e.g., `mcp-bitbucket-access`).
+4.  Click **Create**.
+5.  **Immediately copy the generated API token.** Store it securely.
+
 ### Step 2: Configure the Server Credentials
 
 Choose **one** of the following methods:
 
-#### Method A: Global MCP Config File (Recommended for Persistent Use)
+#### Method A: Global MCP Config File (Recommended)
 
-This is the preferred method as it keeps credentials separate from your AI client configuration.
+This keeps credentials separate and organized.
 
-1.  **Create the directory** (if it doesn't exist):
-    - macOS/Linux: `mkdir -p ~/.mcp`
-    - Windows: Create a folder named `.mcp` in your user profile directory (e.g., `C:\Users\<YourUsername>\.mcp`)
-2.  **Create the config file:** Inside the `.mcp` directory, create a file named `configs.json`.
-3.  **Add the configuration:** Paste **one** of the following JSON structures into `configs.json`, corresponding to the authentication method you chose in Step 1, replacing the placeholder values:
-
-    **Using Atlassian API Token:**
-
-    ```json
-    {
-    	"@aashari/mcp-server-atlassian-bitbucket": {
-    		"environments": {
-    			"ATLASSIAN_SITE_NAME": "<YOUR_SITE_NAME>",
-    			"ATLASSIAN_USER_EMAIL": "<YOUR_ATLASSIAN_EMAIL>",
-    			"ATLASSIAN_API_TOKEN": "<YOUR_COPIED_API_TOKEN>"
-    		}
-    	}
-    	// You can add configurations for other @aashari MCP servers here too
-    }
-    ```
-
-    - `<YOUR_SITE_NAME>`: Your Atlassian site name (e.g., if your URL is `mycompany.atlassian.net`, enter `mycompany`).
-    - `<YOUR_ATLASSIAN_EMAIL>`: The email address associated with your Atlassian account.
-    - `<YOUR_COPIED_API_TOKEN>`: The API token you generated in Step 1A.
+1.  **Create the directory** (if needed): `~/.mcp/`
+2.  **Create/Edit the file:** `~/.mcp/configs.json`
+3.  **Add the configuration:** Paste **one** of the following JSON structures, corresponding to your chosen authentication method, replacing the placeholders:
 
     **Using Bitbucket App Password:**
 
@@ -117,33 +126,50 @@ This is the preferred method as it keeps credentials separate from your AI clien
     			"ATLASSIAN_BITBUCKET_APP_PASSWORD": "<YOUR_COPIED_APP_PASSWORD>"
     		}
     	}
-    	// You can add configurations for other @aashari MCP servers here too
+    	// Add other servers here if needed
     }
     ```
 
-    - `<YOUR_BITBUCKET_USERNAME>`: Your Bitbucket username (the one you log in with).
-    - `<YOUR_COPIED_APP_PASSWORD>`: The App Password you generated in Step 1B.
+    - `<YOUR_BITBUCKET_USERNAME>`: Your Bitbucket username.
+    - `<YOUR_COPIED_APP_PASSWORD>`: The App Password from Step 1B.
 
-#### Method B: Environment Variables (Alternative / Temporary)
+    **Using Atlassian API Token:**
 
-You can set environment variables directly when running the server. This is less convenient for regular use but useful for testing. Choose the set corresponding to your authentication method:
+    ```json
+    {
+    	"@aashari/mcp-server-atlassian-bitbucket": {
+    		"environments": {
+    			"ATLASSIAN_SITE_NAME": "<YOUR_ATLASSIAN_SITE_NAME_UNUSED_BUT_NEEDED>",
+    			"ATLASSIAN_USER_EMAIL": "<YOUR_ATLASSIAN_EMAIL>",
+    			"ATLASSIAN_API_TOKEN": "<YOUR_COPIED_API_TOKEN>"
+    		}
+    	}
+    	// Add other servers here if needed
+    }
+    ```
 
-**Using Atlassian API Token:**
+    - `<YOUR_ATLASSIAN_SITE_NAME_UNUSED_BUT_NEEDED>`: Enter any value (like `bitbucket`). This field is required by the underlying transport but not used for Bitbucket API auth when using an API token.
+    - `<YOUR_ATLASSIAN_EMAIL>`: Your Atlassian account email.
+    - `<YOUR_COPIED_API_TOKEN>`: The API token from Step 1B.
 
-```bash
-# Example for running the server directly (adjust for client config)
-ATLASSIAN_SITE_NAME=<YOUR_SITE_NAME> \
-ATLASSIAN_USER_EMAIL=<YOUR_ATLASSIAN_EMAIL> \
-ATLASSIAN_API_TOKEN=<YOUR_COPIED_API_TOKEN> \
-npx -y @aashari/mcp-server-atlassian-bitbucket
-```
+#### Method B: Environment Variables (Alternative)
+
+Set environment variables when running the server. Choose the set matching your authentication:
 
 **Using Bitbucket App Password:**
 
 ```bash
-# Example for running the server directly
-ATLASSIAN_BITBUCKET_USERNAME=<YOUR_BITBUCKET_USERNAME> \
-ATLASSIAN_BITBUCKET_APP_PASSWORD=<YOUR_COPIED_APP_PASSWORD> \
+ATLASSIAN_BITBUCKET_USERNAME="<YOUR_USERNAME>" \
+ATLASSIAN_BITBUCKET_APP_PASSWORD="<YOUR_APP_PASSWORD>" \
+npx -y @aashari/mcp-server-atlassian-bitbucket
+```
+
+**Using Atlassian API Token:**
+
+```bash
+ATLASSIAN_SITE_NAME="bitbucket" \
+ATLASSIAN_USER_EMAIL="<YOUR_EMAIL>" \
+ATLASSIAN_API_TOKEN="<YOUR_API_TOKEN>" \
 npx -y @aashari/mcp-server-atlassian-bitbucket
 ```
 
@@ -151,11 +177,10 @@ npx -y @aashari/mcp-server-atlassian-bitbucket
 
 Configure your MCP client (Claude Desktop, Cursor, etc.) to run this server.
 
-#### Option 1: Claude Desktop
+#### Claude Desktop
 
-1.  Open Claude Desktop settings (gear icon).
-2.  Click **Edit Config**.
-3.  Add or merge the following into the `mcpServers` section:
+1.  Open Settings (gear icon) > Edit Config.
+2.  Add or merge into `mcpServers`:
 
     ```json
     {
@@ -164,30 +189,28 @@ Configure your MCP client (Claude Desktop, Cursor, etc.) to run this server.
     			"command": "npx",
     			"args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"]
     		}
-    		// Add other servers here if needed
+    		// ... other servers
     	}
     }
     ```
 
-4.  Save the configuration file.
-5.  **Restart Claude Desktop.**
-6.  Verify the connection: Click the "Tools" (hammer) icon. You should see the Bitbucket tools listed (e.g., `list-workspaces`, `get-repository`).
+3.  Save and **Restart Claude Desktop**.
+4.  **Verify:** Click the "Tools" (hammer) icon; Bitbucket tools should be listed.
 
-#### Option 2: Cursor AI
+#### Cursor AI
 
-1.  Open the Command Palette (`Cmd+Shift+P` or `Ctrl+Shift+P`).
-2.  Search for and select **Cursor Settings > MCP**.
-3.  Click **+ Add new MCP server**.
-4.  Fill in the details:
-    - **Name**: `aashari/mcp-server-atlassian-bitbucket` (or another name you prefer)
-    - **Type**: `command`
-    - **Command**: `npx -y @aashari/mcp-server-atlassian-bitbucket`
-5.  Click **Add**.
-6.  Wait for the indicator next to the server name to turn green, confirming it's running and connected.
+1.  Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) > **Cursor Settings > MCP**.
+2.  Click **+ Add new MCP server**.
+3.  Enter:
+    - Name: `aashari/mcp-server-atlassian-bitbucket`
+    - Type: `command`
+    - Command: `npx -y @aashari/mcp-server-atlassian-bitbucket`
+4.  Click **Add**.
+5.  **Verify:** Wait for the indicator next to the server name to turn green.
 
 ### Step 4: Using the Tools
 
-Now you can ask your AI assistant questions related to your Bitbucket instance:
+You can now ask your AI assistant questions related to your Bitbucket instance:
 
 - "List all the Bitbucket workspaces I have access to."
 - "Show me all repositories in the 'dev-team' workspace."
@@ -197,131 +220,55 @@ Now you can ask your AI assistant questions related to your Bitbucket instance:
 
 ## Using as a Command-Line Tool (CLI)
 
-You can also use this package directly from your terminal for quick checks or scripting.
+You can also use this package directly from your terminal. Ensure credentials are set first (Method A or B above).
 
-#### Method 1: `npx` (No Installation Needed)
-
-Run commands directly using `npx`:
+#### Quick Use with `npx`
 
 ```bash
-# Ensure credentials are set via ~/.mcp/configs.json or environment variables first!
 npx -y @aashari/mcp-server-atlassian-bitbucket list-workspaces
 npx -y @aashari/mcp-server-atlassian-bitbucket get-repository --workspace my-team --repository my-api
 npx -y @aashari/mcp-server-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
 ```
 
-#### Method 2: Global Installation (for Frequent Use)
+#### Global Installation (Optional)
 
-1.  Install globally: `npm install -g @aashari/mcp-server-atlassian-bitbucket`
-2.  Run commands using the `mcp-bitbucket` alias:
+1.  `npm install -g @aashari/mcp-server-atlassian-bitbucket`
+2.  Use the `mcp-bitbucket` command:
 
 ```bash
-# Ensure credentials are set via ~/.mcp/configs.json or environment variables first!
 mcp-bitbucket list-workspaces --limit 5
-mcp-bitbucket get-repository --workspace my-team --repository my-api
-mcp-bitbucket list-pull-requests --workspace my-team --repository my-api --state MERGED --limit 10
+mcp-bitbucket get-pull-request --workspace my-team --repository my-api --pull-request 42
 mcp-bitbucket --help # See all commands
-mcp-bitbucket get-pull-request --help # Help for a specific command
 ```
 
 ## Troubleshooting
 
 - **Authentication Errors (401/403):**
-    - Double-check your credentials in your `~/.mcp/configs.json` or environment variables. Ensure you are using _either_ the API Token set _or_ the App Password set, not mixing them.
-    - Ensure the API token or app password is still valid and hasn't been revoked.
-    - If using an App Password, verify it has the necessary `Read` permissions for Workspaces, Repositories, and Pull Requests in Bitbucket settings.
-    - Verify your user account has permission to access the Bitbucket workspaces and repositories you're querying.
+    - Double-check your credentials in `~/.mcp/configs.json` or environment variables. Ensure you used the correct set (App Password OR API Token).
+    - Verify the App Password or API Token is correct, valid, and has not been revoked.
+    - Ensure your account has permission to access the specific Bitbucket resources.
 - **Server Not Connecting (in AI Client):**
-    - Ensure the command in your AI client configuration (`npx -y @aashari/mcp-server-atlassian-bitbucket`) is correct.
-    - Check if Node.js/npm are correctly installed and in your system's PATH.
-    - Try running the `npx` command directly in your terminal to see if it outputs any errors.
-- **Resource Not Found (404 Errors):**
-    - Verify the workspace slug, repository slug, or pull request ID you are using is correct (case-sensitive for slugs).
-    - Ensure you have permissions to view the specific workspace, repository, or pull request.
-- **Enable Debug Logs:** Set the `DEBUG` environment variable to `true` for more detailed logs. Add `"DEBUG": "true"` inside the `environments` block in `configs.json` or run like `DEBUG=true npx ...`.
+    - Ensure the command (`npx ...`) is correct in your client's config.
+    - Check that Node.js/npm are installed and in your PATH.
+    - Run the `npx` command directly in your terminal to see errors.
+- **Resource Not Found (404):**
+    - Verify workspace/repository slugs and PR IDs are correct (slugs are case-sensitive).
+    - Check your permissions for the specific resource.
+- **Enable Debug Logs:** Set the `DEBUG` environment variable to `true` (e.g., add `"DEBUG": "true"` in `configs.json` or run `DEBUG=true npx ...`).
 
 ## For Developers: Contributing
 
-Contributions are welcome! Please follow the established architecture and guidelines.
+Contributions are welcome! If you'd like to contribute, please consider the following:
 
-### Project Architecture
-
-This MCP server adheres to a layered architecture promoting separation of concerns:
-
-1.  **`src/cli`**: Defines the command-line interface using `commander`. Minimal logic, mainly argument parsing and calling controllers.
-2.  **`src/tools`**: Defines the MCP tool interface for AI clients using `@modelcontextprotocol/sdk` and `zod` for schemas. Minimal logic, maps arguments and calls controllers.
-3.  **`src/controllers`**: Contains the core application logic. Orchestrates calls to services, uses formatters, handles pagination, and ensures consistent responses. Implements the "maximal detail" principle for 'get' operations.
-4.  **`src/services`**: Acts as an adapter to the specific vendor (Atlassian Bitbucket) API. Uses `transport.util` for actual HTTP calls.
-5.  **`src/formatters`**: Responsible for converting data into user-friendly Markdown output, heavily utilizing `formatter.util`.
-6.  **`src/utils`**: Holds shared, reusable utilities (config, logging, errors, formatting, transport, pagination, defaults). _Note: `adf.util` and `markdown.util` might be less relevant here compared to Confluence/Jira unless descriptions use complex formats._
-7.  **`src/types`**: Defines shared internal TypeScript types (`ControllerResponse`, etc.).
-
-### Setting Up Development
-
-1.  Clone the repository: `git clone <repository-url>`
-2.  Navigate to the project directory: `cd mcp-server-atlassian-bitbucket`
-3.  Install dependencies: `npm install`
-4.  Run the server in development mode (uses `ts-node` and watches for changes): `npm run dev:server`
-5.  Run CLI commands during development: `npm run dev:cli -- <command> [options]` (e.g., `npm run dev:cli -- list-workspaces`)
-
-### Key Development Scripts
-
-- `npm run dev:server`: Start the MCP server via stdio transport with hot-reloading.
-- `npm run dev:cli -- [args]`: Execute CLI commands using `ts-node`.
-- `npm run build`: Compile TypeScript to JavaScript in `dist/`.
-- `npm test`: Run unit and integration tests using Jest.
-- `npm run lint`: Run ESLint to check for code style issues.
-- `npm run format`: Format code using Prettier.
-
-### Adding a New Feature (Tool/Command)
-
-1.  **API Research:** Identify the target Bitbucket API endpoint(s) (v2.0).
-2.  **Service Layer:** Add function(s) in `src/services/vendor.atlassian.*.service.ts` using `fetchAtlassian`. Define API types in `src/services/vendor.*.types.ts`.
-3.  **Controller Layer:** Add function in `src/controllers/*.controller.ts`. Define internal types (`*Options`, `*Identifier`) in `src/controllers/*.types.ts`. Call the service, ensure maximum detail for 'get' operations, call the formatter, handle pagination (`extractPaginationInfo` with `PaginationType.PAGE`), return `ControllerResponse`, and wrap logic in `handleControllerError`.
-4.  **Formatter:** Add/update function in `src/controllers/*.formatter.ts` using `formatter.util`.
-5.  **Tool Layer:** Define Zod schema in `src/tools/*.types.ts` (minimal args). Define tool in `src/tools/*.tool.ts` using `server.tool()`, including the standard documentation template. Implement handler calling the controller.
-6.  **CLI Layer:** Define command in `src/cli/*.cli.ts` using `commander` (options matching tool args). Implement action calling the controller, formatting output, and using `handleCliError`.
-7.  **Testing:** Add relevant tests (unit, integration, CLI execution).
-8.  **Documentation:** Update this README and ensure tool/CLI descriptions are accurate.
-
-### Standard Tool Documentation Template
-
-Use this template within the description string for `server.tool()`:
-
-```markdown
-PURPOSE: [Briefly explain what the tool does and its primary goal.]
-
-WHEN TO USE:
-
-- [Describe the main scenario(s) where this tool is useful.]
-- [Mention specific situations or questions it answers.]
-
-WHEN NOT TO USE:
-
-- [Point to alternative tools if they are better suited for certain tasks.]
-- [Mention any limitations or anti-patterns.]
-
-RETURNS: [Describe the structure and key information included in the Markdown output. Mention that details are comprehensive by default for 'get' operations.]
-
-EXAMPLES:
-
-- [Provide a simple AI tool call example: { param: "value" }]
-- [Provide a more complex example if applicable, e.g., with filters.]
-
-ERRORS:
-
-- [List common error scenarios (e.g., "Not Found", "Permission Denied").]
-- [Briefly suggest potential causes or checks (e.g., "Verify the slugs/IDs", "Check credentials/permissions").]
-```
-
-### File Naming Convention
-
-- Utility files in `src/utils/` use `kebab-case`: `config.util.ts`, `error-handler.util.ts`.
-- Feature-specific files (CLI, Controller, Formatter, Service, Tool, Types) use the pattern `atlassian.{feature}.{layer}.ts` or `vendor.atlassian.{feature}.{layer}.ts` (for services/service-types), e.g., `atlassian.repositories.cli.ts`, `atlassian.pullrequests.controller.ts`, `vendor.atlassian.workspaces.service.ts`.
+- **Architecture:** The server uses a layered approach (CLI/Tool -> Controller -> Service). See the `.cursorrules` file or code comments for more details.
+- **Setup:** Clone the repo, run `npm install`. Use `npm run dev:server` to run with hot-reloading or `npm run dev:cli -- <command>` to test CLI commands.
+- **Code Style:** Run `npm run lint` and `npm run format`.
+- **Tests:** Add tests for new features (`npm test`).
+- **Consistency:** Ensure new tools/commands follow the "Minimal Interface, Maximal Detail" philosophy and match existing patterns.
 
 ## Versioning Note
 
-This project (`@aashari/mcp-server-atlassian-bitbucket`) follows Semantic Versioning. It is versioned independently from other `@aashari/mcp-server-*` packages (like Jira or Confluence). Version differences between these related projects are expected and reflect their individual development cycles.
+This project (`@aashari/mcp-server-atlassian-bitbucket`) follows Semantic Versioning and is versioned independently from other `@aashari/mcp-server-*` packages.
 
 ## License
 
