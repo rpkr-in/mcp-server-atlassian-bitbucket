@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.6.0...v1.7.0) (2025-03-26)
+
+
+### Features
+
+* trigger release with semantic versioning ([f4895b8](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f4895b82f93d842bf777c59e2707aeedb64fd30c))
+
 # [1.6.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.5.0...v1.6.0) (2025-03-26)
 
 
