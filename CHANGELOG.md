@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.1...v1.7.2) (2025-03-26)
+
+
+### Bug Fixes
+
+* improve CLI and tool descriptions with consistent formatting and detailed guidance ([ce74835](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ce748354d84f7649d71a230b8e66e80c41547f34))
+
 ## [1.7.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.0...v1.7.1) (2025-03-26)
 
 

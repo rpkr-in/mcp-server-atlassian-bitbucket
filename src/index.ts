@@ -13,7 +13,7 @@ import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
 import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
 
 // Define version constant for easier management and consistent versioning
-const VERSION = '1.7.1';
+const VERSION = '1.7.2';
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
