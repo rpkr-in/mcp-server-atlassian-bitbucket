@@ -27,16 +27,6 @@ const PaginationArgs = {
  */
 export const ListWorkspacesToolArgs = z.object({
 	/**
-	 * Sort parameter for ordering results
-	 */
-	sort: z
-		.string()
-		.optional()
-		.describe(
-			'Field to sort results by. Common values: "name", "created_on", "updated_on". Prefix with "-" for descending order. Example: "-name" for reverse alphabetical order. If omitted, defaults to server-defined ordering.',
-		),
-
-	/**
 	 * Maximum number of workspaces to return and pagination
 	 */
 	...PaginationArgs,

@@ -34,7 +34,6 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
 /**
  * List Bitbucket workspaces with optional filtering
  * @param options - Options for listing workspaces
- * @param options.sort - Sort parameter
  * @param options.limit - Maximum number of workspaces to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
  * @returns Promise with formatted workspace list content and pagination information
@@ -66,7 +65,8 @@ async function list(
 			page: mergedOptions.cursor
 				? parseInt(mergedOptions.cursor, 10)
 				: undefined, // Use cursor value for page
-			...(mergedOptions.sort && { sort: mergedOptions.sort }), // Only add sort if specified by user
+			// NOTE: Sort parameter is not included as the Bitbucket API's /2.0/user/permissions/workspaces
+			// endpoint does not support sorting on any field
 		};
 
 		methodLogger.debug('Using filters:', serviceParams);

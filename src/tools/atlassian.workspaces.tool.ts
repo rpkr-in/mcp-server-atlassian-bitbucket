@@ -41,7 +41,6 @@ async function listWorkspaces(
 	try {
 		// Pass the filter options to the controller
 		const message = await atlassianWorkspacesController.list({
-			sort: args.sort,
 			limit: args.limit,
 			cursor: args.cursor,
 		});
@@ -131,7 +130,7 @@ function register(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'list-workspaces',
-		`List Bitbucket workspaces accessible to the authenticated user, with optional sorting and pagination.
+		`List Bitbucket workspaces accessible to the authenticated user, with optional pagination.
 
         PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list-repositories, get-repository, list-pull-requests, get-pull-request).
 
@@ -150,7 +149,6 @@ function register(server: McpServer) {
 
         EXAMPLES:
         - List all accessible workspaces: {}
-        - Sort by last accessed (descending): { sort: "-last_accessed" }
         - Paginate results: { limit: 10, cursor: "some-cursor-value" }
 
         ERRORS:

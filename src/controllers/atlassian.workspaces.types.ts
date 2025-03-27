@@ -12,12 +12,11 @@ export interface WorkspaceIdentifier extends EntityIdentifier {
 
 /**
  * Options for listing Bitbucket workspaces
+ * NOTE: Sorting is not supported by the Bitbucket API for the /2.0/user/permissions/workspaces endpoint
  */
 export interface ListWorkspacesOptions extends PaginationOptions {
-	/**
-	 * Optional sort parameter
-	 */
-	sort?: string;
+	// No additional options beyond pagination
+	[key: string]: unknown;
 }
 
 /**

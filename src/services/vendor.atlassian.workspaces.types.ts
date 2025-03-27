@@ -82,6 +82,11 @@ export type WorkspaceDetailed = Workspace;
  * Parameters for listing workspaces
  */
 export interface ListWorkspacesParams {
+	/**
+	 * Sort parameter
+	 * @deprecated The /2.0/user/permissions/workspaces endpoint does not support sorting,
+	 * despite this parameter being included in the type. Any value provided will be ignored.
+	 */
 	sort?: string;
 	q?: string;
 	page?: number;

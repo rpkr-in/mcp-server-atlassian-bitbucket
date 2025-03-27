@@ -49,17 +49,14 @@ function registerListWorkspacesCommand(program: Command): void {
 
         Use Case: Useful when you don't know the exact slug of a workspace you need to interact with, or when exploring available team/project containers.
 
-        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports sorting and pagination.
+        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports pagination.
 
         Examples:
   $ mcp-bitbucket list-workspaces --limit 10
-  $ mcp-bitbucket list-workspaces --sort "-last_accessed"
   $ mcp-bitbucket list-workspaces --cursor "some-cursor-value"`,
 		)
-		.option(
-			'-S, --sort <string>',
-			'Field to sort results by (e.g., "name", "-created_on")',
-		)
+		// NOTE: Sort option has been removed as the Bitbucket API's /2.0/user/permissions/workspaces endpoint
+		// does not support sorting on any field
 		.option(
 			'-l, --limit <number>',
 			'Maximum number of workspaces to return (1-100)',
@@ -86,9 +83,9 @@ function registerListWorkspacesCommand(program: Command): void {
 					}
 				}
 
-				const filterOptions: ListWorkspacesOptions = {
-					sort: options.sort,
-				};
+				// Bitbucket API's /2.0/user/permissions/workspaces endpoint does not support sorting
+				// so we don't include sort in the filterOptions even if provided in the CLI args
+				const filterOptions: ListWorkspacesOptions = {};
 
 				// Apply pagination options if provided
 				if (options.limit) {

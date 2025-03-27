@@ -38,10 +38,12 @@ serviceLogger.debug('Bitbucket workspaces service initialized');
  * Retrieves a list of workspaces from Bitbucket with support for various filters
  * and pagination options.
  *
+ * NOTE: The /2.0/user/permissions/workspaces endpoint does not support sorting,
+ * despite the ListWorkspacesParams type including a sort parameter.
+ *
  * @async
  * @memberof VendorAtlassianWorkspacesService
  * @param {ListWorkspacesParams} [params={}] - Optional parameters for customizing the request
- * @param {string} [params.sort] - Sort order for results
  * @param {string} [params.q] - Filter by workspace name
  * @param {number} [params.page] - Page number
  * @param {number} [params.pagelen] - Number of items per page
@@ -73,9 +75,8 @@ async function list(
 	const queryParams = new URLSearchParams();
 
 	// Add optional query parameters if provided
-	if (params.sort) {
-		queryParams.set('sort', params.sort);
-	}
+	// NOTE: Sort is intentionally not included as the /2.0/user/permissions/workspaces endpoint
+	// does not support sorting on any field
 	if (params.q) {
 		queryParams.set('q', params.q);
 	}
