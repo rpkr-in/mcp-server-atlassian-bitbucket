@@ -1,5 +1,5 @@
 import { createAuthMissingError } from '../utils/error.util.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import {
 	fetchAtlassian,
 	getAtlassianCredentials,
@@ -25,6 +25,14 @@ const API_PATH = '/2.0';
  * All methods require valid Atlassian credentials configured in the environment.
  */
 
+// Create a contextualized logger for this file
+const serviceLogger = Logger.forContext(
+	'services/vendor.atlassian.repositories.service.ts',
+);
+
+// Log service initialization
+serviceLogger.debug('Bitbucket repositories service initialized');
+
 /**
  * List repositories for a workspace
  * @param {string} workspace - Workspace name or UUID
@@ -47,12 +55,11 @@ const API_PATH = '/2.0';
 async function list(
 	params: ListRepositoriesParams,
 ): Promise<RepositoriesResponse> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.repositories.service.ts@list]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket repositories with params:`,
-		params,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'list',
 	);
+	methodLogger.debug('Listing Bitbucket repositories with params:', params);
 
 	if (!params.workspace) {
 		throw new Error('Workspace parameter is required');
@@ -87,7 +94,7 @@ async function list(
 		: '';
 	const path = `${API_PATH}/repositories/${params.workspace}${queryString}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<RepositoriesResponse>(credentials, path);
 }
 
@@ -111,10 +118,12 @@ async function list(
  * });
  */
 async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.repositories.service.ts@get]';
-	logger.debug(
-		`${logPrefix} Getting Bitbucket repository: ${params.workspace}/${params.repo_slug}`,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'get',
+	);
+	methodLogger.debug(
+		`Getting Bitbucket repository: ${params.workspace}/${params.repo_slug}`,
 	);
 
 	if (!params.workspace || !params.repo_slug) {
@@ -130,7 +139,7 @@ async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
 
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<RepositoryDetailed>(credentials, path);
 }
 

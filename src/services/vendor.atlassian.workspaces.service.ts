@@ -1,5 +1,5 @@
 import { createAuthMissingError } from '../utils/error.util.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import {
 	fetchAtlassian,
 	getAtlassianCredentials,
@@ -23,6 +23,14 @@ const API_PATH = '/2.0';
  * Provides methods for listing workspaces and retrieving workspace details.
  * All methods require valid Atlassian credentials configured in the environment.
  */
+
+// Create a contextualized logger for this file
+const serviceLogger = Logger.forContext(
+	'services/vendor.atlassian.workspaces.service.ts',
+);
+
+// Log service initialization
+serviceLogger.debug('Bitbucket workspaces service initialized');
 
 /**
  * List Bitbucket workspaces with optional filtering and pagination
@@ -48,12 +56,11 @@ const API_PATH = '/2.0';
 async function list(
 	params: ListWorkspacesParams = {},
 ): Promise<WorkspacePermissionsResponse> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.workspaces.service.ts@list]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket workspaces with params:`,
-		params,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.workspaces.service.ts',
+		'list',
 	);
+	methodLogger.debug('Listing Bitbucket workspaces with params:', params);
 
 	const credentials = getAtlassianCredentials();
 	if (!credentials) {
@@ -84,7 +91,7 @@ async function list(
 		: '';
 	const path = `${API_PATH}/user/permissions/workspaces${queryString}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<WorkspacePermissionsResponse>(credentials, path);
 }
 
@@ -103,11 +110,11 @@ async function list(
  * const workspace = await get('my-workspace');
  */
 async function get(workspace: string): Promise<WorkspaceDetailed> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.workspaces.service.ts@get]';
-	logger.debug(
-		`${logPrefix} Getting Bitbucket workspace with slug: ${workspace}`,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.workspaces.service.ts',
+		'get',
 	);
+	methodLogger.debug(`Getting Bitbucket workspace with slug: ${workspace}`);
 
 	const credentials = getAtlassianCredentials();
 	if (!credentials) {
@@ -119,7 +126,7 @@ async function get(workspace: string): Promise<WorkspaceDetailed> {
 	// Currently no query parameters for workspace details API
 	const path = `${API_PATH}/workspaces/${workspace}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<WorkspaceDetailed>(credentials, path);
 }
 

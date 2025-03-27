@@ -1,5 +1,5 @@
 import { createAuthMissingError } from '../utils/error.util.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import {
 	fetchAtlassian,
 	getAtlassianCredentials,
@@ -27,6 +27,14 @@ const API_PATH = '/2.0';
  * All methods require valid Atlassian credentials configured in the environment.
  */
 
+// Create a contextualized logger for this file
+const serviceLogger = Logger.forContext(
+	'services/vendor.atlassian.pullrequests.service.ts',
+);
+
+// Log service initialization
+serviceLogger.debug('Bitbucket pull requests service initialized');
+
 /**
  * List pull requests for a repository
  * @param {ListPullRequestsParams} params - Parameters for the request
@@ -52,12 +60,11 @@ const API_PATH = '/2.0';
 async function list(
 	params: ListPullRequestsParams,
 ): Promise<PullRequestsResponse> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.pullrequests.service.ts@list]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket pull requests with params:`,
-		params,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'list',
 	);
+	methodLogger.debug('Listing Bitbucket pull requests with params:', params);
 
 	if (!params.workspace || !params.repo_slug) {
 		throw new Error('Both workspace and repo_slug parameters are required');
@@ -104,7 +111,7 @@ async function list(
 		: '';
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests${queryString}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<PullRequestsResponse>(credentials, path);
 }
 
@@ -130,10 +137,12 @@ async function list(
  * });
  */
 async function get(params: GetPullRequestParams): Promise<PullRequestDetailed> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.pullrequests.service.ts@get]';
-	logger.debug(
-		`${logPrefix} Getting Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'get',
+	);
+	methodLogger.debug(
+		`Getting Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
 	);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
@@ -151,7 +160,7 @@ async function get(params: GetPullRequestParams): Promise<PullRequestDetailed> {
 
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<PullRequestDetailed>(credentials, path);
 }
 
@@ -183,10 +192,12 @@ async function get(params: GetPullRequestParams): Promise<PullRequestDetailed> {
 async function getComments(
 	params: GetPullRequestCommentsParams,
 ): Promise<PullRequestCommentsResponse> {
-	const logPrefix =
-		'[src/services/vendor.atlassian.pullrequests.service.ts@getComments]';
-	logger.debug(
-		`${logPrefix} Getting comments for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'getComments',
+	);
+	methodLogger.debug(
+		`Getting comments for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
 	);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
@@ -223,7 +234,7 @@ async function getComments(
 
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/comments${queryString}`;
 
-	logger.debug(`${logPrefix} Sending request to: ${path}`);
+	methodLogger.debug(`Sending request to: ${path}`);
 	return fetchAtlassian<PullRequestCommentsResponse>(credentials, path);
 }
 

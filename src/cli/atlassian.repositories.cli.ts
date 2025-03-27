@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
 import { ListRepositoriesOptions } from '../controllers/atlassian.repositories.types.js';
@@ -11,21 +11,28 @@ import { formatPagination } from '../utils/formatter.util.js';
  * All commands require valid Atlassian credentials.
  */
 
+// Create a contextualized logger for this file
+const cliLogger = Logger.forContext('cli/atlassian.repositories.cli.ts');
+
+// Log CLI initialization
+cliLogger.debug('Bitbucket repositories CLI module initialized');
+
 /**
  * Register Bitbucket Repositories CLI commands with the Commander program
  * @param program - The Commander program instance to register commands with
  * @throws Error if command registration fails
  */
 function register(program: Command): void {
-	const logPrefix = '[src/cli/atlassian.repositories.cli.ts@register]';
-	logger.debug(
-		`${logPrefix} Registering Bitbucket Repositories CLI commands...`,
+	const methodLogger = Logger.forContext(
+		'cli/atlassian.repositories.cli.ts',
+		'register',
 	);
+	methodLogger.debug('Registering Bitbucket Repositories CLI commands...');
 
 	registerListRepositoriesCommand(program);
 	registerGetRepositoryCommand(program);
 
-	logger.debug(`${logPrefix} CLI commands registered successfully`);
+	methodLogger.debug('CLI commands registered successfully');
 }
 
 /**
@@ -74,11 +81,13 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Pagination cursor for retrieving the next set of results',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.repositories.cli.ts@list-repositories]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'list-repositories',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Listing repositories for workspace: ${options.workspace}`,
+				actionLogger.debug(
+					`Listing repositories for workspace: ${options.workspace}`,
 				);
 
 				// Prepare filter options from command parameters
@@ -105,17 +114,15 @@ function registerListRepositoriesCommand(program: Command): void {
 					filterOptions.cursor = options.cursor;
 				}
 
-				logger.debug(
-					`${logPrefix} Fetching repositories with filters:`,
+				actionLogger.debug(
+					'Fetching repositories with filters:',
 					filterOptions,
 				);
 
 				const result =
 					await atlassianRepositoriesController.list(filterOptions);
 
-				logger.debug(
-					`${logPrefix} Successfully retrieved repositories`,
-				);
+				actionLogger.debug('Successfully retrieved repositories');
 
 				console.log(result.content);
 
@@ -131,7 +138,7 @@ function registerListRepositoriesCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -165,11 +172,13 @@ function registerGetRepositoryCommand(program: Command): void {
 			'Slug of the repository to retrieve',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.repositories.cli.ts@get-repository]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'get-repository',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Fetching details for repository: ${options.workspace}/${options.repository}`,
+				actionLogger.debug(
+					`Fetching details for repository: ${options.workspace}/${options.repository}`,
 				);
 
 				const result = await atlassianRepositoriesController.get({
@@ -177,13 +186,11 @@ function registerGetRepositoryCommand(program: Command): void {
 					repoSlug: options.repository,
 				});
 
-				logger.debug(
-					`${logPrefix} Successfully retrieved repository details`,
-				);
+				actionLogger.debug('Successfully retrieved repository details');
 
 				console.log(result.content);
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

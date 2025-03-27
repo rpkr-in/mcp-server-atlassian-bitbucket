@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
@@ -12,6 +12,12 @@ import {
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
+
+// Create a contextualized logger for this file
+const toolLogger = Logger.forContext('tools/atlassian.pullrequests.tool.ts');
+
+// Log tool initialization
+toolLogger.debug('Bitbucket pull requests tool initialized');
 
 /**
  * MCP Tool: List Bitbucket Pull Requests
@@ -28,12 +34,11 @@ async function listPullRequests(
 	args: ListPullRequestsToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix =
-		'[src/tools/atlassian.pullrequests.tool.ts@listPullRequests]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket pull requests with filters:`,
-		args,
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.pullrequests.tool.ts',
+		'listPullRequests',
 	);
+	methodLogger.debug('Listing Bitbucket pull requests with filters:', args);
 
 	try {
 		// Pass the filter options to the controller
@@ -46,8 +51,8 @@ async function listPullRequests(
 			cursor: args.cursor,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved pull requests from controller`,
+		methodLogger.debug(
+			'Successfully retrieved pull requests from controller',
 			message,
 		);
 
@@ -60,7 +65,7 @@ async function listPullRequests(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to list pull requests`, error);
+		methodLogger.error('Failed to list pull requests', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -80,11 +85,13 @@ async function getPullRequest(
 	args: GetPullRequestToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix =
-		'[src/tools/atlassian.pullrequests.tool.ts@getPullRequest]';
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.pullrequests.tool.ts',
+		'getPullRequest',
+	);
 
-	logger.debug(
-		`${logPrefix} Retrieving pull request details for ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
+	methodLogger.debug(
+		`Retrieving pull request details for ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
 		args,
 	);
 
@@ -95,8 +102,8 @@ async function getPullRequest(
 			prId: args.prId,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved pull request details from controller`,
+		methodLogger.debug(
+			'Successfully retrieved pull request details from controller',
 			message,
 		);
 
@@ -109,7 +116,7 @@ async function getPullRequest(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to get pull request details`, error);
+		methodLogger.error('Failed to get pull request details', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -129,11 +136,13 @@ async function listPullRequestComments(
 	args: ListPullRequestCommentsToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix =
-		'[src/tools/atlassian.pullrequests.tool.ts@listPullRequestComments]';
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.pullrequests.tool.ts',
+		'listPullRequestComments',
+	);
 
-	logger.debug(
-		`${logPrefix} Retrieving comments for pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
+	methodLogger.debug(
+		`Retrieving comments for pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
 		args,
 	);
 
@@ -146,8 +155,8 @@ async function listPullRequestComments(
 			cursor: args.cursor,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved pull request comments from controller`,
+		methodLogger.debug(
+			'Successfully retrieved pull request comments from controller',
 			message,
 		);
 
@@ -160,7 +169,7 @@ async function listPullRequestComments(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to get pull request comments`, error);
+		methodLogger.error('Failed to get pull request comments', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -174,8 +183,11 @@ async function listPullRequestComments(
  * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
-	const logPrefix = '[src/tools/atlassian.pullrequests.tool.ts@register]';
-	logger.debug(`${logPrefix} Registering Atlassian Pull Requests tools...`);
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.pullrequests.tool.ts',
+		'register',
+	);
+	methodLogger.debug('Registering Atlassian Pull Requests tools...');
 
 	// Register the list pull requests tool
 	server.tool(
@@ -251,34 +263,32 @@ function register(server: McpServer) {
         PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
 
         WHEN TO USE:
-        - When you need to see review feedback for a pull request
-        - When you want to view threaded discussions on a PR
-        - When you need to see inline code comments and their context
-        - After using 'list-pull-requests' to identify the target 'prId'
-        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'
+        - To see what reviewers have said about a pull request.
+        - To find inline code comments and their context (file, line number).
+        - After identifying a PR of interest via 'list-pull-requests'.
+        - When you need to understand review history, discussions, and decisions.
+        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the 'prId' (use 'list-pull-requests' first)
-        - When you need general PR details (use 'get-pull-request' instead)
-        - When you need repository information (use repository tools)
+        - When you don't know the pull request ID (use 'list-pull-requests' first).
+        - When you need the PR's metadata but not comments (use 'get-pull-request').
+        - When you need to post new comments (not supported).
 
-        RETURNS: Formatted list of comments including author, timestamp, content, and inline code context. Both general comments and code-specific comments are included. Supports pagination for PRs with many comments.
+        RETURNS: Formatted list of comments with author, date, content, and for inline comments: the file path and line numbers. General and inline comments are included.
 
         EXAMPLES:
-        - Get comments for a specific PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
-        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", limit: 50, cursor: "next-page-token" }
+        - List all comments on a PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
+        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", limit: 25, cursor: "next-page-token" }
 
         ERRORS:
-        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct
-        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'
-        - Permission errors: Ensure access to view the specified pull request comments`,
+        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct.
+        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
+        - Permission errors: Ensure access to view the specified pull request comments.`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
 	);
 
-	logger.debug(
-		`${logPrefix} Successfully registered Atlassian Pull Requests tools`,
-	);
+	methodLogger.debug('Successfully registered Atlassian Pull Requests tools');
 }
 
 export default { register };

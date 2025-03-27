@@ -2,7 +2,10 @@
  * Utility functions for converting Atlassian Document Format (ADF) to Markdown
  */
 
-import { logger } from './logger.util.js';
+import { Logger } from './logger.util.js';
+
+// Create a file-level logger for the module
+const adfLogger = Logger.forContext('utils/adf.util.ts');
 
 /**
  * Interface for ADF node
@@ -59,10 +62,7 @@ export function adfToMarkdown(adf: unknown): string {
 		// Process the document
 		return processAdfContent(adfDoc.content);
 	} catch (error) {
-		logger.error(
-			'[src/utils/adf.util.ts@adfToMarkdown] Error converting ADF to Markdown:',
-			error,
-		);
+		adfLogger.error('Error converting ADF to Markdown:', error);
 		return '*Error converting description format*';
 	}
 }

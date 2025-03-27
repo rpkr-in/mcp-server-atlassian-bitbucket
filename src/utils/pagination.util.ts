@@ -1,4 +1,4 @@
-import { logger } from './logger.util.js';
+import { Logger } from './logger.util.js';
 
 /**
  * Types of pagination mechanisms used by different Atlassian APIs
@@ -64,14 +64,17 @@ export type PaginationData =
  * Extract pagination information from API response
  * @param data The API response containing pagination information
  * @param paginationType The type of pagination mechanism used
- * @param source Source identifier for logging
  * @returns Object with nextCursor, hasMore, and count properties
  */
 export function extractPaginationInfo(
 	data: PaginationData,
 	paginationType: PaginationType,
-	source: string,
 ): { nextCursor?: string; hasMore: boolean; count?: number } {
+	const methodLogger = Logger.forContext(
+		'utils/pagination.util.ts',
+		'extractPaginationInfo',
+	);
+
 	let nextCursor: string | undefined;
 	let count: number | undefined;
 
@@ -127,8 +130,8 @@ export function extractPaginationInfo(
 							nextCursor = nextPage;
 						}
 					} catch (error) {
-						logger.warn(
-							`${source} Failed to parse next URL: ${pageData.next}`,
+						methodLogger.warn(
+							`Failed to parse next URL: ${pageData.next}`,
 							{ error },
 						);
 					}
@@ -137,17 +140,15 @@ export function extractPaginationInfo(
 			}
 
 			default:
-				logger.warn(
-					`${source} Unknown pagination type: ${paginationType}`,
-				);
+				methodLogger.warn(`Unknown pagination type: ${paginationType}`);
 		}
 
 		if (nextCursor) {
-			logger.debug(`${source} Next cursor: ${nextCursor}`);
+			methodLogger.debug(`Next cursor: ${nextCursor}`);
 		}
 
 		if (count !== undefined) {
-			logger.debug(`${source} Count: ${count}`);
+			methodLogger.debug(`Count: ${count}`);
 		}
 
 		return {
@@ -156,8 +157,8 @@ export function extractPaginationInfo(
 			count,
 		};
 	} catch (error) {
-		logger.warn(
-			`${source} Error extracting pagination information: ${error instanceof Error ? error.message : String(error)}`,
+		methodLogger.warn(
+			`Error extracting pagination information: ${error instanceof Error ? error.message : String(error)}`,
 		);
 		return { hasMore: false };
 	}

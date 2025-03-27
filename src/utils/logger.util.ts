@@ -62,6 +62,56 @@ function formatSourcePath(filePath: string, functionName?: string): string {
 }
 
 /**
+ * Check if debug logging is enabled for a specific module
+ *
+ * This function parses the DEBUG environment variable to determine if a specific
+ * module should have debug logging enabled. The DEBUG variable can be:
+ * - 'true' or '1': Enable all debug logging
+ * - Comma-separated list of modules: Enable debug only for those modules
+ * - Module patterns with wildcards: e.g., 'controllers/*' enables all controllers
+ *
+ * Examples:
+ * - DEBUG=true
+ * - DEBUG=controllers/*,services/vendor.atlassian.spaces.service.ts
+ * - DEBUG=transport,utils/formatter*
+ *
+ * @param modulePath The module path to check against DEBUG patterns
+ * @returns true if debug is enabled for this module, false otherwise
+ */
+function isDebugEnabledForModule(modulePath: string): boolean {
+	const debugEnv = process.env.DEBUG;
+
+	if (!debugEnv) {
+		return false;
+	}
+
+	// If debug is set to true or 1, enable all debug logging
+	if (debugEnv === 'true' || debugEnv === '1') {
+		return true;
+	}
+
+	// Parse comma-separated debug patterns
+	const debugPatterns = debugEnv.split(',').map((p) => p.trim());
+
+	// Check if the module matches any pattern
+	return debugPatterns.some((pattern) => {
+		// Convert glob-like patterns to regex
+		// * matches anything within a path segment
+		// ** matches across path segments
+		const regexPattern = pattern
+			.replace(/\*/g, '.*') // Convert * to regex .*
+			.replace(/\?/g, '.'); // Convert ? to regex .
+
+		const regex = new RegExp(`^${regexPattern}$`);
+		return (
+			regex.test(modulePath) ||
+			// Check for pattern matches without the 'src/' prefix
+			regex.test(modulePath.replace(/^src\//, ''))
+		);
+	});
+}
+
+/**
  * Logger class for consistent logging across the application.
  *
  * RECOMMENDED USAGE:
@@ -79,12 +129,19 @@ function formatSourcePath(filePath: string, functionName?: string): string {
  * 3. Avoid using raw string prefixes in log messages. Instead, use contextualized loggers.
  *
  * 4. For debugging objects, use the debugResponse method to log only essential properties.
+ *
+ * 5. Set DEBUG environment variable to control which modules show debug logs:
+ *    - DEBUG=true (enable all debug logs)
+ *    - DEBUG=controllers/*,services/* (enable for specific module groups)
+ *    - DEBUG=transport,utils/formatter* (enable specific modules, supports wildcards)
  */
 class Logger {
 	private context?: string;
+	private modulePath: string;
 
-	constructor(context?: string) {
+	constructor(context?: string, modulePath: string = '') {
 		this.context = context;
+		this.modulePath = modulePath;
 	}
 
 	/**
@@ -103,7 +160,7 @@ class Logger {
 	 * const methodLogger = Logger.forContext('controllers/myController.ts', 'myMethod');
 	 */
 	static forContext(filePath: string, functionName?: string): Logger {
-		return new Logger(formatSourcePath(filePath, functionName));
+		return new Logger(formatSourcePath(filePath, functionName), filePath);
 	}
 
 	private _formatMessage(message: string): string {
@@ -128,8 +185,8 @@ class Logger {
 		message: string,
 		...args: unknown[]
 	) {
-		// Skip debug messages if DEBUG is not set to true
-		if (level === 'debug' && process.env.DEBUG !== 'true') {
+		// Skip debug messages if not enabled for this module
+		if (level === 'debug' && !isDebugEnabledForModule(this.modulePath)) {
 			return;
 		}
 
@@ -203,6 +260,6 @@ class Logger {
 	}
 }
 
-// Export the default logger instance and the Logger class
-export const logger = new Logger();
+// The legacy logger export has been removed
+// since all files now use the contextual Logger pattern
 export { Logger };

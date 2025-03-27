@@ -1,4 +1,4 @@
-import { logger } from './logger.util.js';
+import { Logger } from './logger.util.js';
 import { config } from './config.util.js';
 import {
 	createAuthInvalidError,
@@ -31,11 +31,22 @@ export interface RequestOptions {
 	body?: unknown;
 }
 
+// Create a contextualized logger for this file
+const transportLogger = Logger.forContext('utils/transport.util.ts');
+
+// Log transport utility initialization
+transportLogger.debug('Transport utility initialized');
+
 /**
  * Get Atlassian credentials from environment variables
  * @returns AtlassianCredentials object or null if credentials are missing
  */
 export function getAtlassianCredentials(): AtlassianCredentials | null {
+	const methodLogger = Logger.forContext(
+		'utils/transport.util.ts',
+		'getAtlassianCredentials',
+	);
+
 	// First try standard Atlassian credentials (preferred for consistency)
 	const siteName = config.get('ATLASSIAN_SITE_NAME');
 	const userEmail = config.get('ATLASSIAN_USER_EMAIL');
@@ -43,9 +54,7 @@ export function getAtlassianCredentials(): AtlassianCredentials | null {
 
 	// If standard credentials are available, use them
 	if (siteName && userEmail && apiToken) {
-		logger.debug(
-			'[src/utils/transport.util.ts@getAtlassianCredentials] Using standard Atlassian credentials',
-		);
+		methodLogger.debug('Using standard Atlassian credentials');
 		return {
 			siteName,
 			userEmail,
@@ -59,9 +68,7 @@ export function getAtlassianCredentials(): AtlassianCredentials | null {
 	const bitbucketAppPassword = config.get('ATLASSIAN_BITBUCKET_APP_PASSWORD');
 
 	if (bitbucketUsername && bitbucketAppPassword) {
-		logger.debug(
-			'[src/utils/transport.util.ts@getAtlassianCredentials] Using Bitbucket-specific credentials',
-		);
+		methodLogger.debug('Using Bitbucket-specific credentials');
 		return {
 			bitbucketUsername,
 			bitbucketAppPassword,
@@ -70,7 +77,7 @@ export function getAtlassianCredentials(): AtlassianCredentials | null {
 	}
 
 	// If neither set of credentials is available, return null
-	logger.warn(
+	methodLogger.warn(
 		'Missing Atlassian credentials. Please set either ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN environment variables, or ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD for Bitbucket-specific auth.',
 	);
 	return null;
@@ -88,6 +95,11 @@ export async function fetchAtlassian<T>(
 	path: string,
 	options: RequestOptions = {},
 ): Promise<T> {
+	const methodLogger = Logger.forContext(
+		'utils/transport.util.ts',
+		'fetchAtlassian',
+	);
+
 	// Set up base URL and auth headers based on credential type
 	let baseUrl: string;
 	let authHeader: string;
@@ -142,16 +154,14 @@ export async function fetchAtlassian<T>(
 		body: options.body ? JSON.stringify(options.body) : undefined,
 	};
 
-	logger.debug(
-		`[src/utils/transport.util.ts@fetchAtlassian] Calling Atlassian API: ${url}`,
-	);
+	methodLogger.debug(`Calling Atlassian API: ${url}`);
 
 	try {
 		const response = await fetch(url, requestOptions);
 
 		// Log the raw response status and headers
-		logger.debug(
-			`[src/utils/transport.util.ts@fetchAtlassian] Raw response received: ${response.status} ${response.statusText}`,
+		methodLogger.debug(
+			`Raw response received: ${response.status} ${response.statusText}`,
 			{
 				url,
 				status: response.status,
@@ -162,8 +172,8 @@ export async function fetchAtlassian<T>(
 
 		if (!response.ok) {
 			const errorText = await response.text();
-			logger.error(
-				`[src/utils/transport.util.ts@fetchAtlassian] API error: ${response.status} ${response.statusText}`,
+			methodLogger.error(
+				`API error: ${response.status} ${response.statusText}`,
 				errorText,
 			);
 
@@ -198,10 +208,7 @@ export async function fetchAtlassian<T>(
 					}
 				}
 			} catch (parseError) {
-				logger.debug(
-					`[src/utils/transport.util.ts@fetchAtlassian] Error parsing error response:`,
-					parseError,
-				);
+				methodLogger.debug(`Error parsing error response:`, parseError);
 				// Fall back to the default error message
 			}
 
@@ -219,17 +226,11 @@ export async function fetchAtlassian<T>(
 		// Clone the response to log its content without consuming it
 		const clonedResponse = response.clone();
 		const responseJson = await clonedResponse.json();
-		logger.debug(
-			`[src/utils/transport.util.ts@fetchAtlassian] Response body:`,
-			responseJson,
-		);
+		methodLogger.debug(`Response body:`, responseJson);
 
 		return response.json() as Promise<T>;
 	} catch (error) {
-		logger.error(
-			`[src/utils/transport.util.ts@fetchAtlassian] Request failed`,
-			error,
-		);
+		methodLogger.error(`Request failed`, error);
 
 		// If it's already an McpError, just rethrow it
 		if (error instanceof McpError) {

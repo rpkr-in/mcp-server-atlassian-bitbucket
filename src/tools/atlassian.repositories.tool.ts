@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
@@ -10,6 +10,12 @@ import {
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
+
+// Create a contextualized logger for this file
+const toolLogger = Logger.forContext('tools/atlassian.repositories.tool.ts');
+
+// Log tool initialization
+toolLogger.debug('Bitbucket repositories tool initialized');
 
 /**
  * MCP Tool: List Bitbucket Repositories
@@ -26,12 +32,11 @@ async function listRepositories(
 	args: ListRepositoriesToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix =
-		'[src/tools/atlassian.repositories.tool.ts@listRepositories]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket repositories with filters:`,
-		args,
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'listRepositories',
 	);
+	methodLogger.debug('Listing Bitbucket repositories with filters:', args);
 
 	try {
 		// Pass the options to the controller
@@ -44,8 +49,8 @@ async function listRepositories(
 			cursor: args.cursor,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved repositories from controller`,
+		methodLogger.debug(
+			'Successfully retrieved repositories from controller',
 			message,
 		);
 
@@ -58,7 +63,7 @@ async function listRepositories(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to list repositories`, error);
+		methodLogger.error('Failed to list repositories', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -78,11 +83,13 @@ async function getRepository(
 	args: GetRepositoryToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix =
-		'[src/tools/atlassian.repositories.tool.ts@getRepository]';
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'getRepository',
+	);
 
-	logger.debug(
-		`${logPrefix} Retrieving repository details for ${args.workspaceSlug}/${args.repoSlug}`,
+	methodLogger.debug(
+		`Retrieving repository details for ${args.workspaceSlug}/${args.repoSlug}`,
 		args,
 	);
 
@@ -92,8 +99,8 @@ async function getRepository(
 			repoSlug: args.repoSlug,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved repository details from controller`,
+		methodLogger.debug(
+			'Successfully retrieved repository details from controller',
 			message,
 		);
 
@@ -106,7 +113,7 @@ async function getRepository(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to get repository details`, error);
+		methodLogger.error('Failed to get repository details', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -120,8 +127,11 @@ async function getRepository(
  * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
-	const logPrefix = '[src/tools/atlassian.repositories.tool.ts@register]';
-	logger.debug(`${logPrefix} Registering Atlassian Repositories tools...`);
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'register',
+	);
+	methodLogger.debug('Registering Atlassian Repositories tools...');
 
 	// Register the list repositories tool
 	server.tool(
@@ -187,9 +197,7 @@ function register(server: McpServer) {
 		getRepository,
 	);
 
-	logger.debug(
-		`${logPrefix} Successfully registered Atlassian Repositories tools`,
-	);
+	methodLogger.debug('Successfully registered Atlassian Repositories tools');
 }
 
 export default { register };

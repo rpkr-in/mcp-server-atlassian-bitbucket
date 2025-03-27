@@ -1,10 +1,16 @@
 import { Command } from 'commander';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 
 // Import Bitbucket-specific CLI modules
 import atlassianWorkspacesCli from './atlassian.workspaces.cli.js';
 import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
 import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
+
+// Create a contextualized logger for this file
+const cliLogger = Logger.forContext('cli/index.ts');
+
+// Log CLI initialization
+cliLogger.debug('Bitbucket CLI module initialized');
 
 // Get the version from package.json
 const VERSION = '1.8.1'; // This should match the version in src/index.ts
@@ -13,6 +19,8 @@ const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
 
 export async function runCli(args: string[]) {
+	const methodLogger = Logger.forContext('cli/index.ts', 'runCli');
+
 	const program = new Command();
 
 	program.name(NAME).description(DESCRIPTION).version(VERSION);
@@ -24,7 +32,7 @@ export async function runCli(args: string[]) {
 
 	// Handle unknown commands
 	program.on('command:*', (operands) => {
-		logger.error(`[src/cli/index.ts] Unknown command: ${operands[0]}`);
+		methodLogger.error(`Unknown command: ${operands[0]}`);
 		console.log('');
 		program.help();
 		process.exit(1);

@@ -1,24 +1,32 @@
 import { getAtlassianCredentials, fetchAtlassian } from './transport.util.js';
+import { Logger } from './logger.util.js';
 import { config } from './config.util.js';
-import { logger } from './logger.util.js';
 
-// Define a basic response interface for testing
+/**
+ * Generic response type for testing
+ */
 interface TestResponse {
-	values: any[];
-	startAt?: number;
-	maxResults?: number;
+	values: Array<Record<string, unknown>>;
+	next?: string;
 	total?: number;
 }
 
 // Mock the logger module only to prevent console output during tests
-jest.mock('./logger.util.js', () => ({
-	logger: {
+jest.mock('./logger.util.js', () => {
+	const mockLoggerInstance = {
 		debug: jest.fn(),
 		info: jest.fn(),
 		warn: jest.fn(),
 		error: jest.fn(),
-	},
-}));
+	};
+
+	return {
+		Logger: {
+			forContext: jest.fn().mockReturnValue(mockLoggerInstance),
+		},
+		// Export only Logger, not the legacy logger
+	};
+});
 
 // NOTE: We are no longer mocking fetch, using real API calls instead
 
@@ -75,8 +83,12 @@ describe('Transport Utility', () => {
 			// Verify the result is null
 			expect(credentials).toBeNull();
 
+			// Get the mock instance returned from forContext
+			const transportLogger = (Logger.forContext as jest.Mock).mock
+				.results[0].value;
+
 			// Verify that a warning was logged with the updated message
-			expect(logger.warn).toHaveBeenCalledWith(
+			expect(transportLogger.warn).toHaveBeenCalledWith(
 				'Missing Atlassian credentials. Please set either ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN environment variables, or ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD for Bitbucket-specific auth.',
 			);
 

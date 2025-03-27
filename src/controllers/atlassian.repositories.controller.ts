@@ -88,7 +88,6 @@ async function list(
 		const pagination = extractPaginationInfo(
 			repositoriesData,
 			PaginationType.PAGE,
-			'controllers/atlassian.repositories.controller.ts@list',
 		);
 
 		// Format the repositories data for display using the formatter

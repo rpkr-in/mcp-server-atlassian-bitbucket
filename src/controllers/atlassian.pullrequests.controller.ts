@@ -1,5 +1,5 @@
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { createApiError } from '../utils/error.util.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
 import {
@@ -32,6 +32,14 @@ const DEFAULT_PAGE_LENGTH = 25;
  * Provides functionality for listing pull requests and retrieving pull request details.
  */
 
+// Create a contextualized logger for this file
+const controllerLogger = Logger.forContext(
+	'controllers/atlassian.pullrequests.controller.ts',
+);
+
+// Log controller initialization
+controllerLogger.debug('Bitbucket pull requests controller initialized');
+
 /**
  * List Bitbucket pull requests with optional filtering
  * @param options - Options for listing pull requests
@@ -45,9 +53,11 @@ const DEFAULT_PAGE_LENGTH = 25;
 async function list(
 	options: ListPullRequestsOptions,
 ): Promise<ControllerResponse> {
-	const source =
-		'[src/controllers/atlassian.pullrequests.controller.ts@list]';
-	logger.debug(`${source} Listing Bitbucket pull requests...`, options);
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.pullrequests.controller.ts',
+		'list',
+	);
+	methodLogger.debug('Listing Bitbucket pull requests...', options);
 
 	try {
 		if (!options.workspaceSlug || !options.repoSlug) {
@@ -79,7 +89,7 @@ async function list(
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 		};
 
-		logger.debug(`${source} Using filters:`, serviceParams);
+		methodLogger.debug('Using filters:', serviceParams);
 
 		// Call the service to get the pull requests data
 		const pullRequestsData =
@@ -87,13 +97,12 @@ async function list(
 
 		// Log the count of pull requests retrieved
 		const count = pullRequestsData.values?.length || 0;
-		logger.debug(`${source} Retrieved ${count} pull requests`);
+		methodLogger.debug(`Retrieved ${count} pull requests`);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
 			pullRequestsData,
 			PaginationType.PAGE,
-			source,
 		);
 
 		// Format the pull requests data for display using the formatter
@@ -108,7 +117,7 @@ async function list(
 		handleControllerError(error, {
 			entityType: 'Pull Requests',
 			operation: 'listing',
-			source: 'src/controllers/atlassian.pullrequests.controller.ts@list',
+			source: 'controllers/atlassian.pullrequests.controller.ts@list',
 			additionalInfo: {
 				options,
 				workspaceSlug: options.workspaceSlug,
@@ -131,9 +140,13 @@ async function get(
 	identifier: PullRequestIdentifier,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug, repoSlug, prId } = identifier;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.pullrequests.controller.ts',
+		'get',
+	);
 
-	logger.debug(
-		`[src/controllers/atlassian.pullrequests.controller.ts@get] Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
+	methodLogger.debug(
+		`Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
 	);
 
 	try {
@@ -146,9 +159,7 @@ async function get(
 
 		const pullRequestData = await atlassianPullRequestsService.get(params);
 
-		logger.debug(
-			`[src/controllers/atlassian.pullrequests.controller.ts@get] Retrieved pull request: ${pullRequestData.id}`,
-		);
+		methodLogger.debug(`Retrieved pull request: ${pullRequestData.id}`);
 
 		// Format the pull request data for display using the formatter
 		// We don't have comments data available from the service
@@ -163,7 +174,7 @@ async function get(
 			entityType: 'Pull Request',
 			entityId: identifier,
 			operation: 'retrieving',
-			source: 'src/controllers/atlassian.pullrequests.controller.ts@get',
+			source: 'controllers/atlassian.pullrequests.controller.ts@get',
 		});
 	}
 }
@@ -181,12 +192,11 @@ async function get(
 async function listComments(
 	options: ListPullRequestCommentsOptions,
 ): Promise<ControllerResponse> {
-	const source =
-		'[src/controllers/atlassian.pullrequests.controller.ts@listComments]';
-	logger.debug(
-		`${source} Listing Bitbucket pull request comments...`,
-		options,
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.pullrequests.controller.ts',
+		'listComments',
 	);
+	methodLogger.debug('Listing Bitbucket pull request comments...', options);
 
 	try {
 		if (!options.workspaceSlug || !options.repoSlug || !options.prId) {
@@ -211,7 +221,7 @@ async function listComments(
 			sort: options.sort || '-updated_on',
 		};
 
-		logger.debug(`${source} Using service parameters:`, serviceParams);
+		methodLogger.debug('Using service parameters:', serviceParams);
 
 		// Call the service to get the pull request comments
 		const commentsData =
@@ -219,13 +229,12 @@ async function listComments(
 
 		// Log the count of comments retrieved
 		const count = commentsData.values?.length || 0;
-		logger.debug(`${source} Retrieved ${count} pull request comments`);
+		methodLogger.debug(`Retrieved ${count} pull request comments`);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
 			commentsData,
 			PaginationType.PAGE,
-			source,
 		);
 
 		// Format the comments data for display using the formatter
@@ -240,7 +249,7 @@ async function listComments(
 		handleControllerError(error, {
 			entityType: 'Pull Request Comments',
 			operation: 'listing',
-			source: 'src/controllers/atlassian.pullrequests.controller.ts@listComments',
+			source: 'controllers/atlassian.pullrequests.controller.ts@listComments',
 			additionalInfo: {
 				options,
 				workspaceSlug: options.workspaceSlug,

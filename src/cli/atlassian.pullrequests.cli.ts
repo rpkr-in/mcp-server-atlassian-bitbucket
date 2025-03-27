@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
 import { formatPagination } from '../utils/formatter.util.js';
@@ -14,22 +14,29 @@ import {
  * All commands require valid Atlassian credentials.
  */
 
+// Create a contextualized logger for this file
+const cliLogger = Logger.forContext('cli/atlassian.pullrequests.cli.ts');
+
+// Log CLI initialization
+cliLogger.debug('Bitbucket pull requests CLI module initialized');
+
 /**
  * Register Bitbucket Pull Requests CLI commands with the Commander program
  * @param program - The Commander program instance to register commands with
  * @throws Error if command registration fails
  */
 function register(program: Command): void {
-	const logPrefix = '[src/cli/atlassian.pullrequests.cli.ts@register]';
-	logger.debug(
-		`${logPrefix} Registering Bitbucket Pull Requests CLI commands...`,
+	const methodLogger = Logger.forContext(
+		'cli/atlassian.pullrequests.cli.ts',
+		'register',
 	);
+	methodLogger.debug('Registering Bitbucket Pull Requests CLI commands...');
 
 	registerListPullRequestsCommand(program);
 	registerGetPullRequestCommand(program);
 	registerListPullRequestCommentsCommand(program);
 
-	logger.debug(`${logPrefix} CLI commands registered successfully`);
+	methodLogger.debug('CLI commands registered successfully');
 }
 
 /**
@@ -79,11 +86,13 @@ function registerListPullRequestsCommand(program: Command): void {
 			'Pagination cursor for retrieving the next set of results',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.pullrequests.cli.ts@list-pull-requests]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'list-pull-requests',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Listing pull requests for repository: ${options.workspace}/${options.repository}`,
+				actionLogger.debug(
+					`Listing pull requests for repository: ${options.workspace}/${options.repository}`,
 				);
 
 				// Prepare filter options from command parameters
@@ -137,17 +146,15 @@ function registerListPullRequestsCommand(program: Command): void {
 					filterOptions.cursor = options.cursor;
 				}
 
-				logger.debug(
-					`${logPrefix} Fetching pull requests with filters:`,
+				actionLogger.debug(
+					'Fetching pull requests with filters:',
 					filterOptions,
 				);
 
 				const result =
 					await atlassianPullRequestsController.list(filterOptions);
 
-				logger.debug(
-					`${logPrefix} Successfully retrieved pull requests`,
-				);
+				actionLogger.debug('Successfully retrieved pull requests');
 
 				console.log(result.content);
 
@@ -163,7 +170,7 @@ function registerListPullRequestsCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -198,11 +205,13 @@ function registerGetPullRequestCommand(program: Command): void {
 		)
 		.requiredOption('--pull-request <id>', 'Pull request ID to retrieve')
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.pullrequests.cli.ts@get-pull-request]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'get-pull-request',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
+				actionLogger.debug(
+					`Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
 				);
 
 				// Validate workspace slug
@@ -241,13 +250,13 @@ function registerGetPullRequestCommand(program: Command): void {
 					prId: options.pullRequest,
 				});
 
-				logger.debug(
-					`${logPrefix} Successfully retrieved pull request details`,
+				actionLogger.debug(
+					'Successfully retrieved pull request details',
 				);
 
 				console.log(result.content);
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -284,7 +293,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 		)
 		.requiredOption(
 			'--pull-request <id>',
-			'Pull request ID to retrieve comments for',
+			'Pull request ID to list comments from',
 		)
 		.option(
 			'-l, --limit <number>',
@@ -295,40 +304,81 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 			'Pagination cursor for retrieving the next set of results',
 		)
 		.option(
-			'-S, --sort <string>',
-			'Field to sort results by (e.g., "created_on", "-updated_on")',
+			'-s, --sort <string>',
+			'Sort order for comments (e.g., "-updated_on" for most recent first)',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.pullrequests.cli.ts@list-pr-comments]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'list-pr-comments',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
+				actionLogger.debug(
+					`Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
 				);
 
-				const commentOptions: ListPullRequestCommentsOptions = {
+				// Prepare filter options
+				const filterOptions: ListPullRequestCommentsOptions = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
 					prId: options.pullRequest,
-					...(options.limit && {
-						limit: parseInt(options.limit, 10),
-					}),
-					...(options.cursor && { cursor: options.cursor }),
-					...(options.sort && { sort: options.sort }),
 				};
 
-				logger.debug(
-					`${logPrefix} Fetching comments with options:`,
-					commentOptions,
+				// Validate workspace slug
+				if (
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
+				) {
+					throw new Error(
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate repository slug
+				if (
+					!options.repository ||
+					typeof options.repository !== 'string' ||
+					options.repository.trim() === ''
+				) {
+					throw new Error(
+						'Repository slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate PR ID
+				const prIdNum = parseInt(options.pullRequest, 10);
+				if (isNaN(prIdNum) || prIdNum <= 0) {
+					throw new Error(
+						'Pull request ID must be a positive integer',
+					);
+				}
+
+				// Apply pagination options if provided
+				if (options.limit) {
+					filterOptions.limit = parseInt(options.limit, 10);
+				}
+
+				if (options.cursor) {
+					filterOptions.cursor = options.cursor;
+				}
+
+				if (options.sort) {
+					filterOptions.sort = options.sort;
+				}
+
+				actionLogger.debug(
+					'Fetching pull request comments with filters:',
+					filterOptions,
 				);
 
 				const result =
 					await atlassianPullRequestsController.listComments(
-						commentOptions,
+						filterOptions,
 					);
 
-				logger.debug(
-					`${logPrefix} Successfully retrieved pull request comments`,
+				actionLogger.debug(
+					'Successfully retrieved pull request comments',
 				);
 
 				console.log(result.content);
@@ -345,7 +395,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

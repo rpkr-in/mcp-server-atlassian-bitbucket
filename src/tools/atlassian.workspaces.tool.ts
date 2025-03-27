@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
@@ -10,6 +10,12 @@ import {
 } from './atlassian.workspaces.types.js';
 
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
+
+// Create a contextualized logger for this file
+const toolLogger = Logger.forContext('tools/atlassian.workspaces.tool.ts');
+
+// Log tool initialization
+toolLogger.debug('Bitbucket workspaces tool initialized');
 
 /**
  * MCP Tool: List Bitbucket Workspaces
@@ -26,11 +32,11 @@ async function listWorkspaces(
 	args: ListWorkspacesToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@listWorkspaces]';
-	logger.debug(
-		`${logPrefix} Listing Bitbucket workspaces with filters:`,
-		args,
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.workspaces.tool.ts',
+		'listWorkspaces',
 	);
+	methodLogger.debug('Listing Bitbucket workspaces with filters:', args);
 
 	try {
 		// Pass the filter options to the controller
@@ -40,8 +46,8 @@ async function listWorkspaces(
 			cursor: args.cursor,
 		});
 
-		logger.debug(
-			`${logPrefix} Successfully retrieved workspaces from controller`,
+		methodLogger.debug(
+			'Successfully retrieved workspaces from controller',
 			message,
 		);
 
@@ -54,7 +60,7 @@ async function listWorkspaces(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to list workspaces`, error);
+		methodLogger.error('Failed to list workspaces', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -74,10 +80,13 @@ async function getWorkspace(
 	args: GetWorkspaceToolArgsType,
 	_extra: RequestHandlerExtra,
 ) {
-	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@getWorkspace]';
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.workspaces.tool.ts',
+		'getWorkspace',
+	);
 
-	logger.debug(
-		`${logPrefix} Retrieving workspace details for ${args.workspaceSlug}`,
+	methodLogger.debug(
+		`Retrieving workspace details for ${args.workspaceSlug}`,
 		args,
 	);
 
@@ -85,8 +94,8 @@ async function getWorkspace(
 		const message = await atlassianWorkspacesController.get({
 			workspaceSlug: args.workspaceSlug,
 		});
-		logger.debug(
-			`${logPrefix} Successfully retrieved workspace details from controller`,
+		methodLogger.debug(
+			'Successfully retrieved workspace details from controller',
 			message,
 		);
 
@@ -99,7 +108,7 @@ async function getWorkspace(
 			],
 		};
 	} catch (error) {
-		logger.error(`${logPrefix} Failed to get workspace details`, error);
+		methodLogger.error('Failed to get workspace details', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -113,8 +122,11 @@ async function getWorkspace(
  * @param server - The MCP server instance to register tools with
  */
 function register(server: McpServer) {
-	const logPrefix = '[src/tools/atlassian.workspaces.tool.ts@register]';
-	logger.debug(`${logPrefix} Registering Atlassian Workspaces tools...`);
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.workspaces.tool.ts',
+		'register',
+	);
+	methodLogger.debug('Registering Atlassian Workspaces tools...');
 
 	// Register the list workspaces tool
 	server.tool(
@@ -177,9 +189,7 @@ function register(server: McpServer) {
 		getWorkspace,
 	);
 
-	logger.debug(
-		`${logPrefix} Successfully registered Atlassian Workspaces tools`,
-	);
+	methodLogger.debug('Successfully registered Atlassian Workspaces tools');
 }
 
 export default { register };

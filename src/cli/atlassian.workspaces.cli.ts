@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { logger } from '../utils/logger.util.js';
+import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
 import { ListWorkspacesOptions } from '../controllers/atlassian.workspaces.types.js';
@@ -11,21 +11,28 @@ import { formatPagination } from '../utils/formatter.util.js';
  * All commands require valid Atlassian credentials.
  */
 
+// Create a contextualized logger for this file
+const cliLogger = Logger.forContext('cli/atlassian.workspaces.cli.ts');
+
+// Log CLI initialization
+cliLogger.debug('Bitbucket workspaces CLI module initialized');
+
 /**
  * Register Bitbucket Workspaces CLI commands with the Commander program
  * @param program - The Commander program instance to register commands with
  * @throws Error if command registration fails
  */
 function register(program: Command): void {
-	const logPrefix = '[src/cli/atlassian.workspaces.cli.ts@register]';
-	logger.debug(
-		`${logPrefix} Registering Bitbucket Workspaces CLI commands...`,
+	const methodLogger = Logger.forContext(
+		'cli/atlassian.workspaces.cli.ts',
+		'register',
 	);
+	methodLogger.debug('Registering Bitbucket Workspaces CLI commands...');
 
 	registerListWorkspacesCommand(program);
 	registerGetWorkspaceCommand(program);
 
-	logger.debug(`${logPrefix} CLI commands registered successfully`);
+	methodLogger.debug('CLI commands registered successfully');
 }
 
 /**
@@ -62,8 +69,10 @@ function registerListWorkspacesCommand(program: Command): void {
 			'Pagination cursor for retrieving the next set of results',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.workspaces.cli.ts@list-workspaces]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.workspaces.cli.ts',
+				'list-workspaces',
+			);
 			try {
 				const filterOptions: ListWorkspacesOptions = {
 					sort: options.sort,
@@ -78,13 +87,13 @@ function registerListWorkspacesCommand(program: Command): void {
 					filterOptions.cursor = options.cursor;
 				}
 
-				logger.debug(
-					`${logPrefix} Fetching workspaces with filters:`,
+				actionLogger.debug(
+					'Fetching workspaces with filters:',
 					filterOptions,
 				);
 				const result =
 					await atlassianWorkspacesController.list(filterOptions);
-				logger.debug(`${logPrefix} Successfully retrieved workspaces`);
+				actionLogger.debug('Successfully retrieved workspaces');
 
 				console.log(result.content);
 
@@ -100,7 +109,7 @@ function registerListWorkspacesCommand(program: Command): void {
 					);
 				}
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -130,22 +139,22 @@ function registerGetWorkspaceCommand(program: Command): void {
 			'Slug of the workspace to retrieve (identifies the workspace)',
 		)
 		.action(async (options) => {
-			const logPrefix =
-				'[src/cli/atlassian.workspaces.cli.ts@get-workspace]';
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.workspaces.cli.ts',
+				'get-workspace',
+			);
 			try {
-				logger.debug(
-					`${logPrefix} Fetching details for workspace: ${options.workspace}`,
+				actionLogger.debug(
+					`Fetching details for workspace: ${options.workspace}`,
 				);
 				const result = await atlassianWorkspacesController.get({
 					workspaceSlug: options.workspace,
 				});
-				logger.debug(
-					`${logPrefix} Successfully retrieved workspace details`,
-				);
+				actionLogger.debug('Successfully retrieved workspace details');
 
 				console.log(result.content);
 			} catch (error) {
-				logger.error(`${logPrefix} Operation failed:`, error);
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

@@ -44,11 +44,11 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
 async function list(
 	options: ListWorkspacesOptions,
 ): Promise<ControllerResponse> {
-	const source = `[src/controllers/atlassian.workspaces.controller.ts@list]`;
-	controllerLogger.debug(
-		`${source} Listing Bitbucket workspaces...`,
-		options,
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.workspaces.controller.ts',
+		'list',
 	);
+	methodLogger.debug('Listing Bitbucket workspaces...', options);
 
 	try {
 		// Map controller filters to service params
@@ -58,22 +58,19 @@ async function list(
 			...(options.sort && { sort: options.sort }), // Only add sort if specified by user
 		};
 
-		controllerLogger.debug(`${source} Using filters:`, serviceParams);
+		methodLogger.debug('Using filters:', serviceParams);
 
 		const workspacesData =
 			await atlassianWorkspacesService.list(serviceParams);
 
-		controllerLogger.debug(
-			`${source} Retrieved ${
-				workspacesData.values?.length || 0
-			} workspaces`,
+		methodLogger.debug(
+			`Retrieved ${workspacesData.values?.length || 0} workspaces`,
 		);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
 			workspacesData,
 			PaginationType.PAGE,
-			source,
 		);
 
 		// Format the workspaces data for display using the formatter
@@ -88,7 +85,7 @@ async function list(
 		handleControllerError(error, {
 			entityType: 'Workspaces',
 			operation: 'listing',
-			source: 'src/controllers/atlassian.workspaces.controller.ts@list',
+			source: 'controllers/atlassian.workspaces.controller.ts@list',
 			additionalInfo: { options },
 		});
 	}
@@ -107,21 +104,23 @@ async function get(
 	options: GetWorkspaceOptions = {},
 ): Promise<ControllerResponse> {
 	const { workspaceSlug } = identifier;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.workspaces.controller.ts',
+		'get',
+	);
 
-	controllerLogger.debug(
-		`[src/controllers/atlassian.workspaces.controller.ts@get] Getting Bitbucket workspace with slug: ${workspaceSlug}...`,
+	methodLogger.debug(
+		`Getting Bitbucket workspace with slug: ${workspaceSlug}...`,
 	);
 
 	try {
 		const workspaceData =
 			await atlassianWorkspacesService.get(workspaceSlug);
-		controllerLogger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@get] Retrieved workspace: ${workspaceData.slug}`,
-		);
+		methodLogger.debug(`Retrieved workspace: ${workspaceData.slug}`);
 
 		// Since membership info isn't directly available, we'll use the workspace data only
-		controllerLogger.debug(
-			`[src/controllers/atlassian.workspaces.controller.ts@get] Membership info not available, using workspace data only`,
+		methodLogger.debug(
+			'Membership info not available, using workspace data only',
 		);
 
 		// Format the workspace data for display using the formatter
@@ -137,9 +136,8 @@ async function get(
 		// Use the standardized error handler
 		handleControllerError(error, {
 			entityType: 'Workspace',
-			entityId: identifier,
 			operation: 'retrieving',
-			source: 'src/controllers/atlassian.workspaces.controller.ts@get',
+			source: 'controllers/atlassian.workspaces.controller.ts@get',
 			additionalInfo: { options },
 		});
 	}
