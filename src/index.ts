@@ -13,7 +13,7 @@ import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
 import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
 
 // Define version constant for easier management and consistent versioning
-const VERSION = '1.11.0';
+const VERSION = '1.10.0';
 
 // Create a contextualized logger for this file
 const indexLogger = Logger.forContext('index.ts');
