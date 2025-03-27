@@ -1,0 +1,312 @@
+import { CliTestUtil } from '../utils/cli.test.util.js';
+import { getAtlassianCredentials } from '../utils/transport.util.js';
+import { config } from '../utils/config.util.js';
+
+describe('Atlassian Pull Requests CLI Commands', () => {
+	// Load configuration and check for credentials before all tests
+	beforeAll(() => {
+		// Load configuration from all sources
+		config.load();
+
+		// Log warning if credentials aren't available
+		const credentials = getAtlassianCredentials();
+		if (!credentials) {
+			console.warn(
+				'Skipping Atlassian Pull Requests CLI tests: No credentials available',
+			);
+		}
+	});
+
+	// Helper function to skip tests when credentials are missing
+	const skipIfNoCredentials = () => {
+		const credentials = getAtlassianCredentials();
+		if (!credentials) {
+			return true;
+		}
+		return false;
+	};
+
+	// Helper to get workspace and repository for testing
+	async function getWorkspaceAndRepo(): Promise<{
+		workspace: string;
+		repository: string;
+	} | null> {
+		// First, get a list of workspaces
+		const workspacesResult = await CliTestUtil.runCommand([
+			'list-workspaces',
+		]);
+
+		// Skip if no workspaces are available
+		if (
+			workspacesResult.stdout.includes('No Bitbucket workspaces found.')
+		) {
+			console.warn('Skipping test: No workspaces available');
+			return null;
+		}
+
+		// Extract a workspace slug from the output
+		const slugMatch = workspacesResult.stdout.match(
+			/\*\*Slug\*\*:\s+([^\n]+)/,
+		);
+		if (!slugMatch || !slugMatch[1]) {
+			console.warn('Skipping test: Could not extract workspace slug');
+			return null;
+		}
+
+		const workspaceSlug = slugMatch[1].trim();
+
+		// Get repositories for this workspace
+		const reposResult = await CliTestUtil.runCommand([
+			'list-repositories',
+			'--workspace',
+			workspaceSlug,
+		]);
+
+		// Skip if no repositories are available
+		if (reposResult.stdout.includes('No repositories found')) {
+			console.warn('Skipping test: No repositories available');
+			return null;
+		}
+
+		// Extract a repository slug from the output
+		const repoMatch = reposResult.stdout.match(/\*\*Name\*\*:\s+([^\n]+)/);
+		if (!repoMatch || !repoMatch[1]) {
+			console.warn('Skipping test: Could not extract repository slug');
+			return null;
+		}
+
+		const repoSlug = repoMatch[1].trim();
+
+		return {
+			workspace: workspaceSlug,
+			repository: repoSlug,
+		};
+	}
+
+	describe('list-pull-requests command', () => {
+		it('should list pull requests for a repository', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// Run the CLI command
+			const result = await CliTestUtil.runCommand([
+				'list-pull-requests',
+				'--workspace',
+				repoInfo.workspace,
+				'--repository',
+				repoInfo.repository,
+			]);
+
+			// Check command exit code
+			expect(result.exitCode).toBe(0);
+
+			// Verify the output format
+			if (!result.stdout.includes('No pull requests found')) {
+				// Validate expected Markdown structure
+				CliTestUtil.validateOutputContains(result.stdout, [
+					'# Bitbucket Pull Requests',
+					'**ID**',
+					'**State**',
+					'**Author**',
+				]);
+
+				// Validate Markdown formatting
+				CliTestUtil.validateMarkdownOutput(result.stdout);
+			}
+		}, 30000); // Increased timeout for API calls
+
+		it('should support filtering by state', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// States to test
+			const states = ['OPEN', 'MERGED', 'DECLINED'];
+
+			for (const state of states) {
+				// Run the CLI command with state filter
+				const result = await CliTestUtil.runCommand([
+					'list-pull-requests',
+					'--workspace',
+					repoInfo.workspace,
+					'--repository',
+					repoInfo.repository,
+					'--state',
+					state,
+				]);
+
+				// Check command exit code
+				expect(result.exitCode).toBe(0);
+
+				// Verify the output includes state if PRs are found
+				if (!result.stdout.includes('No pull requests found')) {
+					expect(result.stdout.toUpperCase()).toContain(state);
+				}
+			}
+		}, 45000); // Increased timeout for multiple API calls
+
+		it('should support pagination with --limit flag', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// Run the CLI command with limit
+			const result = await CliTestUtil.runCommand([
+				'list-pull-requests',
+				'--workspace',
+				repoInfo.workspace,
+				'--repository',
+				repoInfo.repository,
+				'--limit',
+				'1',
+			]);
+
+			// Check command exit code
+			expect(result.exitCode).toBe(0);
+
+			// If there are multiple PRs, pagination section should be present
+			if (
+				!result.stdout.includes('No pull requests found') &&
+				result.stdout.includes('items remaining')
+			) {
+				CliTestUtil.validateOutputContains(result.stdout, [
+					'Pagination',
+					'Next cursor:',
+				]);
+			}
+		}, 30000);
+	});
+
+	describe('get-pull-request command', () => {
+		it('should retrieve details for a specific pull request', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// First, list pull requests to find a valid ID
+			const listResult = await CliTestUtil.runCommand([
+				'list-pull-requests',
+				'--workspace',
+				repoInfo.workspace,
+				'--repository',
+				repoInfo.repository,
+			]);
+
+			// Skip if no pull requests are available
+			if (listResult.stdout.includes('No pull requests found')) {
+				console.warn('Skipping test: No pull requests available');
+				return;
+			}
+
+			// Extract a pull request ID from the output
+			const prMatch = listResult.stdout.match(/\*\*ID\*\*:\s+(\d+)/);
+			if (!prMatch || !prMatch[1]) {
+				console.warn(
+					'Skipping test: Could not extract pull request ID',
+				);
+				return;
+			}
+
+			const prId = prMatch[1].trim();
+
+			// Run the get-pull-request command
+			const getResult = await CliTestUtil.runCommand([
+				'get-pull-request',
+				'--workspace',
+				repoInfo.workspace,
+				'--repository',
+				repoInfo.repository,
+				'--pull-request',
+				prId,
+			]);
+
+			// Check command exit code
+			expect(getResult.exitCode).toBe(0);
+
+			// Verify the output structure and content
+			CliTestUtil.validateOutputContains(getResult.stdout, [
+				`# Pull Request #${prId}`,
+				'## Basic Information',
+				'**State**',
+				'**Repository**',
+				'**Source**',
+				'**Destination**',
+				'**Author**',
+				'## Links',
+			]);
+
+			// Validate Markdown formatting
+			CliTestUtil.validateMarkdownOutput(getResult.stdout);
+		}, 45000); // Increased timeout for multiple API calls
+
+		it('should handle missing required parameters', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Test without workspace parameter
+			const missingWorkspace = await CliTestUtil.runCommand([
+				'get-pull-request',
+				'--repository',
+				'some-repo',
+				'--pull-request',
+				'1',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingWorkspace.exitCode).not.toBe(0);
+			expect(missingWorkspace.stderr).toContain('required option');
+
+			// Test without repository parameter
+			const missingRepo = await CliTestUtil.runCommand([
+				'get-pull-request',
+				'--workspace',
+				'some-workspace',
+				'--pull-request',
+				'1',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingRepo.exitCode).not.toBe(0);
+			expect(missingRepo.stderr).toContain('required option');
+
+			// Test without pull-request parameter
+			const missingPR = await CliTestUtil.runCommand([
+				'get-pull-request',
+				'--workspace',
+				'some-workspace',
+				'--repository',
+				'some-repo',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingPR.exitCode).not.toBe(0);
+			expect(missingPR.stderr).toContain('required option');
+		}, 15000);
+	});
+});
