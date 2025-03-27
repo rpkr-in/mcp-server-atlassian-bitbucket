@@ -166,7 +166,7 @@ async function get(
 			const pullRequestsParams = {
 				workspace: workspaceSlug,
 				repo_slug: repoSlug,
-				pagelen: 25, // Limit to 25 PRs
+				pagelen: DEFAULT_PAGE_SIZE, // Limit to PRs using constant
 				sort: '-updated_on', // Sort by most recently updated
 				// No state filter to get all PRs regardless of state
 			};

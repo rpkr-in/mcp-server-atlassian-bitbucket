@@ -25,76 +25,87 @@ let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
 
 export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
-	const methodLogger = Logger.forContext('index.ts', 'startServer');
-
 	// Load configuration
+	indexLogger.info('Starting MCP server initialization...');
 	config.load();
+	indexLogger.info('Configuration loaded successfully');
 
 	// Enable debug logging if DEBUG is set to true
 	if (config.getBoolean('DEBUG')) {
-		methodLogger.debug('Debug mode enabled');
+		indexLogger.debug('Debug mode enabled');
 	}
 
-	// Log the DEBUG value to verify configuration loading
-	methodLogger.info(`DEBUG value: ${process.env.DEBUG}`);
-	methodLogger.info(
-		`ATLASSIAN_API_TOKEN value exists: ${Boolean(process.env.ATLASSIAN_API_TOKEN)}`,
+	// Log debug configuration settings at debug level
+	indexLogger.debug(`DEBUG environment variable: ${process.env.DEBUG}`);
+	indexLogger.debug(
+		`ATLASSIAN_API_TOKEN exists: ${Boolean(process.env.ATLASSIAN_API_TOKEN)}`,
 	);
-	methodLogger.info(`Config DEBUG value: ${config.get('DEBUG')}`);
+	indexLogger.debug(`Config DEBUG value: ${config.get('DEBUG')}`);
 
+	indexLogger.info(`Initializing Bitbucket MCP server v${VERSION}`);
 	serverInstance = new McpServer({
 		name: '@aashari/mcp-server-atlassian-bitbucket',
 		version: VERSION,
 	});
 
 	if (mode === 'stdio') {
+		indexLogger.info('Using STDIO transport for MCP communication');
 		transportInstance = new StdioServerTransport();
 	} else {
 		throw createUnexpectedError('SSE mode is not supported yet');
 	}
 
-	methodLogger.info(
-		`Starting Bitbucket MCP server with ${mode.toUpperCase()} transport...`,
-	);
-
-	// register tools
+	// Register tools
+	indexLogger.info('Registering MCP tools...');
 	atlassianWorkspacesTools.register(serverInstance);
-	atlassianRepositoriesTools.register(serverInstance);
-	atlassianPullRequestsTools.register(serverInstance);
+	indexLogger.debug('Workspaces tools registered');
 
-	return serverInstance.connect(transportInstance).catch((err) => {
-		methodLogger.error(`Failed to start server`, err);
+	atlassianRepositoriesTools.register(serverInstance);
+	indexLogger.debug('Repositories tools registered');
+
+	atlassianPullRequestsTools.register(serverInstance);
+	indexLogger.debug('Pull requests tools registered');
+
+	indexLogger.info('All tools registered successfully');
+
+	try {
+		indexLogger.info(`Connecting to ${mode.toUpperCase()} transport...`);
+		await serverInstance.connect(transportInstance);
+		indexLogger.info(
+			'MCP server started successfully and ready to process requests',
+		);
+		return serverInstance;
+	} catch (err) {
+		indexLogger.error(`Failed to start server`, err);
 		process.exit(1);
-	});
+	}
 }
 
 // Main entry point - this will run when executed directly
 async function main() {
-	const methodLogger = Logger.forContext('index.ts', 'main');
-
 	// Load configuration
 	config.load();
-
-	// Log the DEBUG value to verify configuration loading
-	methodLogger.info(`DEBUG value: ${process.env.DEBUG}`);
-	methodLogger.info(
-		`ATLASSIAN_API_TOKEN value exists: ${Boolean(process.env.ATLASSIAN_API_TOKEN)}`,
-	);
-	methodLogger.info(`Config DEBUG value: ${config.get('DEBUG')}`);
 
 	// Check if arguments are provided (CLI mode)
 	if (process.argv.length > 2) {
 		// CLI mode: Pass arguments to CLI runner
+		indexLogger.info('Starting in CLI mode');
 		await runCli(process.argv.slice(2));
+		indexLogger.info('CLI execution completed');
 	} else {
 		// MCP Server mode: Start server with default STDIO
+		indexLogger.info('Starting in server mode');
 		await startServer();
+		indexLogger.info('Server is now running');
 	}
 }
 
 // If this file is being executed directly (not imported), run the main function
 if (require.main === module) {
-	main();
+	main().catch((err) => {
+		indexLogger.error('Unhandled error in main process', err);
+		process.exit(1);
+	});
 }
 
 // Export key utilities for library users

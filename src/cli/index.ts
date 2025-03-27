@@ -6,17 +6,17 @@ import atlassianWorkspacesCli from './atlassian.workspaces.cli.js';
 import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
 import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
 
-// Create a contextualized logger for this file
-const cliLogger = Logger.forContext('cli/index.ts');
-
-// Log CLI initialization
-cliLogger.debug('Bitbucket CLI module initialized');
-
 // Get the version from package.json
 const VERSION = '1.9.1'; // This should match the version in src/index.ts
 const NAME = '@aashari/mcp-server-atlassian-bitbucket';
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
+
+// Create a contextualized logger for this file
+const cliLogger = Logger.forContext('cli/index.ts');
+
+// Log CLI initialization
+cliLogger.debug('Bitbucket CLI module initialized');
 
 export async function runCli(args: string[]) {
 	const methodLogger = Logger.forContext('cli/index.ts', 'runCli');
