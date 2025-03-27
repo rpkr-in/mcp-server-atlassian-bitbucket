@@ -1,3 +1,13 @@
+## [1.9.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.9.1...v1.9.2) (2025-03-27)
+
+
+### Bug Fixes
+
+* remove sort option from Bitbucket workspaces endpoints, API does not support sorting ([e6ccd9b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e6ccd9b7e78d6316dbbfa7def756b6897550ff29))
+* standardize patterns across MCP server projects ([78ca874](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/78ca8748ba2b639e52e13bfc361c91d9573e1340))
+* trigger new release ([63b2025](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/63b2025127c509e7db2d82945717b49ea223d77d))
+* update applyDefaults utility to work with TypeScript interfaces ([2f682ca](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/2f682cacef284ebeb9d2f40577209bf6b45ad1d9))
+
 ## [1.9.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.9.0...v1.9.1) (2025-03-27)
 
 
