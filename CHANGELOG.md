@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.8.0...v1.8.1) (2025-03-27)
+
+
+### Bug Fixes
+
+* trigger release ([43a4d06](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/43a4d069c3702f748a751f6f8a5d8b8ff425f5ab))
+
 # [1.8.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.7.3...v1.8.0) (2025-03-26)
 
 
