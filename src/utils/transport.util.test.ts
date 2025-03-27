@@ -10,7 +10,7 @@ interface TestResponse {
 	total?: number;
 }
 
-// Mock the logger module only
+// Mock the logger module only to prevent console output during tests
 jest.mock('./logger.util.js', () => ({
 	logger: {
 		debug: jest.fn(),
@@ -20,8 +20,7 @@ jest.mock('./logger.util.js', () => ({
 	},
 }));
 
-// Mock the fetch function for some tests
-global.fetch = jest.fn();
+// NOTE: We are no longer mocking fetch, using real API calls instead
 
 describe('Transport Utility', () => {
 	// Load configuration before all tests
@@ -97,34 +96,11 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Mock the fetch function for this test
-			const mockResponse = {
-				ok: true,
-				status: 200,
-				statusText: 'OK',
-				json: jest.fn().mockResolvedValue({
-					values: [],
-					startAt: 0,
-					maxResults: 50,
-					total: 0,
-				}),
-				text: jest.fn().mockResolvedValue(''),
-				clone: jest.fn().mockReturnValue({
-					json: jest.fn().mockResolvedValue({
-						values: [],
-						startAt: 0,
-						maxResults: 50,
-						total: 0,
-					}),
-				}),
-				headers: new Headers(),
-			};
-			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-			// Make a call to the function
+			// Make a call to a real API endpoint
+			// For Bitbucket, we'll use the workspaces endpoint
 			const result = await fetchAtlassian<TestResponse>(
 				credentials,
-				'/rest/api/3/project/search',
+				'/2.0/workspaces',
 				{
 					method: 'GET',
 					headers: {
@@ -133,13 +109,18 @@ describe('Transport Utility', () => {
 				},
 			);
 
-			// Verify the response structure
+			// Verify the response structure from real API
 			expect(result).toHaveProperty('values');
 			expect(Array.isArray(result.values)).toBe(true);
-			expect(result).toHaveProperty('startAt');
-			expect(result).toHaveProperty('maxResults');
-			expect(result).toHaveProperty('total');
-		});
+			// Different property names than mocked data to match actual API response
+			if (result.values.length > 0) {
+				// Verify an actual workspace result
+				const workspace = result.values[0];
+				expect(workspace).toHaveProperty('uuid');
+				expect(workspace).toHaveProperty('name');
+				expect(workspace).toHaveProperty('slug');
+			}
+		}, 15000); // Increased timeout for real API call
 
 		it('should handle API errors correctly', async () => {
 			// This test will be skipped if credentials are not available
@@ -151,24 +132,11 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Mock the fetch function for this test
-			const mockResponse = {
-				ok: false,
-				status: 404,
-				statusText: 'Not Found',
-				text: jest.fn().mockResolvedValue('Not Found'),
-				headers: new Headers(),
-			};
-			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-			// Make a call to the function and expect it to throw
+			// Call a non-existent endpoint and expect it to throw
 			await expect(
-				fetchAtlassian(
-					credentials,
-					'/rest/api/3/non-existent-endpoint',
-				),
+				fetchAtlassian(credentials, '/2.0/non-existent-endpoint'),
 			).rejects.toThrow();
-		});
+		}, 15000); // Increased timeout for real API call
 
 		it('should normalize paths that do not start with a slash', async () => {
 			// This test will be skipped if credentials are not available
@@ -180,43 +148,19 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Mock the fetch function for this test
-			const mockResponse = {
-				ok: true,
-				status: 200,
-				statusText: 'OK',
-				json: jest.fn().mockResolvedValue({
-					values: [],
-					startAt: 0,
-					maxResults: 50,
-					total: 0,
-				}),
-				text: jest.fn().mockResolvedValue(''),
-				clone: jest.fn().mockReturnValue({
-					json: jest.fn().mockResolvedValue({
-						values: [],
-						startAt: 0,
-						maxResults: 50,
-						total: 0,
-					}),
-				}),
-				headers: new Headers(),
-			};
-			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-			// Make a call to the function
+			// Call the function with a path that doesn't start with a slash
 			const result = await fetchAtlassian<TestResponse>(
 				credentials,
-				'rest/api/3/project/search',
+				'2.0/workspaces',
 				{
 					method: 'GET',
 				},
 			);
 
-			// Verify the response structure
+			// Verify the response structure from real API
 			expect(result).toHaveProperty('values');
 			expect(Array.isArray(result.values)).toBe(true);
-		});
+		}, 15000); // Increased timeout for real API call
 
 		it('should support custom request options', async () => {
 			// This test will be skipped if credentials are not available
@@ -228,31 +172,7 @@ describe('Transport Utility', () => {
 				return;
 			}
 
-			// Mock the fetch function for this test
-			const mockResponse = {
-				ok: true,
-				status: 200,
-				statusText: 'OK',
-				json: jest.fn().mockResolvedValue({
-					values: [1],
-					startAt: 0,
-					maxResults: 1,
-					total: 1,
-				}),
-				text: jest.fn().mockResolvedValue(''),
-				clone: jest.fn().mockReturnValue({
-					json: jest.fn().mockResolvedValue({
-						values: [1],
-						startAt: 0,
-						maxResults: 1,
-						total: 1,
-					}),
-				}),
-				headers: new Headers(),
-			};
-			(global.fetch as jest.Mock).mockResolvedValue(mockResponse);
-
-			// Custom request options
+			// Custom request options with pagination
 			const options = {
 				method: 'GET' as const,
 				headers: {
@@ -261,18 +181,17 @@ describe('Transport Utility', () => {
 				},
 			};
 
-			// Make a call to the function
+			// Call a real endpoint with pagination parameter
 			const result = await fetchAtlassian<TestResponse>(
 				credentials,
-				'/rest/api/3/project/search?maxResults=1',
+				'/2.0/workspaces?pagelen=1',
 				options,
 			);
 
-			// Verify the response structure
+			// Verify the response structure from real API
 			expect(result).toHaveProperty('values');
 			expect(Array.isArray(result.values)).toBe(true);
-			expect(result).toHaveProperty('startAt');
-			expect(result).toHaveProperty('total');
-		});
+			expect(result.values.length).toBeLessThanOrEqual(1); // Should respect pagelen=1
+		}, 15000); // Increased timeout for real API call
 	});
 });
