@@ -18,6 +18,7 @@
 		"postinstall": "chmod +x dist/index.js || true",
 		"test": "jest",
 		"test:coverage": "jest --coverage",
+		"test:cli": "jest src/cli/.*\\.cli\\.test\\.ts --runInBand --testTimeout=60000",
 		"lint": "eslint src --ext .ts --config eslint.config.mjs",
 		"format": "prettier --write 'src/**/*.ts' 'scripts/**/*.js'",
 		"publish:npm": "npm publish",
