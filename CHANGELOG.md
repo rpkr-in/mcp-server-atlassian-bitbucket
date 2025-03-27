@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.9.0...v1.9.1) (2025-03-27)
+
+
+### Bug Fixes
+
+* **error:** standardize error handling across all MCP servers ([76834af](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/76834aff1d716e3e2caf210f667df65dfd21d466))
+
 # [1.9.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.8.1...v1.9.0) (2025-03-27)
 
 

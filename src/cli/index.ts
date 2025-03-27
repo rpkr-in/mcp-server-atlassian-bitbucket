@@ -13,7 +13,7 @@ const cliLogger = Logger.forContext('cli/index.ts');
 cliLogger.debug('Bitbucket CLI module initialized');
 
 // Get the version from package.json
-const VERSION = '1.9.0'; // This should match the version in src/index.ts
+const VERSION = '1.9.1'; // This should match the version in src/index.ts
 const NAME = '@aashari/mcp-server-atlassian-bitbucket';
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
