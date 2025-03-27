@@ -91,17 +91,7 @@ function registerListPullRequestsCommand(program: Command): void {
 				'list-pull-requests',
 			);
 			try {
-				actionLogger.debug(
-					`Listing pull requests for repository: ${options.workspace}/${options.repository}`,
-				);
-
-				// Prepare filter options from command parameters
-				const filterOptions: ListPullRequestsOptions = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
-					state: options.state?.toUpperCase() as ListPullRequestsOptions['state'],
-					query: options.query,
-				};
+				actionLogger.debug('Processing command options:', options);
 
 				// Validate workspace slug
 				if (
@@ -136,6 +126,28 @@ function registerListPullRequestsCommand(program: Command): void {
 						'State must be one of: OPEN, MERGED, DECLINED, SUPERSEDED',
 					);
 				}
+
+				// Validate limit if provided
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
+				}
+
+				actionLogger.debug(
+					`Listing pull requests for repository: ${options.workspace}/${options.repository}`,
+				);
+
+				// Prepare filter options from command parameters
+				const filterOptions: ListPullRequestsOptions = {
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
+					state: options.state?.toUpperCase() as ListPullRequestsOptions['state'],
+					query: options.query,
+				};
 
 				// Apply pagination options if provided
 				if (options.limit) {
@@ -210,9 +222,7 @@ function registerGetPullRequestCommand(program: Command): void {
 				'get-pull-request',
 			);
 			try {
-				actionLogger.debug(
-					`Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
-				);
+				actionLogger.debug('Processing command options:', options);
 
 				// Validate workspace slug
 				if (
@@ -243,6 +253,10 @@ function registerGetPullRequestCommand(program: Command): void {
 						'Pull request ID must be a positive integer',
 					);
 				}
+
+				actionLogger.debug(
+					`Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
+				);
 
 				const result = await atlassianPullRequestsController.get({
 					workspaceSlug: options.workspace,
@@ -313,16 +327,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 				'list-pr-comments',
 			);
 			try {
-				actionLogger.debug(
-					`Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
-				);
-
-				// Prepare filter options
-				const filterOptions: ListPullRequestCommentsOptions = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
-					prId: options.pullRequest,
-				};
+				actionLogger.debug('Processing command options:', options);
 
 				// Validate workspace slug
 				if (
@@ -353,6 +358,27 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 						'Pull request ID must be a positive integer',
 					);
 				}
+
+				// Validate limit if provided
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
+				}
+
+				actionLogger.debug(
+					`Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
+				);
+
+				// Prepare filter options
+				const filterOptions: ListPullRequestCommentsOptions = {
+					workspaceSlug: options.workspace,
+					repoSlug: options.repository,
+					prId: options.pullRequest,
+				};
 
 				// Apply pagination options if provided
 				if (options.limit) {

@@ -86,6 +86,29 @@ function registerListRepositoriesCommand(program: Command): void {
 				'list-repositories',
 			);
 			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate workspace slug
+				if (
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
+				) {
+					throw new Error(
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate limit if provided
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
+				}
+
 				actionLogger.debug(
 					`Listing repositories for workspace: ${options.workspace}`,
 				);
@@ -177,6 +200,30 @@ function registerGetRepositoryCommand(program: Command): void {
 				'get-repository',
 			);
 			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate workspace slug
+				if (
+					!options.workspace ||
+					typeof options.workspace !== 'string' ||
+					options.workspace.trim() === ''
+				) {
+					throw new Error(
+						'Workspace slug must be a valid non-empty string',
+					);
+				}
+
+				// Validate repository slug
+				if (
+					!options.repository ||
+					typeof options.repository !== 'string' ||
+					options.repository.trim() === ''
+				) {
+					throw new Error(
+						'Repository slug must be a valid non-empty string',
+					);
+				}
+
 				actionLogger.debug(
 					`Fetching details for repository: ${options.workspace}/${options.repository}`,
 				);

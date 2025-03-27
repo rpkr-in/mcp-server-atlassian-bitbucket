@@ -74,6 +74,18 @@ function registerListWorkspacesCommand(program: Command): void {
 				'list-workspaces',
 			);
 			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate limit if provided
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
+				}
+
 				const filterOptions: ListWorkspacesOptions = {
 					sort: options.sort,
 				};
