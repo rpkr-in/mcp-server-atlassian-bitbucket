@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.8.1...v1.9.0) (2025-03-27)
+
+
+### Features
+
+* **logger:** implement contextual logging pattern ([d6f16b7](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d6f16b76513990dce1e6d68c32767331d075c78b))
+
 ## [1.8.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.8.0...v1.8.1) (2025-03-27)
 
 
