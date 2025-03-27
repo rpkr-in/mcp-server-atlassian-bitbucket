@@ -141,7 +141,11 @@ async function get(
 
 		methodLogger.debug(`Retrieved repository: ${repositoryData.full_name}`);
 
-		// Also fetch recent pull requests for this repository (max 25)
+		// Fetch recent pull requests to provide immediate context and activity history.
+		// This enhances usability by including relevant PRs directly in repository details,
+		// saving users from having to make a separate API call. While this crosses entity
+		// boundaries slightly, it significantly improves the user experience by showing
+		// recent activity alongside the repository's metadata.
 		let recentPullRequests = null;
 		try {
 			// Create pull request list parameters similar to how the PR controller would
