@@ -19,8 +19,8 @@ import {
 	ListRepositoriesParams,
 	GetRepositoryParams,
 } from '../services/vendor.atlassian.repositories.types.js';
-import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
+import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.

@@ -16,9 +16,7 @@ import {
 	formatWorkspaceDetails,
 } from './atlassian.workspaces.formatter.js';
 import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.types.js';
-
-// Default constants
-const DEFAULT_PAGE_LENGTH = 25;
+import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -53,7 +51,7 @@ async function list(
 	try {
 		// Map controller filters to service params
 		const serviceParams: ListWorkspacesParams = {
-			pagelen: options.limit || DEFAULT_PAGE_LENGTH, // Default page length
+			pagelen: options.limit || DEFAULT_PAGE_SIZE, // Default page length
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
 			...(options.sort && { sort: options.sort }), // Only add sort if specified by user
 		};

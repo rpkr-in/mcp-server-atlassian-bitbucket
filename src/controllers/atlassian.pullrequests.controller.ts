@@ -23,9 +23,7 @@ import {
 	GetPullRequestCommentsParams,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
-
-// Default constants
-const DEFAULT_PAGE_LENGTH = 25;
+import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -85,7 +83,7 @@ async function list(
 
 			// Optional parameters
 			...(queryParam && { q: queryParam }),
-			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			pagelen: options.limit || DEFAULT_PAGE_SIZE,
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 		};
 
@@ -216,7 +214,7 @@ async function listComments(
 			workspace: options.workspaceSlug,
 			repo_slug: options.repoSlug,
 			pull_request_id: prId,
-			pagelen: options.limit || DEFAULT_PAGE_LENGTH,
+			pagelen: options.limit || DEFAULT_PAGE_SIZE,
 			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
 			sort: options.sort || '-updated_on',
 		};
