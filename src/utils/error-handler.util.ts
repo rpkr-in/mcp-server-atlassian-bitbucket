@@ -1,4 +1,4 @@
-import { createApiError, McpError } from './error.util.js';
+import { createApiError } from './error.util.js';
 import { Logger } from './logger.util.js';
 
 /**
@@ -166,7 +166,9 @@ export function createUserFriendlyErrorMessage(
 			break;
 
 		case ErrorCode.VALIDATION_ERROR:
-			message = `Invalid data provided for ${operation || 'operation'} ${entity.toLowerCase()}.`;
+			message =
+				originalMessage ||
+				`Invalid data provided for ${operation || 'operation'} ${entity.toLowerCase()}.`;
 			break;
 
 		default:
@@ -177,7 +179,8 @@ export function createUserFriendlyErrorMessage(
 	if (
 		originalMessage &&
 		code !== ErrorCode.NOT_FOUND &&
-		code !== ErrorCode.ACCESS_DENIED
+		code !== ErrorCode.ACCESS_DENIED &&
+		code !== ErrorCode.VALIDATION_ERROR
 	) {
 		message += ` Error details: ${originalMessage}`;
 	}
@@ -204,51 +207,46 @@ export function handleControllerError(
 		'handleControllerError',
 	);
 
-	const entityType = context.entityType || 'resource';
-	const operation = context.operation || 'processing';
+	// Extract error details
+	const errorMessage = error instanceof Error ? error.message : String(error);
+	const statusCode =
+		error instanceof Error && 'statusCode' in error
+			? (error as { statusCode: number }).statusCode
+			: undefined;
 
-	// Log detailed error information at debug level for troubleshooting
-	methodLogger.debug(`Processing error for ${entityType}`, {
+	// Detect error type using utility
+	const { code, statusCode: detectedStatus } = detectErrorType(
 		error,
 		context,
-		stack: error instanceof Error ? error.stack : undefined,
-	});
+	);
 
-	// Pass through McpErrors
-	if (error instanceof McpError) {
-		// Log with standard format
-		methodLogger.error(
-			`Error ${operation} ${entityType}: ${error.message}`,
-			error,
-		);
-		throw error;
-	}
+	// Combine detected status with explicit status
+	const finalStatusCode = statusCode || detectedStatus;
 
-	// Get error message
-	const errorMessage = error instanceof Error ? error.message : String(error);
+	// Format entity information for logging
+	const { entityType, entityId, operation } = context;
+	const entity = entityType || 'resource';
+	const entityIdStr = entityId
+		? typeof entityId === 'string'
+			? entityId
+			: JSON.stringify(entityId)
+		: '';
+	const actionStr = operation || 'processing';
 
-	// Get error type
-	const { code, statusCode } = detectErrorType(error, context);
+	// Log detailed error information
+	methodLogger.error(
+		`Error ${actionStr} ${entity}${
+			entityIdStr ? `: ${entityIdStr}` : ''
+		}: ${errorMessage}`,
+		error,
+	);
 
-	// Generate user-friendly message
-	const message = createUserFriendlyErrorMessage(code, context, errorMessage);
+	// Create user-friendly error message for the response
+	const message =
+		code === ErrorCode.VALIDATION_ERROR
+			? errorMessage
+			: createUserFriendlyErrorMessage(code, context, errorMessage);
 
-	// Log the error with standard format - error level for unexpected errors,
-	// warn level for client errors (400 range)
-	if (statusCode >= 500) {
-		methodLogger.error(`Error ${operation} ${entityType}: ${message}`, {
-			code,
-			statusCode,
-			additionalInfo: context.additionalInfo,
-		});
-	} else {
-		methodLogger.warn(`Error ${operation} ${entityType}: ${message}`, {
-			code,
-			statusCode,
-			additionalInfo: context.additionalInfo,
-		});
-	}
-
-	// Throw appropriate error
-	throw createApiError(message, statusCode, error);
+	// Throw an appropriate API error with the user-friendly message
+	throw createApiError(message, finalStatusCode, error);
 }
