@@ -16,7 +16,7 @@ import {
 	formatWorkspaceDetails,
 } from './atlassian.workspaces.formatter.js';
 import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.types.js';
-import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
+import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -49,11 +49,24 @@ async function list(
 	methodLogger.debug('Listing Bitbucket workspaces...', options);
 
 	try {
+		// Create defaults object with proper typing
+		const defaults: Partial<ListWorkspacesOptions> = {
+			limit: DEFAULT_PAGE_SIZE,
+		};
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<ListWorkspacesOptions>(
+			options,
+			defaults,
+		);
+
 		// Map controller filters to service params
 		const serviceParams: ListWorkspacesParams = {
-			pagelen: options.limit || DEFAULT_PAGE_SIZE, // Default page length
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined, // Use cursor value for page
-			...(options.sort && { sort: options.sort }), // Only add sort if specified by user
+			pagelen: mergedOptions.limit, // Default page length
+			page: mergedOptions.cursor
+				? parseInt(mergedOptions.cursor, 10)
+				: undefined, // Use cursor value for page
+			...(mergedOptions.sort && { sort: mergedOptions.sort }), // Only add sort if specified by user
 		};
 
 		methodLogger.debug('Using filters:', serviceParams);

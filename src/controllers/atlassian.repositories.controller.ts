@@ -20,7 +20,7 @@ import {
 	GetRepositoryParams,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
-import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
+import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -55,9 +55,21 @@ async function list(
 	);
 
 	try {
+		// Create defaults object with proper typing
+		const defaults: Partial<ListRepositoriesOptions> = {
+			limit: DEFAULT_PAGE_SIZE,
+			sort: '-updated_on',
+		};
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<ListRepositoriesOptions>(
+			options,
+			defaults,
+		);
+
 		// Format the query for Bitbucket API if provided
-		const formattedQuery = options.query
-			? formatBitbucketQuery(options.query)
+		const formattedQuery = mergedOptions.query
+			? formatBitbucketQuery(mergedOptions.query)
 			: undefined;
 
 		// Map controller options to service parameters
@@ -65,14 +77,16 @@ async function list(
 			// Required workspace
 			workspace: workspaceSlug,
 			// Handle limit with default value
-			pagelen: options.limit || DEFAULT_PAGE_SIZE,
+			pagelen: mergedOptions.limit,
 			// Map cursor to page for page-based pagination
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			page: mergedOptions.cursor
+				? parseInt(mergedOptions.cursor, 10)
+				: undefined,
 			// Set default sort to updated_on descending if not specified
-			sort: options.sort || '-updated_on',
+			sort: mergedOptions.sort,
 			// Optional filter parameters
 			...(formattedQuery && { q: formattedQuery }),
-			...(options.role && { role: options.role }),
+			...(mergedOptions.role && { role: mergedOptions.role }),
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);

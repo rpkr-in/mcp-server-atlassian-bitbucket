@@ -23,7 +23,7 @@ import {
 	GetPullRequestCommentsParams,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
-import { DEFAULT_PAGE_SIZE } from '../utils/defaults.util.js';
+import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -64,27 +64,40 @@ async function list(
 			);
 		}
 
+		// Create defaults object with proper typing
+		const defaults: Partial<ListPullRequestsOptions> = {
+			limit: DEFAULT_PAGE_SIZE,
+		};
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<ListPullRequestsOptions>(
+			options,
+			defaults,
+		);
+
 		// Process the query parameter
 		let queryParam: string | undefined;
 
 		// State filter takes precedence over free-text query
-		if (options.state) {
-			queryParam = `state="${options.state}"`;
-		} else if (options.query) {
+		if (mergedOptions.state) {
+			queryParam = `state="${mergedOptions.state}"`;
+		} else if (mergedOptions.query) {
 			// Format the free-text query using the utility function
-			queryParam = formatBitbucketQuery(options.query, 'title');
+			queryParam = formatBitbucketQuery(mergedOptions.query, 'title');
 		}
 
 		// Map controller filters to service params
 		const serviceParams: ListPullRequestsParams = {
 			// Required parameters
-			workspace: options.workspaceSlug,
-			repo_slug: options.repoSlug,
+			workspace: mergedOptions.workspaceSlug,
+			repo_slug: mergedOptions.repoSlug,
 
 			// Optional parameters
 			...(queryParam && { q: queryParam }),
-			pagelen: options.limit || DEFAULT_PAGE_SIZE,
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
+			pagelen: mergedOptions.limit,
+			page: mergedOptions.cursor
+				? parseInt(mergedOptions.cursor, 10)
+				: undefined,
 		};
 
 		methodLogger.debug('Using filters:', serviceParams);
@@ -209,14 +222,28 @@ async function listComments(
 			throw createApiError('Pull request ID must be a positive integer');
 		}
 
+		// Create defaults object with proper typing
+		const defaults: Partial<ListPullRequestCommentsOptions> = {
+			limit: DEFAULT_PAGE_SIZE,
+			sort: '-updated_on',
+		};
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<ListPullRequestCommentsOptions>(
+			options,
+			defaults,
+		);
+
 		// Map controller options to service params
 		const serviceParams: GetPullRequestCommentsParams = {
-			workspace: options.workspaceSlug,
-			repo_slug: options.repoSlug,
+			workspace: mergedOptions.workspaceSlug,
+			repo_slug: mergedOptions.repoSlug,
 			pull_request_id: prId,
-			pagelen: options.limit || DEFAULT_PAGE_SIZE,
-			page: options.cursor ? parseInt(options.cursor, 10) : undefined,
-			sort: options.sort || '-updated_on',
+			pagelen: mergedOptions.limit,
+			page: mergedOptions.cursor
+				? parseInt(mergedOptions.cursor, 10)
+				: undefined,
+			sort: mergedOptions.sort,
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);
