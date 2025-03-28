@@ -135,7 +135,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 			// Run the get-workspace command with the extracted slug
 			const getResult = await CliTestUtil.runCommand([
 				'get-workspace',
-				'--workspace',
+				'--id',
 				workspaceSlug,
 			]);
 
@@ -182,7 +182,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 			// Run command with invalid slug
 			const result = await CliTestUtil.runCommand([
 				'get-workspace',
-				'--workspace',
+				'--id',
 				invalidSlug,
 			]);
 

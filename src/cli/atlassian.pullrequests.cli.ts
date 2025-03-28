@@ -17,6 +17,16 @@ const cliLogger = Logger.forContext('cli/atlassian.pullrequests.cli.ts');
 // Log CLI initialization
 cliLogger.debug('Bitbucket pull requests CLI module initialized');
 
+// Define interfaces for controller options
+interface PullRequestControllerOptions {
+	workspaceSlug: string;
+	repoSlug: string;
+	prId: string;
+	limit?: number;
+	cursor?: string;
+	[key: string]: unknown;
+}
+
 /**
  * Register Bitbucket Pull Requests CLI commands with the Commander program
  * @param program - The Commander program instance to register commands with
@@ -216,7 +226,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 				actionLogger.debug('Processing command options:', options);
 
 				// Map CLI options to controller format
-				const controllerOptions: any = {
+				const controllerOptions: PullRequestControllerOptions = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
 					prId: options['pull-request'],

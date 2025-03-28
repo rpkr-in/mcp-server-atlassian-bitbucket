@@ -38,25 +38,23 @@ async function search(args: SearchToolArgsType, _extra: RequestHandlerExtra) {
 			throw new Error('workspaceSlug is required for Bitbucket search');
 		}
 
-		let repoResults: {
+		// Define an interface for the search result without extending ControllerResponse
+		interface SearchResult {
 			content: string;
 			pagination: {
-				count: number;
-				hasMore: boolean;
+				count?: number;
+				hasMore?: boolean;
 				nextCursor?: string;
 			};
-		} = {
+		}
+
+		// Initialize empty results
+		let repoResults: SearchResult = {
 			content: '',
 			pagination: { count: 0, hasMore: false },
 		};
-		let prResults: {
-			content: string;
-			pagination: {
-				count: number;
-				hasMore: boolean;
-				nextCursor?: string;
-			};
-		} = {
+
+		let prResults: SearchResult = {
 			content: '',
 			pagination: { count: 0, hasMore: false },
 		};
@@ -68,7 +66,7 @@ async function search(args: SearchToolArgsType, _extra: RequestHandlerExtra) {
 				query,
 				limit: args.limit,
 				cursor: args.cursor,
-			})) as any;
+			})) as SearchResult;
 		}
 
 		// Search pull requests if scope is 'all' or 'pullrequests' and a repository slug is provided
@@ -79,7 +77,7 @@ async function search(args: SearchToolArgsType, _extra: RequestHandlerExtra) {
 				query,
 				limit: args.limit,
 				cursor: args.cursor,
-			})) as any;
+			})) as SearchResult;
 		}
 
 		// Combine results with headers
