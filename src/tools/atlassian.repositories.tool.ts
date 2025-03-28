@@ -135,7 +135,7 @@ function register(server: McpServer) {
 
 	// Register the list repositories tool
 	server.tool(
-		'list-repositories',
+		'list_repositories',
 		`List repositories within a specific Bitbucket workspace, with optional filtering and pagination. Requires 'workspaceSlug'.
 
         PURPOSE: Discover repositories within a given workspace and retrieve their slugs, names, owners, and basic metadata. Essential for finding the 'repoSlug' needed for repository or pull request details tools.
@@ -144,11 +144,11 @@ function register(server: McpServer) {
         - To find the 'repoSlug' for a known repository name within a specific workspace.
         - To explore all repositories within a known workspace ('workspaceSlug' is required).
         - To filter repositories based on name ('query'), your role ('role'), or sort them ('sort').
-        - Before using 'get-repository' or pull request tools if the 'repoSlug' is unknown.
+        - Before using 'get_repository' or pull request tools if the 'repoSlug' is unknown.
 
         WHEN NOT TO USE:
-        - When you don't know the 'workspaceSlug' (use 'list-workspaces' first).
-        - When you already have the 'repoSlug' and need full details (use 'get-repository').
+        - When you don't know the 'workspaceSlug' (use 'list_workspaces' first).
+        - When you already have the 'repoSlug' and need full details (use 'get_repository').
         - When you need pull request information (use pull request tools).
 
         RETURNS: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Includes pagination details if applicable.
@@ -170,19 +170,19 @@ function register(server: McpServer) {
 
 	// Register the get repository details tool
 	server.tool(
-		'get-repository',
+		'get_repository',
 		`Get detailed information about a specific Bitbucket repository using its workspace and repository slugs. Requires 'workspaceSlug' and 'repoSlug'.
 
         PURPOSE: Retrieves comprehensive metadata for a *known* repository, including UUID, owner, description, language, size, creation/update dates, and links.
 
         WHEN TO USE:
         - When you need full details about a *specific* repository and you know its 'workspaceSlug' and 'repoSlug'.
-        - After using 'list-repositories' to identify the target repository slugs.
+        - After using 'list_repositories' to identify the target repository slugs.
         - To get repository metadata before analyzing its pull requests or content.
 
         WHEN NOT TO USE:
-        - When you don't know the 'workspaceSlug' or 'repoSlug' (use 'list-workspaces' and/or 'list-repositories' first).
-        - When you only need a list of repositories (use 'list-repositories').
+        - When you don't know the 'workspaceSlug' or 'repoSlug' (use 'list_workspaces' and/or 'list_repositories' first).
+        - When you only need a list of repositories (use 'list_repositories').
         - When you need pull request information (use pull request tools).
 
         RETURNS: Detailed repository information including name, full name, UUID, description, language, size, owner, dates, and links. Fetches all available details by default.

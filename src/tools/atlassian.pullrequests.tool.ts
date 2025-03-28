@@ -191,21 +191,21 @@ function register(server: McpServer) {
 
 	// Register the list pull requests tool
 	server.tool(
-		'list-pull-requests',
+		'list_pull_requests',
 		`List pull requests for a specific Bitbucket repository, with optional filtering by state or query text. Requires 'workspaceSlug' and 'repoSlug'.
 
-        PURPOSE: Discover pull requests within a given repository and retrieve their IDs, titles, states, authors, and branches. Essential for finding the 'prId' needed for the 'get-pull-request' tool.
+        PURPOSE: Discover pull requests within a given repository and retrieve their IDs, titles, states, authors, and branches. Essential for finding the 'prId' needed for the 'get_pull_request' tool.
 
         WHEN TO USE:
         - To find open, merged, declined, or superseded pull requests within a specific repository.
         - To get a list of recent PR activity for a repository.
         - To search for PRs containing specific text in their title or description ('query' parameter).
-        - To obtain 'prId' values for use with 'get-pull-request'.
+        - To obtain 'prId' values for use with 'get_pull_request'.
         - Requires known 'workspaceSlug' and 'repoSlug'.
 
         WHEN NOT TO USE:
         - When you don't know the 'workspaceSlug' or 'repoSlug' (use workspace/repository listing tools first).
-        - When you already have the 'prId' and need full details (use 'get-pull-request').
+        - When you already have the 'prId' and need full details (use 'get_pull_request').
         - When you need repository information (use repository tools).
 
         RETURNS: Formatted list of pull requests including ID, title, state, author, source/destination branches, a snippet of the description, and URL. Includes pagination details if applicable.
@@ -226,20 +226,20 @@ function register(server: McpServer) {
 
 	// Register the get pull request details tool
 	server.tool(
-		'get-pull-request',
+		'get_pull_request',
 		`Get detailed information about a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
 
         PURPOSE: Retrieves comprehensive details for a *known* pull request, including its full description, state, author, reviewers, source/destination branches, and links to related resources like commits and diffs.
 
         WHEN TO USE:
         - When you need the full context, description, or reviewer list for a *specific* pull request.
-        - After using 'list-pull-requests' to identify the target 'prId'.
+        - After using 'list_pull_requests' to identify the target 'prId'.
         - To get links to view the PR diff, commits, or comments in the browser.
         - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the 'prId' (use 'list-pull-requests' first).
-        - When you only need a list of pull requests (use 'list-pull-requests').
+        - When you don't know the 'prId' (use 'list_pull_requests' first).
+        - When you only need a list of pull requests (use 'list_pull_requests').
         - When you need repository information (use repository tools).
 
         RETURNS: Detailed pull request information including title, full description, state, author, reviewers, branches, and links. Fetches all available details by default.
@@ -257,7 +257,7 @@ function register(server: McpServer) {
 
 	// Register the list pull request comments tool
 	server.tool(
-		'list-pr-comments',
+		'list_pr_comments',
 		`List comments on a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
 
         PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
@@ -265,13 +265,13 @@ function register(server: McpServer) {
         WHEN TO USE:
         - To see what reviewers have said about a pull request.
         - To find inline code comments and their context (file, line number).
-        - After identifying a PR of interest via 'list-pull-requests'.
+        - After identifying a PR of interest via 'list_pull_requests'.
         - When you need to understand review history, discussions, and decisions.
         - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the pull request ID (use 'list-pull-requests' first).
-        - When you need the PR's metadata but not comments (use 'get-pull-request').
+        - When you don't know the pull request ID (use 'list_pull_requests' first).
+        - When you need the PR's metadata but not comments (use 'get_pull_request').
         - When you need to post new comments (not supported).
 
         RETURNS: Formatted list of comments with author, date, content, and for inline comments: the file path and line numbers. General and inline comments are included.

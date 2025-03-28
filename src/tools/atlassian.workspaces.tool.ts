@@ -129,10 +129,10 @@ function register(server: McpServer) {
 
 	// Register the list workspaces tool
 	server.tool(
-		'list-workspaces',
+		'list_workspaces',
 		`List Bitbucket workspaces accessible to the authenticated user, with optional pagination.
 
-        PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list-repositories, get-repository, list-pull-requests, get-pull-request).
+        PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list_repositories, get_repository, list_pull_requests, get_pull_request).
 
         WHEN TO USE:
         - To find the 'workspaceSlug' for a known workspace name.
@@ -142,8 +142,8 @@ function register(server: McpServer) {
 
         WHEN NOT TO USE:
         - When you already have the 'workspaceSlug'.
-        - When you need detailed information about a *single* workspace (use 'get-workspace').
-        - When you need repository or pull request information (use repository/pull-request tools with a known 'workspaceSlug').
+        - When you need detailed information about a *single* workspace (use 'get_workspace').
+        - When you need repository or pull request information (use repository/pull_request tools with a known 'workspaceSlug').
 
         RETURNS: Formatted list of workspace memberships, including workspace name, slug, UUID, your permission level, and access dates. Includes pagination details if applicable.
 
@@ -160,19 +160,19 @@ function register(server: McpServer) {
 
 	// Register the get workspace details tool
 	server.tool(
-		'get-workspace',
+		'get_workspace',
 		`Get detailed information about a specific Bitbucket workspace using its slug.
 
         PURPOSE: Retrieves comprehensive metadata for a *known* workspace, including UUID, name, type, creation date, and links to related resources like repositories and projects.
 
         WHEN TO USE:
         - When you need full details about a *specific* workspace and you already know its 'workspaceSlug'.
-        - After using 'list-workspaces' to identify the target workspace slug.
+        - After using 'list_workspaces' to identify the target workspace slug.
         - To get quick links to a workspace's repositories, projects, or members page.
 
         WHEN NOT TO USE:
-        - When you don't know the workspace slug (use 'list-workspaces' first).
-        - When you only need a list of workspaces (use 'list-workspaces').
+        - When you don't know the workspace slug (use 'list_workspaces' first).
+        - When you only need a list of workspaces (use 'list_workspaces').
         - When you need information about repositories *within* the workspace (use repository tools).
 
         RETURNS: Detailed workspace information including slug, name, UUID, type, creation date, and links. Fetches all available details by default.
