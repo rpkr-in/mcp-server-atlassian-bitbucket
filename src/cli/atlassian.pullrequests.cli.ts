@@ -57,8 +57,8 @@ function registerListPullRequestsCommand(program: Command): void {
 			'Repository slug to list pull requests from',
 		)
 		.option(
-			'-s, --state <state>',
-			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
+			'-S, --status <status>',
+			'Filter by pull request status: OPEN, MERGED, DECLINED, SUPERSEDED',
 		)
 		.option(
 			'-q, --query <text>',
@@ -84,7 +84,7 @@ function registerListPullRequestsCommand(program: Command): void {
 				const controllerOptions: ListPullRequestsOptions = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
-					state: options.state,
+					state: options.status,
 					query: options.query,
 				};
 
