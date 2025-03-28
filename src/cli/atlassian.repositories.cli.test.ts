@@ -69,7 +69,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run the CLI command
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 			]);
 
@@ -106,7 +106,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run the CLI command with limit
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 				'--limit',
 				'1',
@@ -145,7 +145,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run the CLI command with query
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 				'--query',
 				query,
@@ -181,7 +181,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Test one role - we pick 'contributor' as it's most likely to have results
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 				'--role',
 				'contributor',
@@ -217,7 +217,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Test sorting by name (alphabetical)
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 				'--sort',
 				'name',
@@ -264,7 +264,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run with non-numeric limit
 			const result = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 				'--limit',
 				'invalid',
@@ -289,7 +289,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Get repositories for this workspace
 			const reposResult = await CliTestUtil.runCommand([
 				'list-repositories',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 			]);
 
@@ -334,9 +334,9 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run the get-repository command
 			const result = await CliTestUtil.runCommand([
 				'get-repository',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
-				'--repository',
+				'--repo-slug',
 				repoSlug,
 			]);
 
@@ -367,7 +367,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run command without the workspace parameter
 			const result = await CliTestUtil.runCommand([
 				'get-repository',
-				'--repository',
+				'--repo-slug',
 				'some-repo',
 			]);
 
@@ -393,7 +393,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run command without the repository parameter
 			const result = await CliTestUtil.runCommand([
 				'get-repository',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
 			]);
 
@@ -422,9 +422,9 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run command with invalid repository slug
 			const result = await CliTestUtil.runCommand([
 				'get-repository',
-				'--workspace',
+				'--workspace-slug',
 				workspaceSlug,
-				'--repository',
+				'--repo-slug',
 				invalidSlug,
 			]);
 
@@ -448,9 +448,9 @@ describe('Atlassian Repositories CLI Commands', () => {
 			// Run command with invalid workspace slug
 			const result = await CliTestUtil.runCommand([
 				'get-repository',
-				'--workspace',
+				'--workspace-slug',
 				invalidWorkspace,
-				'--repository',
+				'--repo-slug',
 				someRepo,
 			]);
 

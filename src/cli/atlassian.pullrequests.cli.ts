@@ -59,16 +59,16 @@ function registerListPullRequestsCommand(program: Command): void {
         PURPOSE: Discover pull requests in a repository and get their basic metadata, including title, state, author, source/destination branches, and reviewer information. Requires workspace and repository slugs.`,
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'-r, --repository <slug>',
+			'-r, --repo-slug <slug>',
 			'Repository slug to list pull requests from',
 		)
 		.option(
-			'-S, --status <status>',
-			'Filter by pull request status: OPEN, MERGED, DECLINED, SUPERSEDED',
+			'-S, --state <state>',
+			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
 		)
 		.option(
 			'-q, --query <text>',
@@ -92,9 +92,9 @@ function registerListPullRequestsCommand(program: Command): void {
 
 				// Map CLI options to controller format
 				const controllerOptions: ListPullRequestsOptions = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
-					state: options.status,
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					state: options.state,
 					query: options.query,
 				};
 
@@ -149,17 +149,14 @@ function registerGetPullRequestCommand(program: Command): void {
         PURPOSE: Retrieve comprehensive metadata for a pull request, including its description, state, author, reviewers, branches, and links.`,
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'-r, --repository <slug>',
+			'-r, --repo-slug <slug>',
 			'Repository slug containing the pull request',
 		)
-		.requiredOption(
-			'-p, --pull-request <id>',
-			'Pull request ID to retrieve',
-		)
+		.requiredOption('-p, --pr-id <id>', 'Pull request ID to retrieve')
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
@@ -170,9 +167,9 @@ function registerGetPullRequestCommand(program: Command): void {
 
 				// Map CLI options to controller format
 				const params = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
-					prId: options['pull-request'],
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					prId: options.prId,
 				};
 
 				const result =
@@ -198,15 +195,15 @@ function registerListPullRequestCommentsCommand(program: Command): void {
         PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.`,
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'-r, --repository <slug>',
+			'-r, --repo-slug <slug>',
 			'Repository slug containing the pull request',
 		)
 		.requiredOption(
-			'-p, --pull-request <id>',
+			'-p, --pr-id <id>',
 			'Pull request ID to list comments from',
 		)
 		.option(
@@ -227,9 +224,9 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 
 				// Map CLI options to controller format
 				const controllerOptions: PullRequestControllerOptions = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
-					prId: options['pull-request'],
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					prId: options.prId,
 				};
 
 				// Parse limit as number if provided

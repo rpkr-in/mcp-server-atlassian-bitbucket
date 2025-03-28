@@ -24,11 +24,11 @@ function register(program: Command) {
 			'Search for Bitbucket content across repositories and pull requests',
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the content to search',
 		)
 		.option(
-			'-r, --repository <slug>',
+			'-r, --repo-slug <slug>',
 			'Repository slug (required for pull request search)',
 		)
 		.option(
@@ -65,8 +65,8 @@ function register(program: Command) {
 
 				// Map CLI options to controller options
 				const controllerOptions = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
 					query: options.query,
 					scope: options.scope,
 					limit: options.limit,

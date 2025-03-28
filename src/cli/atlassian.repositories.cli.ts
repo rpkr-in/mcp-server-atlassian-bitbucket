@@ -52,12 +52,12 @@ function registerListRepositoriesCommand(program: Command): void {
         Output: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Supports filtering and sorting.
 
         Examples:
-  $ mcp-bitbucket list-repositories --workspace my-team --limit 25
-  $ mcp-bitbucket list-repositories --workspace my-team --query "backend-api" --role contributor
-  $ mcp-bitbucket list-repositories --workspace my-team --sort "-updated_on" --cursor "next-page-token"`,
+  $ mcp-bitbucket list-repositories --workspace-slug my-team --limit 25
+  $ mcp-bitbucket list-repositories --workspace-slug my-team --query "backend-api" --role contributor
+  $ mcp-bitbucket list-repositories --workspace-slug my-team --sort "-updated_on" --cursor "next-page-token"`,
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repositories',
 		)
 		.option(
@@ -90,9 +90,9 @@ function registerListRepositoriesCommand(program: Command): void {
 
 				// Validate workspace slug
 				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
+					!options.workspaceSlug ||
+					typeof options.workspaceSlug !== 'string' ||
+					options.workspaceSlug.trim() === ''
 				) {
 					throw new Error(
 						'Workspace slug is required and must be a valid slug string',
@@ -101,7 +101,7 @@ function registerListRepositoriesCommand(program: Command): void {
 
 				// Map CLI options to controller format
 				const controllerOptions: ListRepositoriesOptions = {
-					workspaceSlug: options.workspace,
+					workspaceSlug: options.workspaceSlug,
 					query: options.query,
 					role: options.role,
 					sort: options.sort,
@@ -163,11 +163,11 @@ function registerGetRepositoryCommand(program: Command): void {
         PURPOSE: Retrieve comprehensive metadata for a repository, including its full description, owner, language, size, dates, and links.`,
 		)
 		.requiredOption(
-			'-w, --workspace <slug>',
+			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'-r, --repository <slug>',
+			'-r, --repo-slug <slug>',
 			'Slug of the repository to retrieve',
 		)
 		.action(async (options) => {
@@ -180,9 +180,9 @@ function registerGetRepositoryCommand(program: Command): void {
 
 				// Validate workspace slug
 				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
+					!options.workspaceSlug ||
+					typeof options.workspaceSlug !== 'string' ||
+					options.workspaceSlug.trim() === ''
 				) {
 					throw new Error(
 						'Workspace slug is required and must be a valid slug string',
@@ -191,9 +191,9 @@ function registerGetRepositoryCommand(program: Command): void {
 
 				// Validate repository slug
 				if (
-					!options.repository ||
-					typeof options.repository !== 'string' ||
-					options.repository.trim() === ''
+					!options.repoSlug ||
+					typeof options.repoSlug !== 'string' ||
+					options.repoSlug.trim() === ''
 				) {
 					throw new Error(
 						'Repository slug is required and must be a valid slug string',
@@ -202,8 +202,8 @@ function registerGetRepositoryCommand(program: Command): void {
 
 				// Map CLI options to controller format
 				const params = {
-					workspaceSlug: options.workspace,
-					repoSlug: options.repository,
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
 				};
 
 				actionLogger.debug('Calling controller with params:', params);

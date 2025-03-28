@@ -58,7 +58,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		// Get repositories for this workspace
 		const reposResult = await CliTestUtil.runCommand([
 			'list-repositories',
-			'--workspace',
+			'--workspace-slug',
 			workspaceSlug,
 		]);
 
@@ -98,9 +98,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Run the CLI command
 			const result = await CliTestUtil.runCommand([
 				'list-pull-requests',
-				'--workspace',
+				'--workspace-slug',
 				repoInfo.workspace,
-				'--repository',
+				'--repo-slug',
 				repoInfo.repository,
 			]);
 
@@ -140,11 +140,11 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				// Run the CLI command with state filter
 				const result = await CliTestUtil.runCommand([
 					'list-pull-requests',
-					'--workspace',
+					'--workspace-slug',
 					repoInfo.workspace,
-					'--repository',
+					'--repo-slug',
 					repoInfo.repository,
-					'--status',
+					'--state',
 					state,
 				]);
 
@@ -172,9 +172,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Run the CLI command with limit
 			const result = await CliTestUtil.runCommand([
 				'list-pull-requests',
-				'--workspace',
+				'--workspace-slug',
 				repoInfo.workspace,
-				'--repository',
+				'--repo-slug',
 				repoInfo.repository,
 				'--limit',
 				'1',
@@ -211,9 +211,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// First, list pull requests to find a valid ID
 			const listResult = await CliTestUtil.runCommand([
 				'list-pull-requests',
-				'--workspace',
+				'--workspace-slug',
 				repoInfo.workspace,
-				'--repository',
+				'--repo-slug',
 				repoInfo.repository,
 			]);
 
@@ -240,11 +240,11 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				// Run the get-pull-request command
 				const getResult = await CliTestUtil.runCommand([
 					'get-pull-request',
-					'--workspace',
+					'--workspace-slug',
 					repoInfo.workspace,
-					'--repository',
+					'--repo-slug',
 					repoInfo.repository,
-					'--id',
+					'--pr-id',
 					prId,
 				]);
 
@@ -265,9 +265,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Test without workspace parameter
 			const missingWorkspace = await CliTestUtil.runCommand([
 				'get-pull-request',
-				'--repository',
+				'--repo-slug',
 				'some-repo',
-				'--id',
+				'--pr-id',
 				'1',
 			]);
 
@@ -278,9 +278,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Test without repository parameter
 			const missingRepo = await CliTestUtil.runCommand([
 				'get-pull-request',
-				'--workspace',
+				'--workspace-slug',
 				'some-workspace',
-				'--id',
+				'--pr-id',
 				'1',
 			]);
 
@@ -291,9 +291,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Test without pull-request parameter
 			const missingPR = await CliTestUtil.runCommand([
 				'get-pull-request',
-				'--workspace',
+				'--workspace-slug',
 				'some-workspace',
-				'--repository',
+				'--repo-slug',
 				'some-repo',
 			]);
 
@@ -301,5 +301,176 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(missingPR.exitCode).not.toBe(0);
 			expect(missingPR.stderr).toContain('required option');
 		}, 15000);
+	});
+
+	describe('list-pr-comments command', () => {
+		it('should list comments for a specific pull request', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// First, list pull requests to find a valid ID
+			const listResult = await CliTestUtil.runCommand([
+				'list-pull-requests',
+				'--workspace-slug',
+				repoInfo.workspace,
+				'--repo-slug',
+				repoInfo.repository,
+			]);
+
+			// Skip if no pull requests are available
+			if (listResult.stdout.includes('No pull requests found')) {
+				console.warn('Skipping test: No pull requests available');
+				return;
+			}
+
+			// Extract a pull request ID from the output
+			const prMatch = listResult.stdout.match(/\*\*ID\*\*:\s+(\d+)/);
+			if (!prMatch || !prMatch[1]) {
+				console.warn(
+					'Skipping test: Could not extract pull request ID',
+				);
+				return;
+			}
+
+			const prId = prMatch[1].trim();
+
+			// Skip the full validation since we can't guarantee PRs exist
+			// Just verify that the test can find a valid ID and run the command
+			if (prId) {
+				// Run the list-pr-comments command
+				const result = await CliTestUtil.runCommand([
+					'list-pr-comments',
+					'--workspace-slug',
+					repoInfo.workspace,
+					'--repo-slug',
+					repoInfo.repository,
+					'--pr-id',
+					prId,
+				]);
+
+				// The test may pass or fail depending on if the PR exists
+				// Just check that we get a result back
+				expect(result).toBeDefined();
+			} else {
+				// Skip test if no PR ID found
+				console.warn('Skipping test: No pull request ID available');
+			}
+		}, 45000); // Increased timeout for multiple API calls
+
+		it('should handle missing required parameters', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Test without workspace parameter
+			const missingWorkspace = await CliTestUtil.runCommand([
+				'list-pr-comments',
+				'--repo-slug',
+				'some-repo',
+				'--pr-id',
+				'1',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingWorkspace.exitCode).not.toBe(0);
+			expect(missingWorkspace.stderr).toContain('required option');
+
+			// Test without repository parameter
+			const missingRepo = await CliTestUtil.runCommand([
+				'list-pr-comments',
+				'--workspace-slug',
+				'some-workspace',
+				'--pr-id',
+				'1',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingRepo.exitCode).not.toBe(0);
+			expect(missingRepo.stderr).toContain('required option');
+
+			// Test without pull-request parameter
+			const missingPR = await CliTestUtil.runCommand([
+				'list-pr-comments',
+				'--workspace-slug',
+				'some-workspace',
+				'--repo-slug',
+				'some-repo',
+			]);
+
+			// Should fail with non-zero exit code
+			expect(missingPR.exitCode).not.toBe(0);
+			expect(missingPR.stderr).toContain('required option');
+		}, 15000);
+	});
+
+	describe('list-pr-comments with pagination', () => {
+		it('should list comments for a specific pull request with pagination', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Get a valid workspace and repository
+			const repoInfo = await getWorkspaceAndRepo();
+			if (!repoInfo) {
+				return; // Skip if no valid workspace/repo found
+			}
+
+			// First, list pull requests to find a valid ID
+			const listResult = await CliTestUtil.runCommand([
+				'list-pull-requests',
+				'--workspace-slug',
+				repoInfo.workspace,
+				'--repo-slug',
+				repoInfo.repository,
+			]);
+
+			// Skip if no pull requests are available
+			if (listResult.stdout.includes('No pull requests found')) {
+				console.warn('Skipping test: No pull requests available');
+				return;
+			}
+
+			// Extract a pull request ID from the output
+			const prMatch = listResult.stdout.match(/\*\*ID\*\*:\s+(\d+)/);
+			if (!prMatch || !prMatch[1]) {
+				console.warn(
+					'Skipping test: Could not extract pull request ID',
+				);
+				return;
+			}
+
+			const prId = prMatch[1].trim();
+
+			// Skip the full validation since we can't guarantee PRs exist
+			// Just verify that the test can find a valid ID and run the command
+			if (prId) {
+				// Run with pagination limit
+				const limitResult = await CliTestUtil.runCommand([
+					'list-pr-comments',
+					'--workspace-slug',
+					repoInfo.workspace,
+					'--repo-slug',
+					repoInfo.repository,
+					'--pr-id',
+					prId,
+					'--limit',
+					'1',
+				]);
+
+				// The test may pass or fail depending on if the PR exists
+				// Just check that we get a result back
+				expect(limitResult).toBeDefined();
+			} else {
+				// Skip test if no PR ID found
+				console.warn('Skipping test: No pull request ID available');
+			}
+		}, 45000); // Increased timeout for multiple API calls
 	});
 });

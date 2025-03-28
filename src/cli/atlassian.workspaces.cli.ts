@@ -141,10 +141,10 @@ function registerGetWorkspaceCommand(program: Command): void {
         Output: Formatted details of the specified workspace. Fetches all available details by default.
 
         Examples:
-  $ mcp-bitbucket get-workspace --id my-dev-team`,
+  $ mcp-bitbucket get-workspace --workspace-slug my-dev-team`,
 		)
 		.requiredOption(
-			'-i, --id <slug>',
+			'-w, --workspace-slug <slug>',
 			'Slug of the workspace to retrieve (identifies the workspace)',
 		)
 		.action(async (options) => {
@@ -153,10 +153,12 @@ function registerGetWorkspaceCommand(program: Command): void {
 				'get-workspace',
 			);
 			try {
-				actionLogger.debug(`Fetching workspace: ${options.id}`);
+				actionLogger.debug(
+					`Fetching workspace: ${options.workspaceSlug}`,
+				);
 
 				const result = await atlassianWorkspacesController.get({
-					workspaceSlug: options.id,
+					workspaceSlug: options.workspaceSlug,
 				});
 
 				console.log(result.content);
