@@ -1,13 +1,12 @@
 import atlassianWorkspacesController from './atlassian.workspaces.controller.js';
 import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
+import { McpError } from '../utils/error.util.js';
 
 describe('Atlassian Workspaces Controller', () => {
-	// Load configuration and skip all tests if Atlassian credentials are not available
+	// Load configuration and check for credentials before all tests
 	beforeAll(() => {
-		// Load configuration from all sources
-		config.load();
-
+		config.load(); // Ensure config is loaded
 		const credentials = getAtlassianCredentials();
 		if (!credentials) {
 			console.warn(
@@ -16,128 +15,146 @@ describe('Atlassian Workspaces Controller', () => {
 		}
 	});
 
-	describe('list', () => {
-		it('should return a formatted list of workspaces', async () => {
-			// Check if credentials are available
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				return; // Skip this test if no credentials
-			}
+	// Helper function to skip tests when credentials are missing
+	const skipIfNoCredentials = () => !getAtlassianCredentials();
 
-			// Call the function
+	describe('list', () => {
+		it('should return a formatted list of workspaces in Markdown', async () => {
+			if (skipIfNoCredentials()) return;
+
 			const result = await atlassianWorkspacesController.list({});
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
+			expect(result).toHaveProperty('pagination');
 
-			// Verify the content format
+			// Basic Markdown content checks
 			if (result.content !== 'No Bitbucket workspaces found.') {
-				expect(result.content).toContain('# Bitbucket Workspaces');
+				expect(result.content).toMatch(/^# Bitbucket Workspaces/m);
 				expect(result.content).toContain('**UUID**');
 				expect(result.content).toContain('**Slug**');
 				expect(result.content).toContain('**Permission Level**');
 			}
-		}, 15000); // Increase timeout for API call
 
-		it('should support pagination options', async () => {
-			// Check if credentials are available
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				return; // Skip this test if no credentials
+			// Verify pagination structure
+			expect(result.pagination).toBeDefined();
+			expect(result.pagination).toHaveProperty('hasMore');
+			expect(typeof result.pagination?.hasMore).toBe('boolean');
+			// nextCursor might be undefined if hasMore is false
+			if (result.pagination?.hasMore) {
+				expect(result.pagination).toHaveProperty('nextCursor');
+				expect(typeof result.pagination?.nextCursor).toBe('string');
 			}
+		}, 30000); // Increased timeout
 
-			// Call the function with pagination options
-			const result = await atlassianWorkspacesController.list({
+		it('should handle pagination options (limit/cursor)', async () => {
+			if (skipIfNoCredentials()) return;
+
+			// Fetch first page
+			const result1 = await atlassianWorkspacesController.list({
 				limit: 1,
 			});
 
-			// Verify the response structure and pagination
-			expect(result).toHaveProperty('content');
-			expect(result).toHaveProperty('pagination');
+			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
 
-			// If there are multiple workspaces, pagination should be provided
-			if (result.pagination?.hasMore) {
-				expect(result.pagination).toHaveProperty('nextCursor');
-				expect(result.content).toContain('Pagination');
+			// If there's a next page, fetch it
+			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+				const result2 = await atlassianWorkspacesController.list({
+					limit: 1,
+					cursor: result1.pagination.nextCursor,
+				});
+				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
+				// Ensure content is different (or handle case where only 1 item exists)
+				if (
+					result1.content !== 'No Bitbucket workspaces found.' &&
+					result2.content !== 'No Bitbucket workspaces found.'
+				) {
+					// Only compare if we actually have multiple workspaces
+					expect(result1.content).not.toEqual(result2.content);
+				}
+			} else {
+				console.warn(
+					'Skipping cursor part of pagination test: Only one page of workspaces found.',
+				);
 			}
-		}, 15000); // Increase timeout for API call
-
-		it('should handle query filters', async () => {
-			// The Bitbucket API doesn't support filtering workspaces by name
-			// This test is intentionally skipped as the feature is not supported by the API
-
-			// Check if credentials are available
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				return; // Skip this test if no credentials
-			}
-
-			// We're marking this test as passed since filtering by name is not a supported feature
-			expect(true).toBe(true);
-		}, 15000); // Increase timeout for API call
+		}, 30000);
 	});
 
 	describe('get', () => {
-		it('should return formatted details for a valid workspace slug', async () => {
-			// Check if credentials are available
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				return; // Skip this test if no credentials
+		// Helper to get a valid slug for testing 'get'
+		async function getFirstWorkspaceSlugForController(): Promise<
+			string | null
+		> {
+			if (skipIfNoCredentials()) return null;
+			try {
+				const listResult = await atlassianWorkspacesController.list({
+					limit: 1,
+				});
+				if (listResult.content === 'No Bitbucket workspaces found.')
+					return null;
+				// Extract slug from Markdown content
+				const slugMatch = listResult.content.match(
+					/\*\*Slug\*\*:\s+([^\s\n]+)/,
+				);
+				return slugMatch ? slugMatch[1] : null;
+			} catch (error) {
+				console.warn(
+					"Could not fetch workspace list for controller 'get' test setup:",
+					error,
+				);
+				return null;
 			}
+		}
 
-			// First, get a list of workspaces to find a valid slug
-			const workspaces = await atlassianWorkspacesController.list({});
-
-			// Skip if no workspaces are available
-			if (workspaces.content === 'No Bitbucket workspaces found.') {
-				console.warn('Skipping test: No workspaces available');
+		it('should return formatted details for a valid workspace slug in Markdown', async () => {
+			const workspaceSlug = await getFirstWorkspaceSlugForController();
+			if (!workspaceSlug) {
+				console.warn(
+					'Skipping controller get test: No workspace slug found.',
+				);
 				return;
 			}
 
-			// Extract a workspace slug from the content
-			const slugMatch = workspaces.content.match(
-				/\*\*Slug\*\*:\s+([^\n]+)/,
-			);
-			if (!slugMatch || !slugMatch[1]) {
-				console.warn('Skipping test: Could not extract workspace slug');
-				return;
-			}
-
-			const workspaceSlug = slugMatch[1].trim();
-
-			// Call the function with the extracted slug
 			const result = await atlassianWorkspacesController.get({
-				workspaceSlug: workspaceSlug,
+				workspaceSlug,
 			});
 
-			// Verify the response structure
+			// Verify the ControllerResponse structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
+			expect(result).not.toHaveProperty('pagination'); // 'get' shouldn't have pagination
 
-			// Verify the content format for a workspace
-			expect(result.content).toContain(`# Workspace: `);
-			expect(result.content).toContain('## Basic Information');
+			// Verify Markdown content
+			expect(result.content).toMatch(/^# Workspace:/m);
 			expect(result.content).toContain(`**Slug**: ${workspaceSlug}`);
+			expect(result.content).toContain('## Basic Information');
 			expect(result.content).toContain('## Links');
-		}, 15000); // Increase timeout for API call
+		}, 30000);
 
-		it('should handle errors for invalid workspace slugs', async () => {
-			// Check if credentials are available
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				return; // Skip this test if no credentials
-			}
+		it('should throw McpError for an invalid workspace slug', async () => {
+			if (skipIfNoCredentials()) return;
 
-			// Use a deliberately invalid workspace slug
-			const invalidSlug = 'invalid-workspace-slug-that-does-not-exist';
+			const invalidSlug = 'this-slug-definitely-does-not-exist-12345';
 
-			// Expect an error to be thrown
+			// Expect the controller call to reject with an McpError
 			await expect(
 				atlassianWorkspacesController.get({
 					workspaceSlug: invalidSlug,
 				}),
-			).rejects.toThrow();
-		}, 15000); // Increase timeout for API call
+			).rejects.toThrow(McpError);
+
+			// Optionally check the status code via the error handler's behavior
+			try {
+				await atlassianWorkspacesController.get({
+					workspaceSlug: invalidSlug,
+				});
+			} catch (e) {
+				expect(e).toBeInstanceOf(McpError);
+				// The controller error handler wraps the service error
+				expect((e as McpError).statusCode).toBe(404); // Expecting Not Found
+				expect((e as McpError).message).toContain('not found');
+			}
+		}, 30000);
 	});
 });
