@@ -14,7 +14,7 @@ import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
 import atlassianSearchTools from './tools/atlassian.search.tool.js';
 
 // Define version constant for easier management and consistent versioning
-const VERSION = '1.10.1';
+const VERSION = '1.11.0';
 
 // Create a contextualized logger for this file
 const indexLogger = Logger.forContext('index.ts');

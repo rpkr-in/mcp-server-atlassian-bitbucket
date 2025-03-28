@@ -1,3 +1,20 @@
+# [1.11.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.10.1...v1.11.0) (2025-03-28)
+
+
+### Bug Fixes
+
+* **cli:** standardize CLI parameter naming conventions ([fe16246](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/fe16246a550674470ce8b03441809e07c0c7016b))
+* resolve TypeScript errors and lint warnings in Bitbucket MCP server ([29446b9](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/29446b95151e3462f2bef3cd1f772e9726c97a29))
+* standardize status parameter and workspace identifiers ([c11b2bf](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c11b2bf5b6cf7f4e3b0eae189c17f300d64c5534))
+* **test:** improve Bitbucket workspaces integration tests with better error handling and reliability ([284447f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/284447f0897c9e53c271777d2f81178a65e32ca9))
+* **tests:** improve test resiliency for CLI commands ([7f690ba](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/7f690ba4f3c42fb2f8bce6cf279ccfb5dc419a74))
+
+
+### Features
+
+* standardize CLI flag patterns and entity parameter naming ([7b4d719](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/7b4d71948d3bf6a4b2cf8659e42b02e57b92f451))
+* **test:** add comprehensive test coverage for Bitbucket MCP server ([b69fa8f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/b69fa8f171efbe713f42e9cfde013a83898419dd))
+
 ## [1.10.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.10.0...v1.10.1) (2025-03-28)
 
 
