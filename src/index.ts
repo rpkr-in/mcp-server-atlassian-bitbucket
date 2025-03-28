@@ -11,6 +11,7 @@ import { runCli } from './cli/index.js';
 import atlassianWorkspacesTools from './tools/atlassian.workspaces.tool.js';
 import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
 import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
+import atlassianSearchTools from './tools/atlassian.search.tool.js';
 
 // Define version constant for easier management and consistent versioning
 const VERSION = '1.10.1';
@@ -65,6 +66,9 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 
 	atlassianPullRequestsTools.register(serverInstance);
 	indexLogger.debug('Pull requests tools registered');
+
+	atlassianSearchTools.register(serverInstance);
+	indexLogger.debug('Search tools registered');
 
 	indexLogger.info('All tools registered successfully');
 

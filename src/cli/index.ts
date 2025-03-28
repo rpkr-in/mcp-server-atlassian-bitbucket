@@ -5,6 +5,7 @@ import { Logger } from '../utils/logger.util.js';
 import atlassianWorkspacesCli from './atlassian.workspaces.cli.js';
 import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
 import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
+import atlassianSearchCommands from './atlassian.search.cli.js';
 
 // Get the version from package.json
 const VERSION = '1.10.1'; // This should match the version in src/index.ts
@@ -27,8 +28,16 @@ export async function runCli(args: string[]) {
 
 	// Register CLI commands
 	atlassianWorkspacesCli.register(program);
+	cliLogger.debug('Workspace commands registered');
+
 	atlassianRepositoriesCli.register(program);
+	cliLogger.debug('Repository commands registered');
+
 	atlassianPullRequestsCli.register(program);
+	cliLogger.debug('Pull Request commands registered');
+
+	atlassianSearchCommands.register(program);
+	cliLogger.debug('Search commands registered');
 
 	// Handle unknown commands
 	program.on('command:*', (operands) => {

@@ -57,8 +57,8 @@ function registerListRepositoriesCommand(program: Command): void {
   $ mcp-bitbucket list-repositories --workspace my-team --sort "-updated_on" --cursor "next-page-token"`,
 		)
 		.requiredOption(
-			'--workspace <slug>',
-			'Workspace slug (e.g., myteam) to list repositories from',
+			'-w, --workspace <slug>',
+			'Workspace slug containing the repositories',
 		)
 		.option(
 			'-q, --query <text>',
@@ -69,7 +69,7 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Filter repositories by the user\'s role (e.g., "owner", "admin", "contributor")',
 		)
 		.option(
-			'-S, --sort <string>',
+			'-s, --sort <string>',
 			'Field to sort results by (e.g., "name", "-updated_on")',
 		)
 		.option(
@@ -95,73 +95,56 @@ function registerListRepositoriesCommand(program: Command): void {
 					options.workspace.trim() === ''
 				) {
 					throw new Error(
-						'Workspace slug must be a valid non-empty string',
+						'Workspace slug is required and must be a valid slug string',
 					);
 				}
 
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				actionLogger.debug(
-					`Listing repositories for workspace: ${options.workspace}`,
-				);
-
-				// Prepare filter options from command parameters
-				const filterOptions: ListRepositoriesOptions = {
+				// Map CLI options to controller format
+				const controllerOptions: ListRepositoriesOptions = {
 					workspaceSlug: options.workspace,
-					...(options.query && { query: options.query }),
+					query: options.query,
+					role: options.role,
+					sort: options.sort,
 				};
 
-				// Apply the optional filter parameters if provided
-				if (options.role) {
-					filterOptions.role = options.role;
-				}
-
-				if (options.sort) {
-					filterOptions.sort = options.sort;
-				}
-
-				// Apply pagination options if provided
+				// Parse limit as number if provided
 				if (options.limit) {
-					filterOptions.limit = parseInt(options.limit, 10);
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit < 1 || limit > 100) {
+						throw new Error(
+							'Limit must be a number between 1 and 100',
+						);
+					}
+					controllerOptions.limit = limit;
 				}
 
+				// Add cursor if provided
 				if (options.cursor) {
-					filterOptions.cursor = options.cursor;
+					controllerOptions.cursor = options.cursor;
 				}
 
 				actionLogger.debug(
-					'Fetching repositories with filters:',
-					filterOptions,
+					'Calling controller with options:',
+					controllerOptions,
 				);
-
 				const result =
-					await atlassianRepositoriesController.list(filterOptions);
-
-				actionLogger.debug('Successfully retrieved repositories');
+					await atlassianRepositoriesController.list(
+						controllerOptions,
+					);
+				actionLogger.debug('API call completed, displaying results...');
 
 				console.log(result.content);
 
-				// Display pagination information if available
 				if (result.pagination) {
 					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
+						formatPagination(
+							result.pagination.count || 0,
+							result.pagination.hasMore,
+							result.pagination.nextCursor,
+						),
 					);
 				}
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -175,23 +158,16 @@ function registerGetRepositoryCommand(program: Command): void {
 	program
 		.command('get-repository')
 		.description(
-			`Get detailed information about a specific Bitbucket repository using its workspace and repository slugs.
+			`Get detailed information about a specific Bitbucket repository.
 
-        PURPOSE: Retrieve comprehensive details for a *known* repository, including its UUID, owner, description, language, size, dates, and links. Requires both workspace and repository slugs.
-
-        Use Case: Useful when you have a specific repository identified (via 'list-repositories' or prior knowledge) and need its full metadata.
-
-        Output: Formatted details of the specified repository. Fetches all available details by default.
-
-        Examples:
-  $ mcp-bitbucket get-repository --workspace my-team --repository backend-api`,
+        PURPOSE: Retrieve comprehensive metadata for a repository, including its full description, owner, language, size, dates, and links.`,
 		)
 		.requiredOption(
-			'--workspace <slug>',
+			'-w, --workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repository <slug>',
+			'-r, --repository <slug>',
 			'Slug of the repository to retrieve',
 		)
 		.action(async (options) => {
@@ -209,7 +185,7 @@ function registerGetRepositoryCommand(program: Command): void {
 					options.workspace.trim() === ''
 				) {
 					throw new Error(
-						'Workspace slug must be a valid non-empty string',
+						'Workspace slug is required and must be a valid slug string',
 					);
 				}
 
@@ -220,24 +196,23 @@ function registerGetRepositoryCommand(program: Command): void {
 					options.repository.trim() === ''
 				) {
 					throw new Error(
-						'Repository slug must be a valid non-empty string',
+						'Repository slug is required and must be a valid slug string',
 					);
 				}
 
-				actionLogger.debug(
-					`Fetching details for repository: ${options.workspace}/${options.repository}`,
-				);
-
-				const result = await atlassianRepositoriesController.get({
+				// Map CLI options to controller format
+				const params = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
-				});
+				};
 
-				actionLogger.debug('Successfully retrieved repository details');
+				actionLogger.debug('Calling controller with params:', params);
+				const result =
+					await atlassianRepositoriesController.get(params);
+				actionLogger.debug('API call completed, displaying results...');
 
 				console.log(result.content);
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

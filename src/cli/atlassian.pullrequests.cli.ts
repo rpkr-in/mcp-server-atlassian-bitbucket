@@ -3,10 +3,7 @@ import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
 import { formatPagination } from '../utils/formatter.util.js';
-import {
-	ListPullRequestsOptions,
-	ListPullRequestCommentsOptions,
-} from '../controllers/atlassian.pullrequests.types.js';
+import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.types.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -49,28 +46,18 @@ function registerListPullRequestsCommand(program: Command): void {
 		.description(
 			`List pull requests within a specific Bitbucket repository.
 
-        PURPOSE: Discover pull requests within a given repository, find their IDs, and get basic metadata like title, state, author, and branches. Requires workspace and repository slugs.
-
-        Use Case: Essential for finding the 'prId' needed for 'get-pull-request'. Shows all PR states by default, but allows filtering by state (OPEN, MERGED, etc.) or text query.
-
-        Output: Formatted list of pull requests including ID, title, state, author, branches, description snippet, and URL. Supports filtering and sorting.
-
-        Examples:
-  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api
-  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --state OPEN
-  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --limit 50 --state MERGED
-  $ mcp-bitbucket list-pull-requests --workspace my-team --repository backend-api --query "bugfix" --cursor "next-page-token"`,
+        PURPOSE: Discover pull requests in a repository and get their basic metadata, including title, state, author, source/destination branches, and reviewer information. Requires workspace and repository slugs.`,
 		)
 		.requiredOption(
-			'--workspace <slug>',
+			'-w, --workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repository <slug>',
+			'-r, --repository <slug>',
 			'Repository slug to list pull requests from',
 		)
 		.option(
-			'--state <state>',
+			'-s, --state <state>',
 			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
 		)
 		.option(
@@ -93,96 +80,47 @@ function registerListPullRequestsCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate workspace slug
-				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
-				) {
-					throw new Error(
-						'Workspace slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate repository slug
-				if (
-					!options.repository ||
-					typeof options.repository !== 'string' ||
-					options.repository.trim() === ''
-				) {
-					throw new Error(
-						'Repository slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate state if provided
-				if (
-					options.state &&
-					!['OPEN', 'MERGED', 'DECLINED', 'SUPERSEDED'].includes(
-						options.state.toUpperCase(),
-					)
-				) {
-					throw new Error(
-						'State must be one of: OPEN, MERGED, DECLINED, SUPERSEDED',
-					);
-				}
-
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				actionLogger.debug(
-					`Listing pull requests for repository: ${options.workspace}/${options.repository}`,
-				);
-
-				// Prepare filter options from command parameters
-				const filterOptions: ListPullRequestsOptions = {
+				// Map CLI options to controller format
+				const controllerOptions: ListPullRequestsOptions = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
-					state: options.state?.toUpperCase() as ListPullRequestsOptions['state'],
+					state: options.state,
 					query: options.query,
 				};
 
-				// Apply pagination options if provided
+				// Parse limit as number if provided
 				if (options.limit) {
-					filterOptions.limit = parseInt(options.limit, 10);
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit < 1 || limit > 100) {
+						throw new Error(
+							'Limit must be a number between 1 and 100',
+						);
+					}
+					controllerOptions.limit = limit;
 				}
 
+				// Add cursor if provided
 				if (options.cursor) {
-					filterOptions.cursor = options.cursor;
+					controllerOptions.cursor = options.cursor;
 				}
-
-				actionLogger.debug(
-					'Fetching pull requests with filters:',
-					filterOptions,
-				);
 
 				const result =
-					await atlassianPullRequestsController.list(filterOptions);
-
-				actionLogger.debug('Successfully retrieved pull requests');
+					await atlassianPullRequestsController.list(
+						controllerOptions,
+					);
 
 				console.log(result.content);
 
-				// Display pagination information if available
 				if (result.pagination) {
 					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
+						formatPagination(
+							result.pagination.count || 0,
+							result.pagination.hasMore,
+							result.pagination.nextCursor,
+						),
 					);
 				}
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -196,26 +134,22 @@ function registerGetPullRequestCommand(program: Command): void {
 	program
 		.command('get-pull-request')
 		.description(
-			`Get detailed information about a specific Bitbucket pull request using its workspace, repository, and PR ID.
+			`Get detailed information about a specific Bitbucket pull request.
 
-        PURPOSE: Retrieve comprehensive details for a *known* pull request, including its description, state, author, reviewers, branches, and links to diffs/commits. Requires workspace slug, repository slug, and pull request ID.
-
-        Use Case: Essential for understanding the full context of a specific PR identified via 'list-pull-requests' or prior knowledge.
-
-        Output: Formatted details of the specified pull request. Fetches all available details by default.
-
-        Examples:
-  $ mcp-bitbucket get-pull-request --workspace my-team --repository backend-api --pull-request 42`,
+        PURPOSE: Retrieve comprehensive metadata for a pull request, including its description, state, author, reviewers, branches, and links.`,
 		)
 		.requiredOption(
-			'--workspace <slug>',
+			'-w, --workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repository <slug>',
+			'-r, --repository <slug>',
 			'Repository slug containing the pull request',
 		)
-		.requiredOption('--pull-request <id>', 'Pull request ID to retrieve')
+		.requiredOption(
+			'-p, --pull-request <id>',
+			'Pull request ID to retrieve',
+		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
@@ -224,53 +158,18 @@ function registerGetPullRequestCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate workspace slug
-				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
-				) {
-					throw new Error(
-						'Workspace slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate repository slug
-				if (
-					!options.repository ||
-					typeof options.repository !== 'string' ||
-					options.repository.trim() === ''
-				) {
-					throw new Error(
-						'Repository slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate PR ID
-				const prIdNum = parseInt(options.pullRequest, 10);
-				if (isNaN(prIdNum) || prIdNum <= 0) {
-					throw new Error(
-						'Pull request ID must be a positive integer',
-					);
-				}
-
-				actionLogger.debug(
-					`Fetching details for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
-				);
-
-				const result = await atlassianPullRequestsController.get({
+				// Map CLI options to controller format
+				const params = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
-					prId: options.pullRequest,
-				});
+					prId: options['pull-request'],
+				};
 
-				actionLogger.debug(
-					'Successfully retrieved pull request details',
-				);
+				const result =
+					await atlassianPullRequestsController.get(params);
 
 				console.log(result.content);
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -286,27 +185,18 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 		.description(
 			`List comments on a specific Bitbucket pull request.
 
-        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
-
-        Use Case: Essential for understanding reviewer feedback, code discussions, and decision rationale. Shows both general comments and inline code comments with file/line context.
-
-        Output: Formatted list of comments including author, timestamp, content, and inline code context. Supports pagination for PRs with many comments.
-
-        Examples:
-  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123
-  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123 --limit 50
-  $ mcp-bitbucket list-pr-comments --workspace my-team --repository backend-api --pull-request 123 --cursor "next-page-token"`,
+        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.`,
 		)
 		.requiredOption(
-			'--workspace <slug>',
+			'-w, --workspace <slug>',
 			'Workspace slug containing the repository',
 		)
 		.requiredOption(
-			'--repository <slug>',
+			'-r, --repository <slug>',
 			'Repository slug containing the pull request',
 		)
 		.requiredOption(
-			'--pull-request <id>',
+			'-p, --pull-request <id>',
 			'Pull request ID to list comments from',
 		)
 		.option(
@@ -317,10 +207,6 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 			'-c, --cursor <string>',
 			'Pagination cursor for retrieving the next set of results',
 		)
-		.option(
-			'-s, --sort <string>',
-			'Sort order for comments (e.g., "-updated_on" for most recent first)',
-		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
@@ -329,99 +215,46 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate workspace slug
-				if (
-					!options.workspace ||
-					typeof options.workspace !== 'string' ||
-					options.workspace.trim() === ''
-				) {
-					throw new Error(
-						'Workspace slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate repository slug
-				if (
-					!options.repository ||
-					typeof options.repository !== 'string' ||
-					options.repository.trim() === ''
-				) {
-					throw new Error(
-						'Repository slug must be a valid non-empty string',
-					);
-				}
-
-				// Validate PR ID
-				const prIdNum = parseInt(options.pullRequest, 10);
-				if (isNaN(prIdNum) || prIdNum <= 0) {
-					throw new Error(
-						'Pull request ID must be a positive integer',
-					);
-				}
-
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				actionLogger.debug(
-					`Listing comments for pull request: ${options.workspace}/${options.repository}/${options.pullRequest}`,
-				);
-
-				// Prepare filter options
-				const filterOptions: ListPullRequestCommentsOptions = {
+				// Map CLI options to controller format
+				const controllerOptions: any = {
 					workspaceSlug: options.workspace,
 					repoSlug: options.repository,
-					prId: options.pullRequest,
+					prId: options['pull-request'],
 				};
 
-				// Apply pagination options if provided
+				// Parse limit as number if provided
 				if (options.limit) {
-					filterOptions.limit = parseInt(options.limit, 10);
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit < 1 || limit > 100) {
+						throw new Error(
+							'Limit must be a number between 1 and 100',
+						);
+					}
+					controllerOptions.limit = limit;
 				}
 
+				// Add cursor if provided
 				if (options.cursor) {
-					filterOptions.cursor = options.cursor;
+					controllerOptions.cursor = options.cursor;
 				}
-
-				if (options.sort) {
-					filterOptions.sort = options.sort;
-				}
-
-				actionLogger.debug(
-					'Fetching pull request comments with filters:',
-					filterOptions,
-				);
 
 				const result =
 					await atlassianPullRequestsController.listComments(
-						filterOptions,
+						controllerOptions,
 					);
-
-				actionLogger.debug(
-					'Successfully retrieved pull request comments',
-				);
 
 				console.log(result.content);
 
-				// Display pagination information if available
 				if (result.pagination) {
 					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
+						formatPagination(
+							result.pagination.count || 0,
+							result.pagination.hasMore,
+							result.pagination.nextCursor,
+						),
 					);
 				}
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
