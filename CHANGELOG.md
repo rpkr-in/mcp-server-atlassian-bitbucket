@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.10.0...v1.10.1) (2025-03-28)
+
+
+### Performance Improvements
+
+* rename tools to use underscore instead of hyphen ([bc1f65e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/bc1f65e7d76d3c13f4fd96cde115c441c7d6212f))
+
 # [1.10.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.9.1...v1.10.0) (2025-03-27)
 
 
