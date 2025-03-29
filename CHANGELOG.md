@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.11.0...v1.11.1) (2025-03-29)
+
+
+### Bug Fixes
+
+* conflict ([e947249](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e9472496062a64bd9766c3ba8b61944076d16883))
+
 # [1.11.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.10.1...v1.11.0) (2025-03-28)
 
 
