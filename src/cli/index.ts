@@ -9,7 +9,7 @@ import atlassianSearchCommands from './atlassian.search.cli.js';
 
 // Get the version from package.json
 const VERSION = '1.11.0'; // This should match the version in src/index.ts
-const NAME = '@aashari/mcp-server-atlassian-bitbucket';
+const NAME = 'mcp-atlassian-bitbucket';
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
 

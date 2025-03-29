@@ -52,9 +52,9 @@ function registerListRepositoriesCommand(program: Command): void {
         Output: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Supports filtering and sorting.
 
         Examples:
-  $ mcp-bitbucket list-repositories --workspace-slug my-team --limit 25
-  $ mcp-bitbucket list-repositories --workspace-slug my-team --query "backend-api" --role contributor
-  $ mcp-bitbucket list-repositories --workspace-slug my-team --sort "-updated_on" --cursor "next-page-token"`,
+  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --limit 25
+  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --query "backend-api" --role contributor
+  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --sort "-updated_on" --cursor "next-page-token"`,
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',

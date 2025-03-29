@@ -52,8 +52,8 @@ function registerListWorkspacesCommand(program: Command): void {
         Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports pagination.
 
         Examples:
-  $ mcp-bitbucket list-workspaces --limit 10
-  $ mcp-bitbucket list-workspaces --cursor "some-cursor-value"`,
+  $ mcp-atlassian-bitbucket list-workspaces --limit 10
+  $ mcp-atlassian-bitbucket list-workspaces --cursor "some-cursor-value"`,
 		)
 		// NOTE: Sort option has been removed as the Bitbucket API's /2.0/user/permissions/workspaces endpoint
 		// does not support sorting on any field
@@ -141,7 +141,7 @@ function registerGetWorkspaceCommand(program: Command): void {
         Output: Formatted details of the specified workspace. Fetches all available details by default.
 
         Examples:
-  $ mcp-bitbucket get-workspace --workspace-slug my-dev-team`,
+  $ mcp-atlassian-bitbucket get-workspace --workspace-slug my-dev-team`,
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',

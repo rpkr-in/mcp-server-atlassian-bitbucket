@@ -233,12 +233,12 @@ npx -y @aashari/mcp-server-atlassian-bitbucket list-pull-requests --workspace my
 #### Global Installation (Optional)
 
 1.  `npm install -g @aashari/mcp-server-atlassian-bitbucket`
-2.  Use the `mcp-bitbucket` command:
+2.  Use the `mcp-atlassian-bitbucket` command:
 
 ```bash
-mcp-bitbucket list-workspaces --limit 5
-mcp-bitbucket get-pull-request --workspace my-team --repository my-api --pull-request 42
-mcp-bitbucket --help # See all commands
+mcp-atlassian-bitbucket list-workspaces --limit 5
+mcp-atlassian-bitbucket get-pull-request --workspace my-team --repository my-api --pull-request 42
+mcp-atlassian-bitbucket --help # See all commands
 ```
 
 ## Troubleshooting
