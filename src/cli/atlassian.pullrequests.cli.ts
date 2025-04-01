@@ -33,15 +33,15 @@ interface PullRequestControllerOptions {
  */
 function registerCreatePullRequestCommand(program: Command): void {
 	program
-		.command('create-pr')
+		.command('create-pull-request')
 		.description(
 			`Create a new pull request in a Bitbucket repository.
 
     PURPOSE: Create a new pull request from one branch to another within a repository.
 
     EXAMPLES:
-    $ mcp-atlassian-bitbucket create-pr -w workspace-slug -r repo-slug -t "New feature" -s feature/branch -d main
-    $ mcp-atlassian-bitbucket create-pr -w workspace-slug -r repo-slug -t "Bug fix" -s bugfix/issue-123 -d develop --desc "This fixes issue #123" --close-source`,
+    $ mcp-atlassian-bitbucket create-pull-request -w workspace-slug -r repo-slug -t "New feature" -s feature/branch -d main
+    $ mcp-atlassian-bitbucket create-pull-request -w workspace-slug -r repo-slug -t "Bug fix" -s bugfix/issue-123 -d develop --description "This fixes issue #123" --close-source-branch`,
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
@@ -60,16 +60,16 @@ function registerCreatePullRequestCommand(program: Command): void {
 			'-d, --destination-branch <branch>',
 			'Destination branch name (the branch you want to merge into, defaults to main)',
 		)
-		.option('--desc <description>', 'Description for the pull request')
+		.option('--description <text>', 'Description for the pull request')
 		.option(
-			'--close-source',
+			'--close-source-branch',
 			'Close source branch after pull request is merged',
 			false,
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'create-pr',
+				'create-pull-request',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -81,8 +81,8 @@ function registerCreatePullRequestCommand(program: Command): void {
 					title: options.title,
 					sourceBranch: options.sourceBranch,
 					destinationBranch: options.destinationBranch,
-					description: options.desc,
-					closeSourceBranch: options.closeSource,
+					description: options.description,
+					closeSourceBranch: options.closeSourceBranch,
 				});
 
 				console.log(result.content);
