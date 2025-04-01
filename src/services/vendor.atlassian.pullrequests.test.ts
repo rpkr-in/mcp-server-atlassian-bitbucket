@@ -10,15 +10,6 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 	let validRepo: string | null = null;
 	let validPrId: string | null = null;
 
-	// Helper function to skip tests if no credentials
-	function skipIfNoCredentials(): boolean {
-		const credentials = getAtlassianCredentials();
-		if (!credentials) {
-			return true; // Skip the test
-		}
-		return false; // Continue with the test
-	}
-
 	// Load configuration and skip all tests if Atlassian credentials are not available
 	beforeAll(async () => {
 		// Load configuration from all sources
