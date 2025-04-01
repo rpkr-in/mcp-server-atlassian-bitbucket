@@ -445,7 +445,7 @@ async function create(
 		};
 	} catch (error) {
 		throw handleControllerError(error, {
-			entityType: 'pull-request',
+			entityType: 'Pull Request',
 			operation: 'create',
 			source: 'controllers/atlassian.pullrequests.controller.ts',
 		});

@@ -112,8 +112,6 @@ export function register(program: Command): void {
 	methodLogger.debug('CLI commands registered successfully');
 }
 
-export default { register };
-
 /**
  * Register the command for listing pull requests within a repository
  * @param program - The Commander program instance
@@ -411,3 +409,5 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 			}
 		});
 }
+
+export default { register };
