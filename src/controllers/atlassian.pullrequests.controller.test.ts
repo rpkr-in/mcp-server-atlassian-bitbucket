@@ -642,4 +642,6 @@ describe('Atlassian Pull Requests Controller', () => {
 			).rejects.toThrow();
 		}, 10000);
 	});
+
+	// Note: addComment test suite has been removed to avoid creating comments on real PRs during tests
 });

@@ -5,8 +5,22 @@ import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
 
 describe('Vendor Atlassian Pull Requests Service', () => {
+	// Variables to store valid test data
+	let validWorkspace: string | null = null;
+	let validRepo: string | null = null;
+	let validPrId: string | null = null;
+
+	// Helper function to skip tests if no credentials
+	function skipIfNoCredentials(): boolean {
+		const credentials = getAtlassianCredentials();
+		if (!credentials) {
+			return true; // Skip the test
+		}
+		return false; // Continue with the test
+	}
+
 	// Load configuration and skip all tests if Atlassian credentials are not available
-	beforeAll(() => {
+	beforeAll(async () => {
 		// Load configuration from all sources
 		config.load();
 
@@ -15,6 +29,46 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 			console.warn(
 				'Skipping Atlassian Pull Requests tests: No credentials available',
 			);
+			return;
+		}
+
+		// Try to find a valid workspace, repository, and PR for tests
+		try {
+			// Get available workspaces
+			const workspaces = await atlassianWorkspacesService.list();
+			if (workspaces.values.length > 0) {
+				validWorkspace = workspaces.values[0].workspace.slug;
+
+				// Find repositories in this workspace
+				const repositories = await atlassianRepositoriesService.list({
+					workspace: validWorkspace,
+				});
+
+				if (repositories && repositories.values.length > 0) {
+					validRepo = repositories.values[0].name.toLowerCase();
+
+					// Try to find a PR in this repository
+					try {
+						const pullRequests =
+							await atlassianPullRequestsService.list({
+								workspace: validWorkspace,
+								repo_slug: validRepo,
+								pagelen: 1,
+							});
+
+						if (pullRequests.values.length > 0) {
+							validPrId = String(pullRequests.values[0].id);
+							console.log(
+								`Found valid PR for testing: ${validWorkspace}/${validRepo}/${validPrId}`,
+							);
+						}
+					} catch (error) {
+						console.warn('Could not find a valid PR for testing');
+					}
+				}
+			}
+		} catch (error) {
+			console.warn('Error setting up test data:', error);
 		}
 	});
 
@@ -435,4 +489,6 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 			}
 		}, 15000); // Increase timeout for API call
 	});
+
+	// Note: addComment test suite has been removed to avoid creating comments on real PRs during tests
 });
