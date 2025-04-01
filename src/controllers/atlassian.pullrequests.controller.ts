@@ -12,6 +12,7 @@ import {
 	PullRequestIdentifier,
 	ListPullRequestCommentsOptions,
 	AddPullRequestCommentOptions,
+	CreatePullRequestOptions,
 } from './atlassian.pullrequests.types.js';
 import {
 	formatPullRequestsList,
@@ -26,6 +27,7 @@ import {
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { AddPullRequestCommentParams } from '../services/vendor.atlassian.pullrequests.types.js';
+import { CreatePullRequestParams } from '../services/vendor.atlassian.pullrequests.types.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -368,4 +370,92 @@ async function addComment(
 	}
 }
 
-export default { list, get, listComments, addComment };
+/**
+ * Create a new pull request
+ * @param options - Options for creating a new pull request
+ * @param options.workspaceSlug - Workspace slug containing the repository
+ * @param options.repoSlug - Repository slug to create the pull request in
+ * @param options.title - Title of the pull request
+ * @param options.sourceBranch - Source branch name
+ * @param options.destinationBranch - Destination branch name (defaults to the repository's main branch)
+ * @param options.description - Optional description for the pull request
+ * @param options.closeSourceBranch - Whether to close the source branch after merge
+ * @returns Promise with formatted pull request details content
+ */
+async function create(
+	options: CreatePullRequestOptions,
+): Promise<ControllerResponse> {
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.pullrequests.controller.ts',
+		'create',
+	);
+	methodLogger.debug('Creating new pull request...', options);
+
+	try {
+		if (!options.workspaceSlug || !options.repoSlug) {
+			throw createApiError(
+				'workspaceSlug and repoSlug parameters are required',
+			);
+		}
+
+		if (!options.title) {
+			throw createApiError('Pull request title is required');
+		}
+
+		if (!options.sourceBranch) {
+			throw createApiError('Source branch is required');
+		}
+
+		// The API requires a destination branch, use default if not provided
+		const destinationBranch = options.destinationBranch || 'main';
+
+		// Map controller options to service params
+		const serviceParams: CreatePullRequestParams = {
+			workspace: options.workspaceSlug,
+			repo_slug: options.repoSlug,
+			title: options.title,
+			source: {
+				branch: {
+					name: options.sourceBranch,
+				},
+			},
+			destination: {
+				branch: {
+					name: destinationBranch,
+				},
+			},
+		};
+
+		// Add optional parameters if provided
+		if (options.description) {
+			serviceParams.description = options.description;
+		}
+
+		if (options.closeSourceBranch !== undefined) {
+			serviceParams.close_source_branch = options.closeSourceBranch;
+		}
+
+		// Call the service to create the pull request
+		const pullRequest =
+			await atlassianPullRequestsService.create(serviceParams);
+
+		// Format the created pull request details for response
+		return {
+			content: formatPullRequestDetails(pullRequest),
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'Pull Request',
+			operation: 'create',
+			source: 'controllers/atlassian.pullrequests.controller.ts',
+		});
+	}
+}
+
+export default {
+	list,
+	get,
+	listComments,
+	addComment,
+	create,
+};

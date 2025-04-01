@@ -364,3 +364,51 @@ export interface PullRequestCommentsResponse {
 		title?: string;
 	};
 }
+
+/**
+ * Parameters for creating a pull request
+ */
+export interface CreatePullRequestParams {
+	/**
+	 * The workspace slug or UUID
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug or UUID
+	 */
+	repo_slug: string;
+
+	/**
+	 * Title of the pull request
+	 */
+	title: string;
+
+	/**
+	 * Source branch information
+	 */
+	source: {
+		branch: {
+			name: string;
+		};
+	};
+
+	/**
+	 * Destination branch information
+	 */
+	destination: {
+		branch: {
+			name: string;
+		};
+	};
+
+	/**
+	 * Optional description for the pull request
+	 */
+	description?: string;
+
+	/**
+	 * Whether to close the source branch after merge
+	 */
+	close_source_branch?: boolean;
+}
