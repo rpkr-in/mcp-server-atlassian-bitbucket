@@ -578,18 +578,6 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			);
 		});
 
-		// Skip live API tests without credentials
-		it('should add a comment if valid credentials exist', async () => {
-			const credentials = getAtlassianCredentials();
-			if (!credentials) {
-				console.warn('Skipping test: No credentials available');
-				return;
-			}
-
-			// If we have credentials but no valid PR to test against, we just skip the test
-			// This test would be better with mocks, but we're working with what we have
-			console.warn('Skipping actual API call in CLI test');
-			return;
-		});
+		// Note: API call test has been removed to avoid creating comments on real PRs during tests
 	});
 });
