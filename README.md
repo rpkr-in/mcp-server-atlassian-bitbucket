@@ -60,10 +60,17 @@ This MCP server provides the following tools for your AI assistant:
     - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42" }`
 
 - **Add Pull Request Comment (`add-pr-comment`)**
+
     - **Purpose:** Add comments to a pull request, including both general PR comments and inline code comments.
     - **Use When:** You need to provide feedback, ask questions, or communicate with contributors on a specific PR.
     - **Conversational Example:** "Add a comment to pull request #42 in the 'acme-corp/frontend-app' repo saying 'This looks good to merge'."
     - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "This looks good to merge" }` or with inline comment: `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "Consider a constant here", inline: { path: "src/utils.js", line: 42 } }`
+
+- **Create Pull Request (`create-pull-request`)**
+    - **Purpose:** Create a new pull request from one branch to another within a repository.
+    - **Use When:** You need to initiate a code review for a completed feature or bug fix, or want to merge changes from a feature branch into a main branch.
+    - **Conversational Example:** "Create a pull request in the 'acme-corp/frontend-app' repo from the 'feature/new-login' branch to 'main' with the title 'Add new login screen'."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", title: "Add new login screen", sourceBranch: "feature/new-login" }` or with more options: `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", title: "Fix login bug", sourceBranch: "bugfix/login", description: "This fixes issue #123", destinationBranch: "develop", closeSourceBranch: true }`
 
 ## Interface Philosophy: Simple Input, Rich Output
 
@@ -224,6 +231,7 @@ You can now ask your AI assistant questions related to your Bitbucket instance:
 - "Get information about the 'main-api' repository in the 'dev-team' workspace."
 - "Show me open pull requests for the 'dev-team/main-api' repository."
 - "Summarize pull request #42 in the 'dev-team/main-api' repository."
+- "Create a pull request in the 'dev-team/main-api' repository from the 'feature/login' branch to 'main' with the title 'Add new login feature'."
 
 ## Using as a Command-Line Tool (CLI)
 
@@ -235,6 +243,7 @@ You can also use this package directly from your terminal. Ensure credentials ar
 npx -y @aashari/mcp-server-atlassian-bitbucket list-workspaces
 npx -y @aashari/mcp-server-atlassian-bitbucket get-repository --workspace my-team --repository my-api
 npx -y @aashari/mcp-server-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
+npx -y @aashari/mcp-server-atlassian-bitbucket create-pull-request --workspace my-team --repository my-api --title "New feature" --source-branch feature/new-login
 ```
 
 #### Global Installation (Optional)
