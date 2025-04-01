@@ -1,3 +1,16 @@
+# [1.12.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.11.1...v1.12.0) (2025-04-01)
+
+
+### Bug Fixes
+
+* **build:** remove unused skipIfNoCredentials function ([9173010](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/91730106c1a21f33879130ffb20b24d9d3731e78))
+* **pr:** fix double JSON.stringify in PR comment API call ([a445dc7](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a445dc7db71bcc6fd73f2b3bf6312686b9424ce1))
+
+
+### Features
+
+* **pr:** add CLI command and tests for PR comments ([d6d3dc2](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d6d3dc20e3722b22f694e50e7b80542ba951ea54))
+
 ## [1.11.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.11.0...v1.11.1) (2025-03-29)
 
 
