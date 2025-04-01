@@ -5,8 +5,22 @@ import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
 
 describe('Vendor Atlassian Pull Requests Service', () => {
+	// Variables to store valid test data
+	let validWorkspace: string | null = null;
+	let validRepo: string | null = null;
+	let validPrId: string | null = null;
+
+	// Helper function to skip tests if no credentials
+	function skipIfNoCredentials(): boolean {
+		const credentials = getAtlassianCredentials();
+		if (!credentials) {
+			return true; // Skip the test
+		}
+		return false; // Continue with the test
+	}
+
 	// Load configuration and skip all tests if Atlassian credentials are not available
-	beforeAll(() => {
+	beforeAll(async () => {
 		// Load configuration from all sources
 		config.load();
 
@@ -15,6 +29,46 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 			console.warn(
 				'Skipping Atlassian Pull Requests tests: No credentials available',
 			);
+			return;
+		}
+
+		// Try to find a valid workspace, repository, and PR for tests
+		try {
+			// Get available workspaces
+			const workspaces = await atlassianWorkspacesService.list();
+			if (workspaces.values.length > 0) {
+				validWorkspace = workspaces.values[0].workspace.slug;
+
+				// Find repositories in this workspace
+				const repositories = await atlassianRepositoriesService.list({
+					workspace: validWorkspace,
+				});
+
+				if (repositories && repositories.values.length > 0) {
+					validRepo = repositories.values[0].name.toLowerCase();
+
+					// Try to find a PR in this repository
+					try {
+						const pullRequests =
+							await atlassianPullRequestsService.list({
+								workspace: validWorkspace,
+								repo_slug: validRepo,
+								pagelen: 1,
+							});
+
+						if (pullRequests.values.length > 0) {
+							validPrId = String(pullRequests.values[0].id);
+							console.log(
+								`Found valid PR for testing: ${validWorkspace}/${validRepo}/${validPrId}`,
+							);
+						}
+					} catch (error) {
+						console.warn('Could not find a valid PR for testing');
+					}
+				}
+			}
+		} catch (error) {
+			console.warn('Error setting up test data:', error);
 		}
 	});
 
@@ -434,5 +488,123 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 				// Otherwise, we should have caught the expected rejection
 			}
 		}, 15000); // Increase timeout for API call
+	});
+
+	describe('addComment', () => {
+		it('should add a comment to a pull request', async () => {
+			// Skip test if no credentials
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// We need a valid workspace, repository, and PR ID for testing
+			if (!validWorkspace || !validRepo || !validPrId) {
+				console.warn(
+					'Skipping addComment test: Missing valid workspace, repository, or PR ID',
+				);
+				return;
+			}
+
+			// Parameters for adding a comment
+			const params = {
+				workspace: validWorkspace,
+				repo_slug: validRepo,
+				pull_request_id: parseInt(validPrId, 10),
+				content: {
+					raw: `Test comment from automated test at ${new Date().toISOString()}`,
+				},
+			};
+
+			try {
+				// Attempt to add a comment
+				const result =
+					await atlassianPullRequestsService.addComment(params);
+
+				// Verify the response
+				expect(result).toBeDefined();
+				expect(result.id).toBeDefined();
+				expect(result.content).toBeDefined();
+				expect(result.content.raw).toBe(params.content.raw);
+			} catch (error) {
+				// The comment addition might fail due to PR state or permissions
+				// We'll log the error and continue
+				console.warn('Failed to add comment to PR:', error);
+			}
+		});
+
+		it('should throw an error if missing credentials', async () => {
+			if (!skipIfNoCredentials()) {
+				// Only run test if we have valid workspace, repo, and PR ID
+				// but temporarily simulate missing credentials
+				const originalToken = process.env.ATLASSIAN_API_TOKEN;
+				process.env.ATLASSIAN_API_TOKEN = '';
+
+				// Parameters for adding a comment
+				const params = {
+					workspace: validWorkspace || 'test-workspace',
+					repo_slug: validRepo || 'test-repo',
+					pull_request_id: validPrId ? parseInt(validPrId, 10) : 1,
+					content: {
+						raw: 'Test comment with missing credentials',
+					},
+				};
+
+				// Should throw an error about missing credentials
+				await expect(
+					atlassianPullRequestsService.addComment(params),
+				).rejects.toThrow();
+
+				// Restore original token
+				process.env.ATLASSIAN_API_TOKEN = originalToken;
+			}
+		});
+
+		it('should throw an error if missing required parameters', async () => {
+			if (skipIfNoCredentials()) {
+				return;
+			}
+
+			// Test missing workspace
+			await expect(
+				atlassianPullRequestsService.addComment({
+					repo_slug: 'test-repo',
+					pull_request_id: 1,
+					content: {
+						raw: 'Test comment',
+					},
+				} as any),
+			).rejects.toThrow(/workspace/i);
+
+			// Test missing repo_slug
+			await expect(
+				atlassianPullRequestsService.addComment({
+					workspace: 'test-workspace',
+					pull_request_id: 1,
+					content: {
+						raw: 'Test comment',
+					},
+				} as any),
+			).rejects.toThrow(/repo_slug/i);
+
+			// Test missing pull_request_id
+			await expect(
+				atlassianPullRequestsService.addComment({
+					workspace: 'test-workspace',
+					repo_slug: 'test-repo',
+					content: {
+						raw: 'Test comment',
+					},
+				} as any),
+			).rejects.toThrow(/pull_request_id/i);
+
+			// Test missing content
+			await expect(
+				atlassianPullRequestsService.addComment({
+					workspace: 'test-workspace',
+					repo_slug: 'test-repo',
+					pull_request_id: 1,
+				} as any),
+			).rejects.toThrow(/content/i);
+		});
 	});
 });

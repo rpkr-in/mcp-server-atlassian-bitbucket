@@ -42,6 +42,7 @@ function register(program: Command): void {
 	registerListPullRequestsCommand(program);
 	registerGetPullRequestCommand(program);
 	registerListPullRequestCommentsCommand(program);
+	registerAddPullRequestCommentCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -261,6 +262,83 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 						),
 					);
 				}
+			} catch (error) {
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for adding a comment to a pull request
+ * @param program - The Commander program instance
+ */
+function registerAddPullRequestCommentCommand(program: Command): void {
+	program
+		.command('add-pr-comment')
+		.description(
+			`Add a comment to a specific Bitbucket pull request.
+
+        PURPOSE: Create comments on a pull request to provide feedback, ask questions, or communicate with other reviewers/developers. Supports both general PR comments and inline code comments.
+
+        EXAMPLES:
+        $ mcp-atlassian-bitbucket add-pr-comment -w workspace-slug -r repo-slug -p 1 -c "This looks good to merge!"
+        $ mcp-atlassian-bitbucket add-pr-comment -w workspace-slug -r repo-slug -p 1 -c "Consider using a const here" --file src/utils.ts --line 42`,
+		)
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug containing the pull request',
+		)
+		.requiredOption('-p, --pr-id <id>', 'Pull request ID to comment on')
+		.requiredOption('-c, --content <text>', 'Content of the comment to add')
+		.option(
+			'--file <path>',
+			'File path for inline comments (requires --line)',
+		)
+		.option(
+			'--line <number>',
+			'Line number for inline comments (requires --file)',
+			(val) => parseInt(val, 10),
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'add-pr-comment',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate inline comment options
+				if (
+					(options.file && !options.line) ||
+					(!options.file && options.line)
+				) {
+					throw new Error(
+						'Both --file and --line must be provided together for inline comments',
+					);
+				}
+
+				// Build inline comment params if needed
+				const inline =
+					options.file && options.line
+						? { path: options.file, line: options.line }
+						: undefined;
+
+				// Call controller
+				const result = await atlassianPullRequestsController.addComment(
+					{
+						workspaceSlug: options.workspaceSlug,
+						repoSlug: options.repoSlug,
+						prId: options.prId,
+						content: options.content,
+						inline,
+					},
+				);
+
+				console.log(result.content);
 			} catch (error) {
 				handleCliError(error);
 			}

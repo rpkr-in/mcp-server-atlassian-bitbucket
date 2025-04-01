@@ -210,10 +210,7 @@ async function addPullRequestComment(
 			inline: args.inline,
 		});
 
-		methodLogger.debug(
-			'Successfully added pull request comment',
-			message,
-		);
+		methodLogger.debug('Successfully added pull request comment', message);
 
 		return {
 			content: [

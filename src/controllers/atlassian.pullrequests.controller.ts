@@ -344,7 +344,8 @@ async function addComment(
 		methodLogger.debug('Using service parameters:', serviceParams);
 
 		// Call the service to add the comment
-		const commentData = await atlassianPullRequestsService.addComment(serviceParams);
+		const commentData =
+			await atlassianPullRequestsService.addComment(serviceParams);
 
 		methodLogger.debug(`Successfully added comment: ${commentData.id}`);
 

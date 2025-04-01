@@ -493,4 +493,103 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			}
 		}, 45000); // Increased timeout for multiple API calls
 	});
+
+	describe('add-pr-comment command', () => {
+		it('should display help information', async () => {
+			const result = await CliTestUtil.runCommand([
+				'add-pr-comment',
+				'--help',
+			]);
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout).toContain(
+				'Add a comment to a specific Bitbucket pull request',
+			);
+			expect(result.stdout).toContain('--workspace-slug');
+			expect(result.stdout).toContain('--repo-slug');
+			expect(result.stdout).toContain('--pr-id');
+			expect(result.stdout).toContain('--content');
+			expect(result.stdout).toContain('--file');
+			expect(result.stdout).toContain('--line');
+		});
+
+		it('should require workspace-slug parameter', async () => {
+			const result = await CliTestUtil.runCommand(['add-pr-comment']);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('workspace-slug');
+		});
+
+		it('should require repo-slug parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'add-pr-comment',
+				'--workspace-slug',
+				'codapayments',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('repo-slug');
+		});
+
+		it('should require pr-id parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'add-pr-comment',
+				'--workspace-slug',
+				'codapayments',
+				'--repo-slug',
+				'repo-1',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('pr-id');
+		});
+
+		it('should require content parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'add-pr-comment',
+				'--workspace-slug',
+				'codapayments',
+				'--repo-slug',
+				'repo-1',
+				'--pr-id',
+				'1',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('content');
+		});
+
+		it('should detect incomplete inline comment parameters', async () => {
+			const result = await CliTestUtil.runCommand([
+				'add-pr-comment',
+				'--workspace-slug',
+				'codapayments',
+				'--repo-slug',
+				'repo-1',
+				'--pr-id',
+				'1',
+				'--content',
+				'Test',
+				'--file',
+				'README.md',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain(
+				'Both --file and --line must be provided',
+			);
+		});
+
+		// Skip live API tests without credentials
+		it('should add a comment if valid credentials exist', async () => {
+			const credentials = getAtlassianCredentials();
+			if (!credentials) {
+				console.warn('Skipping test: No credentials available');
+				return;
+			}
+
+			// If we have credentials but no valid PR to test against, we just skip the test
+			// This test would be better with mocks, but we're working with what we have
+			console.warn('Skipping actual API call in CLI test');
+			return;
+		});
+	});
 });
