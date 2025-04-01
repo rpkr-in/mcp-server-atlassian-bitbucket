@@ -1,3 +1,15 @@
+# [1.13.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.12.0...v1.13.0) (2025-04-01)
+
+
+### Bug Fixes
+
+* **cli:** rename create-pr to create-pull-request and update parameter names for consistency ([6e4dbb2](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/6e4dbb2112368544cdbf567561ef800575e91536))
+
+
+### Features
+
+* **pullrequests:** add create pull request feature to CLI and MCP tools ([73400af](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/73400af266fd787b8b216bcb3ec5058b1fa99ff9)), closes [#3](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/3)
+
 # [1.12.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.11.1...v1.12.0) (2025-04-01)
 
 
