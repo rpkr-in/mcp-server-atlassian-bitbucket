@@ -53,10 +53,17 @@ This MCP server provides the following tools for your AI assistant:
     - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", state: "OPEN" }`
 
 - **Get Pull Request (`get-pull-request`)**
+
     - **Purpose:** Retrieve detailed information about a _specific_ pull request using its workspace slug, repository slug, and PR ID.
     - **Use When:** You know the identifiers for a specific PR and need its full description, reviewers, status, branches, etc.
     - **Conversational Example:** "Get the details for pull request #42 in the 'acme-corp/frontend-app' repo."
     - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42" }`
+
+- **Add Pull Request Comment (`add-pr-comment`)**
+    - **Purpose:** Add comments to a pull request, including both general PR comments and inline code comments.
+    - **Use When:** You need to provide feedback, ask questions, or communicate with contributors on a specific PR.
+    - **Conversational Example:** "Add a comment to pull request #42 in the 'acme-corp/frontend-app' repo saying 'This looks good to merge'."
+    - **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "This looks good to merge" }` or with inline comment: `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "Consider a constant here", inline: { path: "src/utils.js", line: 42 } }`
 
 ## Interface Philosophy: Simple Input, Rich Output
 
