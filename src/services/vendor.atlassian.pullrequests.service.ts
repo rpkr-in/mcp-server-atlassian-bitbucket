@@ -310,10 +310,10 @@ async function addComment(
 	methodLogger.debug(`Sending POST request to: ${path}`);
 	return fetchAtlassian<PullRequestComment>(credentials, path, {
 		method: 'POST',
-		body: JSON.stringify({
+		body: {
 			content: params.content,
 			inline: params.inline,
-		}),
+		},
 	});
 }
 
