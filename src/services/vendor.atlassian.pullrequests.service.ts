@@ -13,6 +13,7 @@ import {
 	PullRequestCommentsResponse,
 	PullRequestComment,
 	AddPullRequestCommentParams,
+	CreatePullRequestParams,
 } from './vendor.atlassian.pullrequests.types.js';
 
 /**
@@ -317,4 +318,103 @@ async function addComment(
 	});
 }
 
-export default { list, get, getComments, addComment };
+/**
+ * Create a new pull request
+ * @param {CreatePullRequestParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {string} params.title - Title of the pull request
+ * @param {string} params.source.branch.name - Source branch name
+ * @param {string} params.destination.branch.name - Destination branch name (defaults to main/master)
+ * @param {string} [params.description] - Optional description for the pull request
+ * @param {boolean} [params.close_source_branch] - Whether to close the source branch after merge (default: false)
+ * @returns {Promise<PullRequestDetailed>} Detailed information about the created pull request
+ * @example
+ * ```typescript
+ * // Create a new pull request
+ * const pullRequest = await create({
+ *   workspace: 'myworkspace',
+ *   repo_slug: 'myrepo',
+ *   title: 'Add new feature',
+ *   source: {
+ *     branch: {
+ *       name: 'feature/new-feature'
+ *     }
+ *   },
+ *   destination: {
+ *     branch: {
+ *       name: 'main'
+ *     }
+ *   },
+ *   description: 'This PR adds a new feature...',
+ *   close_source_branch: true
+ * });
+ * ```
+ */
+async function create(
+	params: CreatePullRequestParams,
+): Promise<PullRequestDetailed> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'create',
+	);
+	methodLogger.debug(
+		'Creating new Bitbucket pull request with params:',
+		params,
+	);
+
+	if (!params.workspace || !params.repo_slug) {
+		throw new Error('Both workspace and repo_slug parameters are required');
+	}
+
+	if (!params.title) {
+		throw new Error('Pull request title is required');
+	}
+
+	if (!params.source || !params.source.branch || !params.source.branch.name) {
+		throw new Error('Source branch name is required');
+	}
+
+	// Destination branch is required but may have a default
+	if (
+		!params.destination ||
+		!params.destination.branch ||
+		!params.destination.branch.name
+	) {
+		throw new Error('Destination branch name is required');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests`;
+
+	// Construct request body with only the fields needed by the API
+	const requestBody = {
+		title: params.title,
+		source: {
+			branch: {
+				name: params.source.branch.name,
+			},
+		},
+		destination: {
+			branch: {
+				name: params.destination.branch.name,
+			},
+		},
+		description: params.description || '',
+		close_source_branch: !!params.close_source_branch,
+	};
+
+	methodLogger.debug(`Sending POST request to: ${path}`);
+	return fetchAtlassian<PullRequestDetailed>(credentials, path, {
+		method: 'POST',
+		body: requestBody,
+	});
+}
+
+export default { list, get, getComments, addComment, create };

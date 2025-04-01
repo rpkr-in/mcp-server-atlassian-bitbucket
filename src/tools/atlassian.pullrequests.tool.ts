@@ -11,6 +11,8 @@ import {
 	ListPullRequestCommentsToolArgsType,
 	AddPullRequestCommentToolArgs,
 	AddPullRequestCommentToolArgsType,
+	CreatePullRequestToolArgs,
+	CreatePullRequestToolArgsType,
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
@@ -227,6 +229,57 @@ async function addPullRequestComment(
 }
 
 /**
+ * MCP Tool: Create a new Bitbucket Pull Request
+ *
+ * Creates a new pull request between two branches in a repository.
+ * Returns a formatted markdown response with the created pull request details.
+ *
+ * @param args - Tool arguments for creating a pull request
+ * @param _extra - Extra request handler information (unused)
+ * @returns MCP response with formatted pull request details
+ * @throws Will return error message if pull request creation fails
+ */
+async function createPullRequest(
+	args: CreatePullRequestToolArgsType,
+	_extra: RequestHandlerExtra,
+) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.pullrequests.tool.ts',
+		'createPullRequest',
+	);
+	methodLogger.debug(
+		`Creating pull request in ${args.workspaceSlug}/${args.repoSlug} from ${args.sourceBranch}`,
+		args,
+	);
+
+	try {
+		const message = await atlassianPullRequestsController.create({
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
+			title: args.title,
+			sourceBranch: args.sourceBranch,
+			destinationBranch: args.destinationBranch,
+			description: args.description,
+			closeSourceBranch: args.closeSourceBranch,
+		});
+
+		methodLogger.debug('Successfully created pull request', message);
+
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: message.content,
+				},
+			],
+		};
+	} catch (error) {
+		methodLogger.error('Failed to create pull request', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register Atlassian Pull Requests MCP Tools
  *
  * Registers the list-pull-requests and get-pull-request tools with the MCP server.
@@ -371,6 +424,33 @@ function register(server: McpServer) {
         - Permission errors: Ensure access to comment on the specified pull request.`,
 		AddPullRequestCommentToolArgs.shape,
 		addPullRequestComment,
+	);
+
+	// Register the tool for creating pull requests
+	server.tool(
+		'pull_requests_create',
+		`Create a new pull request in a Bitbucket repository.
+
+    PURPOSE: Create a new pull request from one branch to another within a repository.
+
+    WHEN TO USE:
+    - When you need to initiate a code review for a completed feature or bug fix.
+    - When you want to merge changes from a feature branch into a main branch.
+    - When you've completed work in your branch and want to propose the changes.
+
+    RETURNS: Formatted details of the newly created pull request including ID, title, source/destination branches, and URL.
+
+    EXAMPLES:
+    - Create a basic PR: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Add user authentication", sourceBranch: "feature/auth" }
+    - Create PR with description: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Fix login bug", sourceBranch: "bugfix/login", description: "This fixes the login issue #123" }
+    - Close source branch after merge: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Update docs", sourceBranch: "docs/update", destinationBranch: "develop", closeSourceBranch: true }
+
+    ERRORS:
+    - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
+    - Branch not found: Verify the source and destination branches exist.
+    - Permission errors: Ensure you have permission to create pull requests in the repository.`,
+		CreatePullRequestToolArgs.shape,
+		createPullRequest,
 	);
 
 	methodLogger.debug('Successfully registered Atlassian Pull Requests tools');

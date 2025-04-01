@@ -231,3 +231,78 @@ export const AddPullRequestCommentToolArgs = z.object({
 export type AddPullRequestCommentToolArgsType = z.infer<
 	typeof AddPullRequestCommentToolArgs
 >;
+
+/**
+ * Arguments schema for the pull_requests_create tool
+ */
+export const CreatePullRequestToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe(
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug to create the pull request in
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug to create the pull request in. This must be a valid repository in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Title of the pull request
+	 */
+	title: z
+		.string()
+		.min(1, 'Pull request title is required')
+		.describe('Title for the pull request. Example: "Add new feature"'),
+
+	/**
+	 * Source branch name
+	 */
+	sourceBranch: z
+		.string()
+		.min(1, 'Source branch name is required')
+		.describe(
+			'Source branch name (the branch containing your changes). Example: "feature/new-login"',
+		),
+
+	/**
+	 * Destination branch name
+	 */
+	destinationBranch: z
+		.string()
+		.optional()
+		.describe(
+			'Destination branch name (the branch you want to merge into, defaults to main). Example: "develop"',
+		),
+
+	/**
+	 * Description for the pull request
+	 */
+	description: z
+		.string()
+		.optional()
+		.describe('Optional description for the pull request.'),
+
+	/**
+	 * Whether to close the source branch after merge
+	 */
+	closeSourceBranch: z
+		.boolean()
+		.optional()
+		.describe(
+			'Whether to close the source branch after the pull request is merged. Default: false',
+		),
+});
+
+export type CreatePullRequestToolArgsType = z.infer<
+	typeof CreatePullRequestToolArgs
+>;

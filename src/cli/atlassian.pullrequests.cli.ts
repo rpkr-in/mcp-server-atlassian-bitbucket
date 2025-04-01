@@ -28,11 +28,75 @@ interface PullRequestControllerOptions {
 }
 
 /**
- * Register Bitbucket Pull Requests CLI commands with the Commander program
- * @param program - The Commander program instance to register commands with
- * @throws Error if command registration fails
+ * Register the command for creating a pull request
+ * @param program - The Commander program instance
  */
-function register(program: Command): void {
+function registerCreatePullRequestCommand(program: Command): void {
+	program
+		.command('create-pr')
+		.description(
+			`Create a new pull request in a Bitbucket repository.
+
+    PURPOSE: Create a new pull request from one branch to another within a repository.
+
+    EXAMPLES:
+    $ mcp-atlassian-bitbucket create-pr -w workspace-slug -r repo-slug -t "New feature" -s feature/branch -d main
+    $ mcp-atlassian-bitbucket create-pr -w workspace-slug -r repo-slug -t "Bug fix" -s bugfix/issue-123 -d develop --desc "This fixes issue #123" --close-source`,
+		)
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug to create the pull request in',
+		)
+		.requiredOption('-t, --title <title>', 'Title for the pull request')
+		.requiredOption(
+			'-s, --source-branch <branch>',
+			'Source branch name (the branch containing your changes)',
+		)
+		.option(
+			'-d, --destination-branch <branch>',
+			'Destination branch name (the branch you want to merge into, defaults to main)',
+		)
+		.option('--desc <description>', 'Description for the pull request')
+		.option(
+			'--close-source',
+			'Close source branch after pull request is merged',
+			false,
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'create-pr',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Call controller
+				const result = await atlassianPullRequestsController.create({
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					title: options.title,
+					sourceBranch: options.sourceBranch,
+					destinationBranch: options.destinationBranch,
+					description: options.desc,
+					closeSourceBranch: options.closeSource,
+				});
+
+				console.log(result.content);
+			} catch (error) {
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register pull request commands with the Commander program
+ * @param program - The Commander program instance
+ */
+export function register(program: Command): void {
 	const methodLogger = Logger.forContext(
 		'cli/atlassian.pullrequests.cli.ts',
 		'register',
@@ -43,9 +107,12 @@ function register(program: Command): void {
 	registerGetPullRequestCommand(program);
 	registerListPullRequestCommentsCommand(program);
 	registerAddPullRequestCommentCommand(program);
+	registerCreatePullRequestCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
+
+export default { register };
 
 /**
  * Register the command for listing pull requests within a repository
@@ -344,5 +411,3 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 			}
 		});
 }
-
-export default { register };

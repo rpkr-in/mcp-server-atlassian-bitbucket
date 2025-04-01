@@ -114,3 +114,43 @@ export interface AddPullRequestCommentOptions {
 		line: number;
 	};
 }
+
+/**
+ * Options for creating a new pull request
+ */
+export interface CreatePullRequestOptions {
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: string;
+
+	/**
+	 * Repository slug to create the pull request in
+	 */
+	repoSlug: string;
+
+	/**
+	 * Title of the pull request
+	 */
+	title: string;
+
+	/**
+	 * Source branch name
+	 */
+	sourceBranch: string;
+
+	/**
+	 * Destination branch name (defaults to the repository's main branch)
+	 */
+	destinationBranch?: string;
+
+	/**
+	 * Optional description for the pull request
+	 */
+	description?: string;
+
+	/**
+	 * Whether to close the source branch after merge
+	 */
+	closeSourceBranch?: boolean;
+}
