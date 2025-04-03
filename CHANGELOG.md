@@ -1,3 +1,10 @@
+## [1.13.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.2...v1.13.3) (2025-04-03)
+
+
+### Bug Fixes
+
+* **logger:** ensure consistent logger implementation across all projects ([30f96e9](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/30f96e96eb7576cfdac904534210915c40286aa3))
+
 ## [1.13.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.1...v1.13.2) (2025-04-03)
 
 
