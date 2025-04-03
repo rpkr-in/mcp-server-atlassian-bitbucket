@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.1...v1.13.2) (2025-04-03)
+
+
+### Performance Improvements
+
+* **bitbucket:** improve version handling and module exports ([76f9820](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/76f982098774f8dd22d4694c683fdd485c38112d))
+
 ## [1.13.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.0...v1.13.1) (2025-04-03)
 
 
