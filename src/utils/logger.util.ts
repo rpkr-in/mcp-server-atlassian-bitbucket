@@ -163,6 +163,15 @@ class Logger {
 		return new Logger(formatSourcePath(filePath, functionName), filePath);
 	}
 
+	/**
+	 * Create a method level logger from a context logger
+	 * @param method Method name
+	 * @returns A new logger with the method context
+	 */
+	forMethod(method: string): Logger {
+		return Logger.forContext(this.modulePath, method);
+	}
+
 	private _formatMessage(message: string): string {
 		return this.context ? `${this.context} ${message}` : message;
 	}
