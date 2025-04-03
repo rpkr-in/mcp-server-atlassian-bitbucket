@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.3...v1.14.0) (2025-04-03)
+
+
+### Features
+
+* **logging:** add file logging with session ID to ~/.mcp/data/ ([8e2eae1](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/8e2eae16cdf78579bf7925704fb958a0a97411b7))
+
 ## [1.13.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.2...v1.13.3) (2025-04-03)
 
 
