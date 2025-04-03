@@ -5,6 +5,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { Logger } from './utils/logger.util.js';
 import { config } from './utils/config.util.js';
 import { createUnexpectedError } from './utils/error.util.js';
+import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
 import { runCli } from './cli/index.js';
 
 // Import Bitbucket-specific tools
@@ -12,9 +13,6 @@ import atlassianWorkspacesTools from './tools/atlassian.workspaces.tool.js';
 import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
 import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
 import atlassianSearchTools from './tools/atlassian.search.tool.js';
-
-// Define version constant for easier management and consistent versioning
-const VERSION = '1.13.0';
 
 // Create a contextualized logger for this file
 const indexLogger = Logger.forContext('index.ts');
@@ -54,7 +52,7 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 
 	serverLogger.info(`Initializing Bitbucket MCP server v${VERSION}`);
 	serverInstance = new McpServer({
-		name: '@aashari/mcp-server-atlassian-bitbucket',
+		name: PACKAGE_NAME,
 		version: VERSION,
 	});
 
@@ -131,3 +129,4 @@ if (require.main === module) {
 // Export key utilities for library users
 export { Logger, config };
 export * from './utils/error.util.js';
+export { VERSION, PACKAGE_NAME, CLI_NAME } from './utils/constants.util.js';

@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
+import { VERSION, CLI_NAME } from '../utils/constants.util.js';
 
 // Import Bitbucket-specific CLI modules
 import atlassianWorkspacesCli from './atlassian.workspaces.cli.js';
@@ -7,9 +8,7 @@ import atlassianRepositoriesCli from './atlassian.repositories.cli.js';
 import atlassianPullRequestsCli from './atlassian.pullrequests.cli.js';
 import atlassianSearchCommands from './atlassian.search.cli.js';
 
-// Get the version from package.json
-const VERSION = '1.13.0'; // This should match the version in src/index.ts
-const NAME = 'mcp-atlassian-bitbucket';
+// Package description
 const DESCRIPTION =
 	'A Model Context Protocol (MCP) server for Atlassian Bitbucket integration';
 
@@ -24,7 +23,7 @@ export async function runCli(args: string[]) {
 
 	const program = new Command();
 
-	program.name(NAME).description(DESCRIPTION).version(VERSION);
+	program.name(CLI_NAME).description(DESCRIPTION).version(VERSION);
 
 	// Register CLI commands
 	atlassianWorkspacesCli.register(program);
