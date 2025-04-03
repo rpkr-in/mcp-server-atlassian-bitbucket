@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.14.0...v1.14.1) (2025-04-03)
+
+
+### Performance Improvements
+
+* trigger new release ([9c3cd52](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/9c3cd52bf4ba820df9bb0a9f5a3b7ea6d6f90c99))
+
 # [1.14.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.3...v1.14.0) (2025-04-03)
 
 
