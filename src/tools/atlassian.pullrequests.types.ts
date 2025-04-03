@@ -104,12 +104,10 @@ export const GetPullRequestToolArgs = z.object({
 	 * Pull request identifier
 	 */
 	prId: z
-		.union([z.string(), z.number()])
-		.transform((value) =>
-			typeof value === 'string' ? value : String(value),
-		)
+		.string()
+		.min(1, 'Pull request ID is required')
 		.describe(
-			'Numeric ID of the pull request to retrieve. Must be a valid pull request ID in the specified repository. Example: 42',
+			'Numeric ID of the pull request to retrieve as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		),
 });
 
@@ -143,12 +141,10 @@ export const ListPullRequestCommentsToolArgs = z.object({
 	 * Pull request identifier
 	 */
 	prId: z
-		.union([z.string(), z.number()])
-		.transform((value) =>
-			typeof value === 'string' ? value : String(value),
-		)
+		.string()
+		.min(1, 'Pull request ID is required')
 		.describe(
-			'Numeric ID of the pull request to retrieve comments from. Must be a valid pull request ID in the specified repository. Example: 42',
+			'Numeric ID of the pull request to retrieve comments from as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		),
 
 	/**
@@ -189,12 +185,10 @@ export const AddPullRequestCommentToolArgs = z.object({
 	 * Pull request identifier
 	 */
 	prId: z
-		.union([z.string(), z.number()])
-		.transform((value) =>
-			typeof value === 'string' ? value : String(value),
-		)
+		.string()
+		.min(1, 'Pull request ID is required')
 		.describe(
-			'Numeric ID of the pull request to add a comment to. Must be a valid pull request ID in the specified repository. Example: 42',
+			'Numeric ID of the pull request to add a comment to as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		),
 
 	/**
