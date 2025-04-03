@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.13.0...v1.13.1) (2025-04-03)
+
+
+### Bug Fixes
+
+* update PR tool argument types for Windsurf wave 6 compatibility ([51b3824](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/51b38242cb553f77b73d025280db9cceaa2365d5)), closes [#7](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/7)
+
 # [1.13.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.12.0...v1.13.0) (2025-04-01)
 
 
