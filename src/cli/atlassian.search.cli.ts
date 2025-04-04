@@ -5,23 +5,22 @@ import { formatPagination } from '../utils/formatter.util.js';
 
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
 
+const cliLogger = Logger.forContext('cli/atlassian.search.cli.ts');
+
 /**
  * Register Atlassian Search commands
  *
  * @param {Command} program - Commander program instance
  */
 function register(program: Command) {
-	const cliLogger = Logger.forContext(
-		'cli/atlassian.search.cli.ts',
-		'register',
-	);
-	cliLogger.debug('Registering Atlassian search commands...');
+	const methodLogger = cliLogger.forMethod('register');
+	methodLogger.debug('Registering Atlassian search commands...');
 
 	// Register the search command
 	program
 		.command('search')
 		.description(
-			'Search for Bitbucket content across repositories and pull requests',
+			'Search for Bitbucket content across repositories, pull requests, and code',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
@@ -29,31 +28,28 @@ function register(program: Command) {
 		)
 		.option(
 			'-r, --repo-slug <slug>',
-			'Repository slug (required for pull request search)',
+			'Repository slug (required for pull request search, optional for code search)',
 		)
 		.option(
 			'-q, --query <query>',
-			'Search query to filter results by name, description, etc.',
+			'Search query to filter results by name, description, etc. (required for code search)',
 		)
 		.option(
 			'-s, --scope <scope>',
-			'Search scope: "repositories", "pullrequests", or "all" (default)',
+			'Search scope: "repositories", "pullrequests", "commits", "code", or "all" (default)',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return (1-100)',
+			'Maximum number of items to return per page (1-100)',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results',
+			'Pagination cursor for repositories/PRs, or page number for code search',
 		)
 		.action(async (options) => {
 			try {
-				const cliLogger = Logger.forContext(
-					'cli/atlassian.search.cli.ts',
-					'search',
-				);
-				cliLogger.debug(
+				const actionLogger = cliLogger.forMethod('search');
+				actionLogger.debug(
 					'Executing search command with options:',
 					options,
 				);
@@ -61,6 +57,11 @@ function register(program: Command) {
 				// Parse limit as number if provided
 				if (options.limit) {
 					options.limit = parseInt(options.limit, 10);
+				}
+
+				// For code search, cursor is actually a page number
+				if (options.scope === 'code' && options.cursor) {
+					options.page = parseInt(options.cursor, 10);
 				}
 
 				// Map CLI options to controller options
@@ -71,6 +72,7 @@ function register(program: Command) {
 					scope: options.scope,
 					limit: options.limit,
 					cursor: options.cursor,
+					page: options.page,
 				};
 
 				const result =
@@ -92,7 +94,7 @@ function register(program: Command) {
 			}
 		});
 
-	cliLogger.debug('Successfully registered Atlassian search commands');
+	methodLogger.debug('Successfully registered Atlassian search commands');
 }
 
 export default { register };

@@ -21,14 +21,15 @@ const PaginationArgs = z.object({
 
 	/**
 	 * Pagination cursor for retrieving the next set of results.
+	 * For repositories and pull requests, this is a cursor string.
+	 * For code search, this is a page number.
 	 * Use this to navigate through large result sets.
-	 * The cursor value can be obtained from the pagination information in a previous response.
 	 */
 	cursor: z
 		.string()
 		.optional()
 		.describe(
-			'Pagination cursor for retrieving the next set of results. Use this to navigate through large result sets. The cursor value can be obtained from the pagination information in a previous response.',
+			'Pagination cursor for retrieving the next set of results. For repositories and pull requests, this is a cursor string. For code search, this is a page number. Use this to navigate through large result sets.',
 		),
 });
 
@@ -53,38 +54,42 @@ export const SearchToolArgs = z
 		/**
 		 * Repository slug to search within.
 		 * This is required when searching for pull requests.
+		 * Optional for code search; if provided, limits code search to the specified repo.
 		 * Example: "backend-api"
 		 */
 		repoSlug: z
 			.string()
 			.optional()
 			.describe(
-				'Repository slug to search within. This is required when searching for pull requests. Example: "backend-api"',
+				'Repository slug to search within. Required for pull requests search. Optional for code search (limits search to the specified repo). Example: "backend-api"',
 			),
 
 		/**
-		 * Search query to filter results by name, description, etc.
+		 * Search query to filter results by name, description, or code content.
+		 * Required for code search.
 		 * Use this to find specific content matching certain terms.
 		 */
 		query: z
 			.string()
 			.optional()
 			.describe(
-				'Search query to filter results by name, description, etc. Use this to find specific content matching certain terms.',
+				'Search query to filter results by name, description, or code content. Required for code search. Use this to find specific content matching certain terms.',
 			),
 
 		/**
 		 * Scope of the search. Options include:
 		 * - "repositories" (search only repositories)
 		 * - "pullrequests" (search only pull requests)
-		 * - "all" (search both repositories and pull requests)
+		 * - "commits" (search only commits)
+		 * - "code" (search file content)
+		 * - "all" (search repositories and pull requests)
 		 * Defaults to "all" if not specified.
 		 */
 		scope: z
-			.enum(['repositories', 'pullrequests', 'all'])
+			.enum(['repositories', 'pullrequests', 'commits', 'code', 'all'])
 			.optional()
 			.describe(
-				'Scope of the search. Options include: "repositories" (search only repositories), "pullrequests" (search only pull requests), or "all" (search both repositories and pull requests). Defaults to "all" if not specified.',
+				'Scope of the search. Options include: "repositories" (search only repositories), "pullrequests" (search only pull requests), "commits" (search only commits), "code" (search file content), or "all" (search both repositories and pull requests). Defaults to "all" if not specified.',
 			),
 	})
 	.merge(PaginationArgs);
