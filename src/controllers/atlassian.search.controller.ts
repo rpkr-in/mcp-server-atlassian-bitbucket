@@ -8,6 +8,15 @@ import {
 
 import atlassianRepositoriesController from './atlassian.repositories.controller.js';
 import atlassianPullRequestsController from './atlassian.pullrequests.controller.js';
+import {
+	formatCodeSearchResults,
+	formatCommitsResults,
+} from './atlassian.search.formatter.js';
+import atlassianSearchService from '../services/vendor.atlassian.search.service.js';
+
+const controllerLogger = Logger.forContext(
+	'controllers/atlassian.search.controller.ts',
+);
 
 /**
  * Search options interface
@@ -17,9 +26,159 @@ export interface SearchOptions {
 	workspaceSlug?: string;
 	repoSlug?: string;
 	query?: string;
-	scope?: 'repositories' | 'pullrequests' | 'all';
+	scope?: 'repositories' | 'pullrequests' | 'commits' | 'code' | 'all';
 	limit?: number;
 	cursor?: string;
+	page?: number;
+	pageLen?: number;
+}
+
+/**
+ * Search for code in repositories
+ *
+ * @param options Options for code search
+ * @returns Promise with formatted code search results
+ */
+async function searchCode(
+	options: SearchOptions = {},
+): Promise<ControllerResponse> {
+	const methodLogger = controllerLogger.forMethod('searchCode');
+	methodLogger.debug('Searching code with options:', options);
+
+	try {
+		// Validate required parameters
+		if (!options.workspaceSlug) {
+			throw new Error('workspaceSlug is required for code search');
+		}
+
+		if (!options.query) {
+			throw new Error('query is required for code search');
+		}
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<SearchOptions>(options, {
+			page: 1,
+			pageLen: options.limit || DEFAULT_PAGE_SIZE,
+		});
+
+		// Call the code search service
+		const response = await atlassianSearchService.searchCode({
+			workspaceSlug: mergedOptions.workspaceSlug as string,
+			searchQuery: mergedOptions.query || '',
+			repoSlug: mergedOptions.repoSlug,
+			page: mergedOptions.page,
+			pageLen: mergedOptions.pageLen,
+			// Add fields to get repository information for better display
+			fields: '+values.file.commit.repository',
+		});
+
+		// Format the results into markdown
+		const content = formatCodeSearchResults(response);
+
+		// Create pagination information
+		const pagination: ResponsePagination = {
+			count: response.size || 0,
+			hasMore: response.page * response.pagelen < response.size,
+			// For cursor-based pagination, use the page number as the cursor
+			nextCursor:
+				response.page * response.pagelen < response.size
+					? (response.page + 1).toString()
+					: undefined,
+		};
+
+		methodLogger.debug('Successfully retrieved code search results', {
+			count: response.size,
+			hasMore: pagination.hasMore,
+		});
+
+		return {
+			content,
+			pagination,
+		};
+	} catch (error) {
+		return handleControllerError(error, {
+			source: 'Bitbucket',
+			operation: 'searchCode',
+			entityType: 'code',
+			entityId: options.workspaceSlug,
+		});
+	}
+}
+
+/**
+ * Search for commits in a repository
+ *
+ * @param options Options for commit search
+ * @returns Promise with formatted commit search results
+ */
+async function searchCommits(
+	options: SearchOptions = {},
+): Promise<ControllerResponse> {
+	const methodLogger = controllerLogger.forMethod('searchCommits');
+	methodLogger.debug('Searching commits with options:', options);
+
+	try {
+		// Validate required parameters
+		if (!options.workspaceSlug) {
+			throw new Error('workspaceSlug is required for commit search');
+		}
+
+		if (!options.repoSlug) {
+			throw new Error('repoSlug is required for commit search');
+		}
+
+		// Apply defaults
+		const mergedOptions = applyDefaults<SearchOptions>(options, {
+			page: 1,
+			pageLen: options.limit || DEFAULT_PAGE_SIZE,
+		});
+
+		// Call the commits search service
+		const response = await atlassianSearchService.searchCommits({
+			workspaceSlug: mergedOptions.workspaceSlug as string,
+			repoSlug: mergedOptions.repoSlug as string,
+			searchQuery: mergedOptions.query || '',
+			page: mergedOptions.page,
+			pageLen: mergedOptions.pageLen,
+			// Add fields to get repository information for better display
+			fields: '',
+		});
+
+		// Format the results into markdown
+		const content = formatCommitsResults(
+			response,
+			mergedOptions.repoSlug as string,
+			mergedOptions.workspaceSlug as string,
+		);
+
+		// Create pagination information
+		const pagination: ResponsePagination = {
+			count: response.size || response.values?.length || 0,
+			hasMore: response.page * response.pagelen < response.size,
+			// For cursor-based pagination, use the page number as the cursor
+			nextCursor:
+				response.page * response.pagelen < response.size
+					? (response.page + 1).toString()
+					: undefined,
+		};
+
+		methodLogger.debug('Successfully retrieved commit search results', {
+			count: pagination.count,
+			hasMore: pagination.hasMore,
+		});
+
+		return {
+			content,
+			pagination,
+		};
+	} catch (error) {
+		return handleControllerError(error, {
+			source: 'Bitbucket',
+			operation: 'searchCommits',
+			entityType: 'commits',
+			entityId: `${options.workspaceSlug}/${options.repoSlug}`,
+		});
+	}
 }
 
 /**
@@ -31,14 +190,8 @@ export interface SearchOptions {
 async function search(
 	options: SearchOptions = {},
 ): Promise<ControllerResponse> {
-	const controllerLogger = Logger.forContext(
-		'controllers/atlassian.search.controller.ts',
-		'search',
-	);
-	controllerLogger.debug(
-		'Searching Bitbucket content with options:',
-		options,
-	);
+	const methodLogger = controllerLogger.forMethod('search');
+	methodLogger.debug('Searching Bitbucket content with options:', options);
 
 	try {
 		// Validate required parameters
@@ -57,6 +210,20 @@ async function search(
 		const scope = mergedOptions.scope || 'all';
 		const workspaceSlug = mergedOptions.workspaceSlug as string;
 		const query = mergedOptions.query || '';
+
+		// If scope is code, use the code search handler
+		if (scope === 'code') {
+			return searchCode(mergedOptions);
+		}
+
+		// If scope is commits, use the commits search handler
+		if (scope === 'commits') {
+			// Commits search requires a repository slug
+			if (!mergedOptions.repoSlug) {
+				throw new Error('repoSlug is required for commits search');
+			}
+			return searchCommits(mergedOptions);
+		}
 
 		let repoResults: ControllerResponse = {
 			content: '',
@@ -127,7 +294,7 @@ async function search(
 					?.nextCursor,
 		};
 
-		controllerLogger.debug(
+		methodLogger.debug(
 			'Successfully retrieved and formatted search results',
 			{ totalCount, hasMore },
 		);
@@ -148,4 +315,6 @@ async function search(
 
 export default {
 	search,
+	searchCode,
+	searchCommits,
 };
