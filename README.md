@@ -64,6 +64,21 @@ This MCP server provides the following tools for your AI assistant:
 
 **Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "backend-api" }`
 
+### Search Bitbucket (`search`)
+
+**Purpose:** Search across repositories, pull requests, commits, and code in Bitbucket to find matching content.
+
+**Use When:** You need to find specific content across your Bitbucket workspace, such as repositories by name, pull requests by description, commits by message, or code by content.
+
+**Conversational Example:** "Search for 'authentication' in repositories in the 'acme-corp' workspace" or "Find code with 'function getUser' in the 'acme-corp' workspace".
+
+**Parameter Examples:**
+
+- Search repositories: `{ workspaceSlug: "acme-corp", query: "api", scope: "repositories" }`
+- Search pull requests: `{ workspaceSlug: "acme-corp", repoSlug: "backend-api", query: "fix", scope: "pullrequests" }`
+- Search commits: `{ workspaceSlug: "acme-corp", repoSlug: "backend-api", query: "update", scope: "commits" }`
+- Search code: `{ workspaceSlug: "acme-corp", query: "function getUser", scope: "code" }`
+
 ### List Pull Requests (`list-pull-requests`)
 
 **Purpose:** List pull requests within a specific repository. Requires workspace and repository slugs.
@@ -251,6 +266,9 @@ You can now ask your AI assistant questions related to your Bitbucket instance:
 - "List all the Bitbucket workspaces I have access to."
 - "Show me all repositories in the 'dev-team' workspace."
 - "Get information about the 'main-api' repository in the 'dev-team' workspace."
+- "Search for repositories containing 'auth' in the 'dev-team' workspace."
+- "Search for code with 'function getUser' in the 'dev-team' workspace."
+- "Search for commits that mention 'bugfix' in the 'dev-team/main-api' repository."
 - "Show me open pull requests for the 'dev-team/main-api' repository."
 - "Summarize pull request #42 in the 'dev-team/main-api' repository."
 - "Create a pull request in the 'dev-team/main-api' repository from the 'feature/login' branch to 'main' with the title 'Add new login feature'."
@@ -272,6 +290,15 @@ npx -y @aashari/mcp-server-atlassian-bitbucket get-repository --workspace my-tea
 
 # List pull requests
 npx -y @aashari/mcp-server-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
+
+# Search for repositories containing 'api' in their name or description
+npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --query api --scope repositories
+
+# Search for code containing 'function getUser'
+npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code
+
+# Search for commits with 'update' in their message
+npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --repo-slug my-api --query update --scope commits
 ```
 
 ### Global Installation
@@ -307,6 +334,9 @@ For frequent use, you can install the package globally on your system:
 
     # List pull requests
     mcp-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
+
+    # Search for code
+    mcp-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code
     ```
 
 ### Configuration with Global Installation

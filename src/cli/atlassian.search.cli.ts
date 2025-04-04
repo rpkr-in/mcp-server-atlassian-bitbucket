@@ -20,7 +20,7 @@ function register(program: Command) {
 	program
 		.command('search')
 		.description(
-			'Search for Bitbucket content across repositories, pull requests, and code',
+			'Search for Bitbucket content across repositories, pull requests, commits, and code',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
