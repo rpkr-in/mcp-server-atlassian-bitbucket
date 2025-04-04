@@ -20,7 +20,17 @@ function register(program: Command) {
 	program
 		.command('search')
 		.description(
-			'Search for Bitbucket content across repositories, pull requests, commits, and code',
+			'Search for Bitbucket content across repositories, pull requests, commits, and code\n\n' +
+				'        PURPOSE: Provides a unified search interface for Bitbucket workspaces, searching across repository names/descriptions, ' +
+				'pull request titles/descriptions, commit messages, and code content to help locate resources.\n\n' +
+				'        Use Case: Useful when you need to find specific content across your Bitbucket workspace such as ' +
+				'repositories by name, pull requests by description, commits by message, or code by content.\n\n' +
+				'        Output: Formatted search results including repository details, pull request information, commit data, or code snippets ' +
+				'with matching content highlighted. Supports pagination.\n\n' +
+				'        Examples:\n' +
+				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --scope repositories --query "api"\n' +
+				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --repo-slug backend --scope commits --query "update"\n' +
+				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
