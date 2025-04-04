@@ -282,15 +282,15 @@ async function createPullRequest(
 /**
  * Register Atlassian Pull Requests MCP Tools
  *
- * Registers the list-pull-requests and get-pull-request tools with the MCP server.
+ * Registers the pull requests-related tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
  * @param server - The MCP server instance to register tools with
  */
-function register(server: McpServer) {
+function registerTools(server: McpServer) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
-		'register',
+		'registerTools',
 	);
 	methodLogger.debug('Registering Atlassian Pull Requests tools...');
 
@@ -456,4 +456,4 @@ function register(server: McpServer) {
 	methodLogger.debug('Successfully registered Atlassian Pull Requests tools');
 }
 
-export default { register };
+export default { registerTools };

@@ -120,10 +120,10 @@ async function getWorkspace(
  *
  * @param server - The MCP server instance to register tools with
  */
-function register(server: McpServer) {
+function registerTools(server: McpServer) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.workspaces.tool.ts',
-		'register',
+		'registerTools',
 	);
 	methodLogger.debug('Registering Atlassian Workspaces tools...');
 
@@ -190,4 +190,4 @@ function register(server: McpServer) {
 	methodLogger.debug('Successfully registered Atlassian Workspaces tools');
 }
 
-export default { register };
+export default { registerTools };

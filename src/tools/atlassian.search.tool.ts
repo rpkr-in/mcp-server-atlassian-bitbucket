@@ -118,17 +118,17 @@ async function search(args: SearchToolArgsType, _extra: RequestHandlerExtra) {
 /**
  * Register Atlassian Search MCP Tools
  *
- * Registers the search tool with the MCP server.
- * The tool is registered with its schema, description, and handler function.
+ * Registers the search-related tools with the MCP server.
+ * Each tool is registered with its schema, description, and handler function.
  *
- * @param {McpServer} server - The MCP server instance to register tools with
+ * @param server - The MCP server instance to register tools with
  */
-function register(server: McpServer) {
-	const toolLogger = Logger.forContext(
+function registerTools(server: McpServer) {
+	const methodLogger = Logger.forContext(
 		'tools/atlassian.search.tool.ts',
-		'register',
+		'registerTools',
 	);
-	toolLogger.debug('Registering Atlassian Search tools...');
+	methodLogger.debug('Registering Atlassian Search tools...');
 
 	// Register the search tool
 	server.tool(
@@ -175,7 +175,7 @@ function register(server: McpServer) {
 		search,
 	);
 
-	toolLogger.debug('Successfully registered Atlassian Search tools');
+	methodLogger.debug('Successfully registered Atlassian Search tools');
 }
 
-export default { register };
+export default { registerTools };

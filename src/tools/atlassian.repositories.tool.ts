@@ -121,15 +121,15 @@ async function getRepository(
 /**
  * Register Atlassian Repositories MCP Tools
  *
- * Registers the list-repositories and get-repository tools with the MCP server.
+ * Registers the repositories-related tools with the MCP server.
  * Each tool is registered with its schema, description, and handler function.
  *
  * @param server - The MCP server instance to register tools with
  */
-function register(server: McpServer) {
+function registerTools(server: McpServer) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
-		'register',
+		'registerTools',
 	);
 	methodLogger.debug('Registering Atlassian Repositories tools...');
 
@@ -200,4 +200,4 @@ function register(server: McpServer) {
 	methodLogger.debug('Successfully registered Atlassian Repositories tools');
 }
 
-export default { register };
+export default { registerTools };
