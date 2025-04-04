@@ -1,366 +1,357 @@
 # Atlassian Bitbucket MCP Server
 
-This project provides a Model Context Protocol (MCP) server that acts as a bridge between AI assistants (like Anthropic's Claude, Cursor AI, or other MCP-compatible clients) and your Atlassian Bitbucket instance. It allows AI to securely access and interact with your repositories, pull requests, and workspaces in real-time.
+This project provides a Model Context Protocol (MCP) server that acts as a bridge between AI assistants (like Anthropic's Claude, Cursor AI, or other MCP-compatible clients) and your Atlassian Bitbucket instance. It allows AI to securely access and interact with your repositories, pull requests, and workspaces in real time.
 
-### What is MCP and Why Use This Server?
+---
 
-Model Context Protocol (MCP) is an open standard enabling AI models to connect securely to external tools and data sources. This server implements MCP specifically for Bitbucket Cloud.
+# Overview
 
-**Benefits:**
+## What is MCP?
 
-- **Real-time Access:** Your AI assistant can directly access up-to-date Bitbucket data (repositories, PRs, etc.).
-- **Eliminate Copy/Paste:** No need to manually transfer information between Bitbucket and your AI assistant.
-- **Enhanced AI Capabilities:** Enables AI to analyze repositories, review pull requests, understand code context, and work directly with your version control system.
-- **Security:** You control access via API credentials (Atlassian API Token or Bitbucket App Password). The AI interacts through the server, and sensitive operations remain contained.
+Model Context Protocol (MCP) is an open standard that allows AI systems to securely and contextually connect with external tools and data sources.
 
-### Interface Philosophy: Simple Input, Rich Output
+This server implements MCP specifically for Bitbucket Cloud, bridging your Bitbucket data with AI assistants.
 
-This server follows a "Minimal Interface, Maximal Detail" approach:
+## Why Use This Server?
 
-1.  **Simple Tools:** Ask for only essential identifiers (like `workspaceSlug`, `repoSlug`, `prId`).
-2.  **Rich Details:** When you ask for a specific item (like `get-repository`), the server provides all relevant information by default (description, owner, links, etc.) without needing extra flags.
+- **Minimal Input, Maximum Output Philosophy**: Simple identifiers like `workspaceSlug` and `repoSlug` are all you need. Each tool returns comprehensive details without requiring extra flags.
 
-## Available Tools
+- **Rich Code Visualization**: Get detailed insights into repositories and code changes with file statistics, diff views, and smart context around code modifications.
 
-This MCP server provides the following tools for your AI assistant:
+- **Secure Local Authentication**: Credentials are never stored in the server. The server runs locally, so your tokens never leave your machine and you can request only the permissions you need.
 
-### List Workspaces (`list-workspaces`)
+- **Intuitive Markdown Responses**: All responses use well-structured Markdown for readability with consistent formatting and navigational links.
 
-**Purpose:** Discover available Bitbucket workspaces you have access to and find their 'slugs' (unique identifiers).
+- **Full Bitbucket Integration**: Access workspaces, repositories, pull requests, comments, code search, and more through a unified interface.
 
-**Use When:** You need to know which workspaces are available or find the slug for a specific workspace to use with other tools.
+---
 
-**Conversational Example:** "Show me all my Bitbucket workspaces."
-
-**Parameter Example:** `{}` (no parameters needed for basic list) or `{ query: "devteam" }` (to filter).
-
-### Get Workspace (`get-workspace`)
-
-**Purpose:** Retrieve detailed information about a _specific_ workspace using its slug.
-
-**Use When:** You know the workspace slug and need its full details or links to its contents.
-
-**Conversational Example:** "Tell me more about the 'acme-corp' workspace."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp" }`
-
-### List Repositories (`list-repositories`)
-
-**Purpose:** List repositories within a specific workspace and find their 'slugs'. Requires the workspace slug.
-
-**Use When:** You need to find repositories within a known workspace or get the slug for a specific repository.
-
-**Conversational Example:** "List the repositories in the 'acme-corp' workspace."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp" }` or `{ workspaceSlug: "acme-corp", query: "backend" }` (to filter).
-
-### Get Repository (`get-repository`)
-
-**Purpose:** Retrieve detailed information about a _specific_ repository using its workspace and repository slugs.
-
-**Use When:** You know the workspace and repository slugs and need full details like description, language, owner, etc.
-
-**Conversational Example:** "Show me details for the 'backend-api' repository in the 'acme-corp' workspace."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "backend-api" }`
-
-### Search Bitbucket (`search`)
-
-**Purpose:** Search across repositories, pull requests, commits, and code in Bitbucket to find matching content.
-
-**Use When:** You need to find specific content across your Bitbucket workspace, such as repositories by name, pull requests by description, commits by message, or code by content.
-
-**Conversational Example:** "Search for 'authentication' in repositories in the 'acme-corp' workspace" or "Find code with 'function getUser' in the 'acme-corp' workspace".
-
-**Parameter Examples:**
-
-- Search repositories: `{ workspaceSlug: "acme-corp", query: "api", scope: "repositories" }`
-- Search pull requests: `{ workspaceSlug: "acme-corp", repoSlug: "backend-api", query: "fix", scope: "pullrequests" }`
-- Search commits: `{ workspaceSlug: "acme-corp", repoSlug: "backend-api", query: "update", scope: "commits" }`
-- Search code: `{ workspaceSlug: "acme-corp", query: "function getUser", scope: "code" }`
-
-### List Pull Requests (`list-pull-requests`)
-
-**Purpose:** List pull requests within a specific repository. Requires workspace and repository slugs.
-
-**Use When:** You need to find open/merged/etc. pull requests in a known repository or get the ID for a specific PR.
-
-**Conversational Example:** "Show me the open pull requests for the 'acme-corp/frontend-app' repository."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", state: "OPEN" }`
-
-### Get Pull Request (`get-pull-request`)
-
-**Purpose:** Retrieve detailed information about a _specific_ pull request using its workspace slug, repository slug, and PR ID.
-
-**Use When:** You know the identifiers for a specific PR and need its full description, reviewers, status, branches, etc.
-
-**Conversational Example:** "Get the details for pull request #42 in the 'acme-corp/frontend-app' repo."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42" }`
-
-### Add Pull Request Comment (`add-pr-comment`)
-
-**Purpose:** Add comments to a pull request, including both general PR comments and inline code comments.
-
-**Use When:** You need to provide feedback, ask questions, or communicate with contributors on a specific PR.
-
-**Conversational Example:** "Add a comment to pull request #42 in the 'acme-corp/frontend-app' repo saying 'This looks good to merge'."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "This looks good to merge" }` or with inline comment: `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", prId: "42", content: "Consider a constant here", inline: { path: "src/utils.js", line: 42 } }`
-
-### Create Pull Request (`create-pull-request`)
-
-**Purpose:** Create a new pull request from one branch to another within a repository.
-
-**Use When:** You need to initiate a code review for a completed feature or bug fix, or want to merge changes from a feature branch into a main branch.
-
-**Conversational Example:** "Create a pull request in the 'acme-corp/frontend-app' repo from the 'feature/new-login' branch to 'main' with the title 'Add new login screen'."
-
-**Parameter Example:** `{ workspaceSlug: "acme-corp", repoSlug: "frontend-app", title: "Add new login screen", sourceBranch: "feature/new-login" }`
+# Getting Started
 
 ## Prerequisites
 
-- **Node.js and npm:** Ensure you have Node.js (which includes npm) installed. Download from [nodejs.org](https://nodejs.org/).
-- **Bitbucket Account:** An active Bitbucket Cloud account with access to the workspaces and repositories you want to connect to.
+- **Node.js** (>=18.x): [Download](https://nodejs.org/)
+- **Bitbucket Cloud Account**
 
-## Quick Start Guide
+---
 
-Follow these steps to connect your AI assistant to Bitbucket:
+## Step 1: Authenticate
 
-### Step 1: Set Up Authentication
+Choose one of the following authentication methods:
 
-You have two options for authenticating with Bitbucket:
+### Option A: Bitbucket App Password (Recommended)
 
-#### Option A: Bitbucket App Password (Recommended for Bitbucket-only use)
+Generate one from [Bitbucket App Passwords](https://bitbucket.org/account/settings/app-passwords/). Minimum permissions:
 
-**Important:** Treat your App Password like a password. Do not share it or commit it to version control.
+- Workspaces: Read
+- Repositories: Read
+- Pull Requests: Read
 
-1.  Navigate to your Bitbucket personal settings:
-    [https://bitbucket.org/account/settings/app-passwords/](https://bitbucket.org/account/settings/app-passwords/)
-2.  Click **Create app password**.
-3.  Give it a **Label** (e.g., `mcp-bitbucket-access`).
-4.  Grant the following **Permissions** (at minimum):
-    - `Workspaces`: `Read`
-    - `Repositories`: `Read`
-    - `Pull requests`: `Read`
-5.  Click **Create**.
-6.  **Immediately copy the generated App Password.** You won't be able to see it again. Store it securely.
+### Option B: Atlassian API Token
 
-#### Option B: Atlassian API Token (Use if connecting other Atlassian tools like Jira/Confluence)
+Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
 
-**Important:** Treat your API token like a password.
+---
 
-1.  Go to your Atlassian API token management page:
-    [https://id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
-2.  Click **Create API token**.
-3.  Give it a descriptive **Label** (e.g., `mcp-bitbucket-access`).
-4.  Click **Create**.
-5.  **Immediately copy the generated API token.** Store it securely.
+## Step 2: Configure Credentials
 
-### Step 2: Configure the Server Credentials
+### Method A: MCP Config File (Recommended)
 
-Choose **one** of the following methods:
-
-#### Method A: Global MCP Config File (Recommended)
-
-This keeps credentials separate and organized.
-
-1.  **Create the directory** (if needed): `~/.mcp/`
-2.  **Create/Edit the file:** `~/.mcp/configs.json`
-3.  **Add the configuration:** Paste **one** of the following JSON structures, corresponding to your chosen authentication method, replacing the placeholders:
-
-    **Using Bitbucket App Password:**
-
-    ```json
-    {
-    	"@aashari/mcp-server-atlassian-bitbucket": {
-    		"environments": {
-    			"ATLASSIAN_BITBUCKET_USERNAME": "<YOUR_BITBUCKET_USERNAME>",
-    			"ATLASSIAN_BITBUCKET_APP_PASSWORD": "<YOUR_COPIED_APP_PASSWORD>"
-    		}
-    	}
-    }
-    ```
-
-    - `<YOUR_BITBUCKET_USERNAME>`: Your Bitbucket username.
-    - `<YOUR_COPIED_APP_PASSWORD>`: The App Password from Step 1.
-
-    **Using Atlassian API Token:**
-
-    ```json
-    {
-    	"@aashari/mcp-server-atlassian-bitbucket": {
-    		"environments": {
-    			"ATLASSIAN_SITE_NAME": "<YOUR_ATLASSIAN_SITE_NAME_UNUSED_BUT_NEEDED>",
-    			"ATLASSIAN_USER_EMAIL": "<YOUR_ATLASSIAN_EMAIL>",
-    			"ATLASSIAN_API_TOKEN": "<YOUR_COPIED_API_TOKEN>"
-    		}
-    	}
-    }
-    ```
-
-    - `<YOUR_ATLASSIAN_SITE_NAME_UNUSED_BUT_NEEDED>`: Enter any value (like `bitbucket`). This field is required by the underlying transport but not used for Bitbucket API auth when using an API token.
-    - `<YOUR_ATLASSIAN_EMAIL>`: Your Atlassian account email.
-    - `<YOUR_COPIED_API_TOKEN>`: The API token from Step 1.
-
-#### Method B: Environment Variables (Alternative)
-
-Set environment variables when running the server. Choose the set matching your authentication:
+Create or edit `~/.mcp/configs.json`:
 
 **Using Bitbucket App Password:**
 
-```bash
-ATLASSIAN_BITBUCKET_USERNAME="<YOUR_USERNAME>" \
-ATLASSIAN_BITBUCKET_APP_PASSWORD="<YOUR_APP_PASSWORD>" \
-npx -y @aashari/mcp-server-atlassian-bitbucket
+```json
+{
+	"@aashari/mcp-server-atlassian-bitbucket": {
+		"environments": {
+			"ATLASSIAN_BITBUCKET_USERNAME": "<your_username>",
+			"ATLASSIAN_BITBUCKET_APP_PASSWORD": "<your_app_password>"
+		}
+	}
+}
 ```
 
 **Using Atlassian API Token:**
 
+```json
+{
+	"@aashari/mcp-server-atlassian-bitbucket": {
+		"environments": {
+			"ATLASSIAN_SITE_NAME": "bitbucket",
+			"ATLASSIAN_USER_EMAIL": "<your_email>",
+			"ATLASSIAN_API_TOKEN": "<your_api_token>"
+		}
+	}
+}
+```
+
+### Method B: Environment Variables
+
+Pass credentials directly when running the server:
+
 ```bash
-ATLASSIAN_SITE_NAME="bitbucket" \
-ATLASSIAN_USER_EMAIL="<YOUR_EMAIL>" \
-ATLASSIAN_API_TOKEN="<YOUR_API_TOKEN>" \
+ATLASSIAN_BITBUCKET_USERNAME="<your_username>" \
+ATLASSIAN_BITBUCKET_APP_PASSWORD="<your_app_password>" \
 npx -y @aashari/mcp-server-atlassian-bitbucket
 ```
 
-### Step 3: Connect Your AI Assistant
+---
 
-Configure your MCP client (Claude Desktop, Cursor, etc.) to run this server.
+## Step 3: Connect Your AI Assistant
 
-#### Claude Desktop
+Configure your MCP-compatible client to launch this server.
 
-1.  Open Settings (gear icon) > Edit Config.
-2.  Add or merge into `mcpServers`:
+**Claude / Cursor Configuration:**
 
-    ```json
-    {
-    	"mcpServers": {
-    		"aashari/mcp-server-atlassian-bitbucket": {
-    			"command": "npx",
-    			"args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"]
-    		}
-    	}
-    }
-    ```
-
-3.  Save and **Restart Claude Desktop**.
-4.  **Verify:** Click the "Tools" (hammer) icon; Bitbucket tools should be listed.
-
-#### Cursor AI
-
-1.  Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) > **Cursor Settings > MCP**.
-2.  Click **+ Add new MCP server**.
-3.  Enter:
-    - Name: `aashari/mcp-server-atlassian-bitbucket`
-    - Type: `command`
-    - Command: `npx -y @aashari/mcp-server-atlassian-bitbucket`
-4.  Click **Add**.
-5.  **Verify:** Wait for the indicator next to the server name to turn green.
-
-### Step 4: Using the Tools
-
-You can now ask your AI assistant questions related to your Bitbucket instance:
-
-- "List all the Bitbucket workspaces I have access to."
-- "Show me all repositories in the 'dev-team' workspace."
-- "Get information about the 'main-api' repository in the 'dev-team' workspace."
-- "Search for repositories containing 'auth' in the 'dev-team' workspace."
-- "Search for code with 'function getUser' in the 'dev-team' workspace."
-- "Search for commits that mention 'bugfix' in the 'dev-team/main-api' repository."
-- "Show me open pull requests for the 'dev-team/main-api' repository."
-- "Summarize pull request #42 in the 'dev-team/main-api' repository."
-- "Create a pull request in the 'dev-team/main-api' repository from the 'feature/login' branch to 'main' with the title 'Add new login feature'."
-
-## Using as a Command-Line Tool (CLI)
-
-You can also use this package directly from your terminal:
-
-### Quick Use with `npx`
-
-No installation required - run directly using npx:
-
-```bash
-# List workspaces
-npx -y @aashari/mcp-server-atlassian-bitbucket list-workspaces
-
-# Get repository details
-npx -y @aashari/mcp-server-atlassian-bitbucket get-repository --workspace my-team --repository my-api
-
-# List pull requests
-npx -y @aashari/mcp-server-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
-
-# Search for repositories containing 'api' in their name or description
-npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --query api --scope repositories
-
-# Search for code containing 'function getUser'
-npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code
-
-# Search for commits with 'update' in their message
-npx -y @aashari/mcp-server-atlassian-bitbucket search --workspace-slug my-team --repo-slug my-api --query update --scope commits
+```json
+{
+	"mcpServers": {
+		"aashari/mcp-server-atlassian-bitbucket": {
+			"command": "npx",
+			"args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"]
+		}
+	}
+}
 ```
 
-### Global Installation
+This configuration launches the server automatically at runtime.
 
-For frequent use, you can install the package globally on your system:
+---
 
-1. **Install globally** using npm:
+# Tools
 
-    ```bash
-    npm install -g @aashari/mcp-server-atlassian-bitbucket
-    ```
+This section covers the MCP tools available when using this server with an AI assistant. Note that MCP tools use `snake_case` for tool names and `camelCase` for parameters.
 
-2. **Verify installation** by checking the version:
+## `list_workspaces`
 
-    ```bash
-    mcp-atlassian-bitbucket --version
-    ```
+List available Bitbucket workspaces.
 
-3. **Use the commands** without npx prefix:
+```json
+{}
+```
 
-    ```bash
-    # List workspaces
-    mcp-atlassian-bitbucket list-workspaces
+_or:_
 
-    # Get workspace details
-    mcp-atlassian-bitbucket get-workspace --workspace my-team
+```json
+{ "query": "devteam" }
+```
 
-    # List repositories in a workspace
-    mcp-atlassian-bitbucket list-repositories --workspace my-team
+> "Show me all my Bitbucket workspaces."
 
-    # Get repository details
-    mcp-atlassian-bitbucket get-repository --workspace my-team --repository my-api
+---
 
-    # List pull requests
-    mcp-atlassian-bitbucket list-pull-requests --workspace my-team --repository my-api --state OPEN
+## `get_workspace`
 
-    # Search for code
-    mcp-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code
-    ```
+Get full details for a specific workspace.
 
-### Configuration with Global Installation
+```json
+{ "workspaceSlug": "acme-corp" }
+```
 
-When installed globally, you can still use the same configuration methods:
+> "Tell me more about the 'acme-corp' workspace."
 
-1. **Using environment variables**:
+---
 
-    ```bash
-    # Using Bitbucket App Password
-    ATLASSIAN_BITBUCKET_USERNAME="<YOUR_USERNAME>" \
-    ATLASSIAN_BITBUCKET_APP_PASSWORD="<YOUR_APP_PASSWORD>" \
-    mcp-atlassian-bitbucket list-workspaces
+## `list_repositories`
 
-    # Using Atlassian API Token
-    ATLASSIAN_SITE_NAME="bitbucket" \
-    ATLASSIAN_USER_EMAIL="<YOUR_EMAIL>" \
-    ATLASSIAN_API_TOKEN="<YOUR_API_TOKEN>" \
-    mcp-atlassian-bitbucket list-workspaces
-    ```
+List repositories in a workspace.
 
-2. **Using global MCP config file** (recommended):
-   Set up the `~/.mcp/configs.json` file as described in the Quick Start Guide.
+```json
+{ "workspaceSlug": "acme-corp" }
+```
 
-## License
+_or:_
 
-[ISC](https://opensource.org/licenses/ISC)
+```json
+{ "workspaceSlug": "acme-corp", "query": "api" }
+```
+
+> "List repositories in 'acme-corp'."
+
+---
+
+## `get_repository`
+
+Get details of a specific repository.
+
+```json
+{ "workspaceSlug": "acme-corp", "repoSlug": "backend-api" }
+```
+
+> "Show me the 'backend-api' repository in 'acme-corp'."
+
+---
+
+## `search`
+
+Search Bitbucket content.
+
+**Repositories:**
+
+```json
+{ "workspaceSlug": "acme-corp", "query": "api", "scope": "repositories" }
+```
+
+**Pull Requests:**
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api",
+	"query": "fix",
+	"scope": "pullrequests"
+}
+```
+
+**Commits:**
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api",
+	"query": "update",
+	"scope": "commits"
+}
+```
+
+**Code:**
+
+```json
+{ "workspaceSlug": "acme-corp", "query": "function getUser", "scope": "code" }
+```
+
+> "Search for 'function getUser' in the 'acme-corp' workspace."
+
+---
+
+## `list_pull_requests`
+
+List pull requests in a repository.
+
+```json
+{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "state": "OPEN" }
+```
+
+> "Show open PRs in 'frontend-app'."
+
+---
+
+## `get_pull_request`
+
+Get full details of a pull request, including code diffs and file changes.
+
+```json
+{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
+```
+
+> "Get PR #42 from 'frontend-app' with all code changes."
+
+---
+
+## `list_pr_comments`
+
+List comments on a specific pull request.
+
+```json
+{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
+```
+
+> "Show me all comments on PR #42."
+
+---
+
+## `add_pr_comment`
+
+Add a comment to a pull request.
+
+**General:**
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app",
+	"prId": "42",
+	"content": "Looks good."
+}
+```
+
+**Inline:**
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app",
+	"prId": "42",
+	"content": "Consider refactoring.",
+	"inline": { "path": "src/utils.js", "line": 42 }
+}
+```
+
+> "Add a comment to PR #42 on line 42."
+
+---
+
+## `pull_requests_create`
+
+Create a new pull request.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app",
+	"title": "Add login screen",
+	"sourceBranch": "feature/login"
+}
+```
+
+> "Create a PR from 'feature/login' to 'main'."
+
+---
+
+# Command-Line Interface (CLI)
+
+The CLI uses kebab-case for commands (e.g., `list-workspaces`) and options (e.g., `--workspace-slug`).
+
+## Quick Use with `npx`
+
+```bash
+npx -y @aashari/mcp-server-atlassian-bitbucket list-workspaces
+npx -y @aashari/mcp-server-atlassian-bitbucket get-repository \
+  --workspace-slug acme-corp \
+  --repo-slug backend-api
+```
+
+## Install Globally
+
+```bash
+npm install -g @aashari/mcp-server-atlassian-bitbucket
+```
+
+Then run directly:
+
+```bash
+mcp-atlassian-bitbucket list-workspaces
+```
+
+## Discover More CLI Options
+
+Use `--help` to see flags and usage for all available commands:
+
+```bash
+mcp-atlassian-bitbucket --help
+```
+
+Or get detailed help for a specific command:
+
+```bash
+mcp-atlassian-bitbucket get-repository --help
+mcp-atlassian-bitbucket list-pull-requests --help
+mcp-atlassian-bitbucket search --help
+```
+
+---
+
+# License
+
+[ISC License](https://opensource.org/licenses/ISC)
