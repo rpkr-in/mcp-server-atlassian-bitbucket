@@ -412,3 +412,30 @@ export interface CreatePullRequestParams {
 	 */
 	close_source_branch?: boolean;
 }
+
+/**
+ * Diffstat response representing changes in a pull request
+ */
+export interface DiffstatResponse {
+	pagelen?: number;
+	values: DiffstatFileChange[];
+	page?: number;
+	size?: number;
+}
+
+/**
+ * Individual file change in a diffstat
+ */
+export interface DiffstatFileChange {
+	status: string;
+	old?: {
+		path: string;
+		type?: string;
+	};
+	new?: {
+		path: string;
+		type?: string;
+	};
+	lines_added?: number;
+	lines_removed?: number;
+}

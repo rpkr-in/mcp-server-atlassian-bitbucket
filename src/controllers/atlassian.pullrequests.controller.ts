@@ -143,12 +143,12 @@ async function list(
 }
 
 /**
- * Get details of a specific Bitbucket pull request
+ * Get details of a specific Bitbucket pull request, including code changes
  * @param identifier - Object containing pull request identifiers
  * @param identifier.workspaceSlug - The workspace slug containing the repository
  * @param identifier.repoSlug - The repository slug containing the pull request
  * @param identifier.prId - The pull request ID
- * @returns Promise with formatted pull request details content
+ * @returns Promise with formatted pull request details content, including code changes
  * @throws Error if pull request retrieval fails
  */
 async function get(
@@ -165,20 +165,40 @@ async function get(
 	);
 
 	try {
-		// Get basic pull request information
+		// Set up parameters for API calls
 		const params: GetPullRequestParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
 			pull_request_id: parseInt(prId, 10),
 		};
 
-		const pullRequestData = await atlassianPullRequestsService.get(params);
+		// Fetch pull request details, diffstat, and raw diff in parallel for better performance
+		const [pullRequestData, diffstatData, rawDiff] = await Promise.all([
+			atlassianPullRequestsService.get(params),
+			atlassianPullRequestsService.getDiffstat(params).catch((error) => {
+				// Log but don't fail if diffstat can't be retrieved
+				methodLogger.warn(
+					`Failed to retrieve diffstat: ${error.message}`,
+				);
+				return null;
+			}),
+			atlassianPullRequestsService.getRawDiff(params).catch((error) => {
+				// Log but don't fail if diff can't be retrieved
+				methodLogger.warn(
+					`Failed to retrieve raw diff: ${error.message}`,
+				);
+				return null;
+			}),
+		]);
 
 		methodLogger.debug(`Retrieved pull request: ${pullRequestData.id}`);
 
-		// Format the pull request data for display using the formatter
-		// We don't have comments data available from the service
-		const formattedPullRequest = formatPullRequestDetails(pullRequestData);
+		// Format the pull request data with diff information
+		const formattedPullRequest = formatPullRequestDetails(
+			pullRequestData,
+			diffstatData,
+			rawDiff,
+		);
 
 		return {
 			content: formattedPullRequest,

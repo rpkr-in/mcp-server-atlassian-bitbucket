@@ -2,6 +2,7 @@ import {
 	PullRequest,
 	PullRequestsResponse,
 	PullRequestCommentsResponse,
+	DiffstatResponse,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	formatHeading,
@@ -10,6 +11,7 @@ import {
 	formatSeparator,
 	formatNumberedList,
 	formatDate,
+	formatDiff,
 } from '../utils/formatter.util.js';
 
 /**
@@ -90,9 +92,15 @@ export function formatPullRequestsList(
 /**
  * Format detailed pull request information for display
  * @param pullRequest - Raw pull request data from the API
+ * @param diffstat - Optional diffstat data from the API
+ * @param rawDiff - Optional raw diff content from the API
  * @returns Formatted string with pull request details in markdown format
  */
-export function formatPullRequestDetails(pullRequest: PullRequest): string {
+export function formatPullRequestDetails(
+	pullRequest: PullRequest,
+	diffstat?: DiffstatResponse | null,
+	rawDiff?: string | null,
+): string {
 	const lines: string[] = [
 		formatHeading(
 			`Pull Request #${pullRequest.id}: ${pullRequest.title}`,
@@ -109,8 +117,8 @@ export function formatPullRequestDetails(pullRequest: PullRequest): string {
 		Source: pullRequest.source.branch.name,
 		Destination: pullRequest.destination.branch.name,
 		Author: pullRequest.author?.display_name,
-		Created: pullRequest.created_on,
-		Updated: pullRequest.updated_on,
+		Created: new Date(pullRequest.created_on),
+		Updated: new Date(pullRequest.updated_on),
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
@@ -135,6 +143,56 @@ export function formatPullRequestDetails(pullRequest: PullRequest): string {
 		lines.push('');
 		lines.push(formatHeading('Description', 2));
 		lines.push(pullRequest.rendered.description.raw);
+	}
+
+	// File Changes Summary from Diffstat
+	if (diffstat && diffstat.values && diffstat.values.length > 0) {
+		lines.push('');
+		lines.push(formatHeading('File Changes', 2));
+
+		// Calculate summary statistics
+		const totalFiles = diffstat.values.length;
+		let totalAdditions = 0;
+		let totalDeletions = 0;
+
+		diffstat.values.forEach((file) => {
+			if (file.lines_added) totalAdditions += file.lines_added;
+			if (file.lines_removed) totalDeletions += file.lines_removed;
+		});
+
+		// Add summary line
+		lines.push(
+			`${totalFiles} file${totalFiles !== 1 ? 's' : ''} changed with ${totalAdditions} insertion${totalAdditions !== 1 ? 's' : ''} and ${totalDeletions} deletion${totalDeletions !== 1 ? 's' : ''}`,
+		);
+
+		// Add file list (limited to 10 files for brevity)
+		const maxFilesToShow = 10;
+		if (totalFiles > 0) {
+			lines.push('');
+			diffstat.values.slice(0, maxFilesToShow).forEach((file) => {
+				const changes = [];
+				if (file.lines_added) changes.push(`+${file.lines_added}`);
+				if (file.lines_removed) changes.push(`-${file.lines_removed}`);
+				const changeStr =
+					changes.length > 0 ? ` (${changes.join(', ')})` : '';
+				lines.push(
+					`- \`${file.old?.path || file.new?.path}\`${changeStr}`,
+				);
+			});
+
+			if (totalFiles > maxFilesToShow) {
+				lines.push(
+					`- ... and ${totalFiles - maxFilesToShow} more files`,
+				);
+			}
+		}
+	}
+
+	// Detailed Diff Content
+	if (rawDiff) {
+		lines.push('');
+		lines.push(formatHeading('Code Changes', 2));
+		lines.push(formatDiff(rawDiff));
 	}
 
 	// Links

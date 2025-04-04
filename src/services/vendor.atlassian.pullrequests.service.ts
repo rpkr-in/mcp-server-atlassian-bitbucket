@@ -14,6 +14,7 @@ import {
 	PullRequestComment,
 	AddPullRequestCommentParams,
 	CreatePullRequestParams,
+	DiffstatResponse,
 } from './vendor.atlassian.pullrequests.types.js';
 
 /**
@@ -417,4 +418,111 @@ async function create(
 	});
 }
 
-export default { list, get, getComments, addComment, create };
+/**
+ * Get raw diff content for a specific Bitbucket pull request
+ *
+ * Retrieves the raw diff content showing actual code changes in the pull request.
+ * The diff is returned in a standard unified diff format.
+ *
+ * @async
+ * @memberof VendorAtlassianPullRequestsService
+ * @param {GetPullRequestParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {number} params.pull_request_id - The ID of the pull request
+ * @returns {Promise<string>} Promise containing the raw diff content
+ * @throws {Error} If Atlassian credentials are missing or API request fails
+ * @example
+ * // Get raw diff content for a pull request
+ * const diffContent = await getRawDiff({
+ *   workspace: 'my-workspace',
+ *   repo_slug: 'my-repo',
+ *   pull_request_id: 123
+ * });
+ */
+async function getRawDiff(params: GetPullRequestParams): Promise<string> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'getRawDiff',
+	);
+	methodLogger.debug(
+		`Getting raw diff for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	// Use the diff endpoint directly
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/diff`;
+
+	methodLogger.debug(`Sending request to: ${path}`);
+
+	// Override the Accept header to get raw diff content instead of JSON
+	return fetchAtlassian<string>(credentials, path, {
+		headers: {
+			Accept: 'text/plain',
+			'Content-Type': 'text/plain',
+		},
+	});
+}
+
+/**
+ * Get the diffstat information for a pull request
+ *
+ * Returns summary statistics about the changes in a pull request,
+ * including files changed, insertions, and deletions.
+ *
+ * @async
+ * @memberof VendorAtlassianPullRequestsService
+ * @param {GetPullRequestParams} params - Parameters for the request
+ * @returns {Promise<DiffstatResponse>} Promise containing the diffstat response
+ */
+async function getDiffstat(
+	params: GetPullRequestParams,
+): Promise<DiffstatResponse> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'getDiffstat',
+	);
+	methodLogger.debug(
+		`Getting diffstat for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/diffstat`;
+
+	methodLogger.debug(`Sending request to: ${path}`);
+	return fetchAtlassian<DiffstatResponse>(credentials, path);
+}
+
+export default {
+	list,
+	get,
+	getComments,
+	addComment,
+	create,
+	getRawDiff,
+	getDiffstat,
+};

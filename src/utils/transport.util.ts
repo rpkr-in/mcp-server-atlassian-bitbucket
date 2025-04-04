@@ -223,10 +223,29 @@ export async function fetchAtlassian<T>(
 			}
 		}
 
+		// Check if the response is expected to be plain text
+		const contentType = response.headers.get('content-type') || '';
+		if (contentType.includes('text/plain')) {
+			// If we're expecting text (like a diff), return the raw text
+			const textResponse = await response.text();
+			methodLogger.debug(
+				`Text response received (truncated)`,
+				textResponse.substring(0, 200) + '...',
+			);
+			return textResponse as unknown as T;
+		}
+
+		// For JSON responses, proceed as before
 		// Clone the response to log its content without consuming it
 		const clonedResponse = response.clone();
-		const responseJson = await clonedResponse.json();
-		methodLogger.debug(`Response body:`, responseJson);
+		try {
+			const responseJson = await clonedResponse.json();
+			methodLogger.debug(`Response body:`, responseJson);
+		} catch {
+			methodLogger.debug(
+				`Could not parse response as JSON, returning raw content`,
+			);
+		}
 
 		return response.json() as Promise<T>;
 	} catch (error) {

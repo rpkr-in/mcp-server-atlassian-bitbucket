@@ -208,3 +208,100 @@ export function formatNumberedList<T>(
 		.map((item, index) => formatter(item, index))
 		.join('\n\n' + formatSeparator() + '\n\n');
 }
+
+/**
+ * Format a raw diff output for display
+ *
+ * Parses and formats a raw unified diff string into a Markdown
+ * formatted display with proper code block syntax highlighting.
+ *
+ * @param {string} rawDiff - The raw diff content from the API
+ * @param {number} maxFiles - Maximum number of files to display in detail (optional, default: 5)
+ * @param {number} maxLinesPerFile - Maximum number of lines to display per file (optional, default: 100)
+ * @returns {string} Markdown formatted diff content
+ */
+export function formatDiff(
+	rawDiff: string,
+	maxFiles: number = 5,
+	maxLinesPerFile: number = 100,
+): string {
+	if (!rawDiff || rawDiff.trim() === '') {
+		return '*No changes found in this pull request.*';
+	}
+
+	const lines = rawDiff.split('\n');
+	const formattedLines: string[] = [];
+	let currentFile = '';
+	let fileCount = 0;
+	let inFile = false;
+	let truncated = false;
+	let lineCount = 0;
+
+	for (const line of lines) {
+		// New file is marked by a line starting with "diff --git"
+		if (line.startsWith('diff --git')) {
+			if (inFile) {
+				// Close previous file code block
+				formattedLines.push('```');
+				formattedLines.push('');
+			}
+
+			// Only process up to maxFiles
+			fileCount++;
+			if (fileCount > maxFiles) {
+				truncated = true;
+				break;
+			}
+
+			// Extract filename
+			const filePath = line.match(/diff --git a\/(.*) b\/(.*)/);
+			currentFile = filePath ? filePath[1] : 'unknown file';
+			formattedLines.push(`### ${currentFile}`);
+			formattedLines.push('');
+			formattedLines.push('```diff');
+			inFile = true;
+			lineCount = 0;
+		} else if (inFile) {
+			lineCount++;
+
+			// Truncate files that are too long
+			if (lineCount > maxLinesPerFile) {
+				formattedLines.push(
+					'// ... more lines omitted for brevity ...',
+				);
+				formattedLines.push('```');
+				formattedLines.push('');
+				inFile = false;
+				continue;
+			}
+
+			// Format diff lines with appropriate highlighting
+			if (line.startsWith('+')) {
+				formattedLines.push(line);
+			} else if (line.startsWith('-')) {
+				formattedLines.push(line);
+			} else if (line.startsWith('@@')) {
+				// Change section header
+				formattedLines.push(line);
+			} else {
+				// Context line
+				formattedLines.push(line);
+			}
+		}
+	}
+
+	// Close the last code block if necessary
+	if (inFile) {
+		formattedLines.push('```');
+	}
+
+	// Add truncation notice if we limited the output
+	if (truncated) {
+		formattedLines.push('');
+		formattedLines.push(
+			`*Output truncated. Only showing the first ${maxFiles} files.*`,
+		);
+	}
+
+	return formattedLines.join('\n');
+}
