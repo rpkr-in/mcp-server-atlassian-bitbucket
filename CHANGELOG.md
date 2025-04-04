@@ -1,3 +1,12 @@
+## [1.14.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.14.1...v1.14.2) (2025-04-04)
+
+
+### Bug Fixes
+
+* add remaining search functionality improvements ([163d38f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/163d38fb5d18f3b2b7dc47cee778c48be61a23c4))
+* improve search results consistency across all search types ([d5f8313](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d5f8313df4f04287d5c97824a3db98202e428f7d))
+* standardize tool registration function names to registerTools ([4f4b7c6](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4f4b7c6dce51b750048465526f0033239af54921))
+
 ## [1.14.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.14.0...v1.14.1) (2025-04-03)
 
 
