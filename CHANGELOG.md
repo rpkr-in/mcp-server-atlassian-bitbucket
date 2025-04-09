@@ -1,3 +1,15 @@
+# [1.15.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.14.2...v1.15.0) (2025-04-04)
+
+
+### Bug Fixes
+
+* improve README clarity and accuracy ([c09711f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c09711fc86dd29f6018907660b891e322bf089b2))
+
+
+### Features
+
+* **pullrequests:** add code diff and diffstat display to pull request details ([ed2fd3a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ed2fd3a2483117989701bc37b14f8aeed1233e2b))
+
 ## [1.14.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.14.1...v1.14.2) (2025-04-04)
 
 
