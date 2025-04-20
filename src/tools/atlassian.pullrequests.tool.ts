@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListPullRequestsToolArgs,
@@ -30,14 +29,10 @@ toolLogger.debug('Bitbucket pull requests tool initialized');
  * Returns a formatted markdown response with pull request details.
  *
  * @param args - Tool arguments for filtering pull requests
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted pull requests list
  * @throws Will return error message if pull request listing fails
  */
-async function listPullRequests(
-	args: ListPullRequestsToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function listPullRequests(args: ListPullRequestsToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
 		'listPullRequests',
@@ -81,14 +76,10 @@ async function listPullRequests(
  * Returns a formatted markdown response with pull request metadata.
  *
  * @param args - Tool arguments containing workspace, repository, and PR identifiers
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted pull request details
  * @throws Will return error message if pull request retrieval fails
  */
-async function getPullRequest(
-	args: GetPullRequestToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function getPullRequest(args: GetPullRequestToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
 		'getPullRequest',
@@ -132,13 +123,11 @@ async function getPullRequest(
  * Returns a formatted markdown response with comment details.
  *
  * @param args - Tool arguments containing workspace, repository, and PR identifiers
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted pull request comments
  * @throws Will return error message if comment retrieval fails
  */
 async function listPullRequestComments(
 	args: ListPullRequestCommentsToolArgsType,
-	_extra: RequestHandlerExtra,
 ) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
@@ -185,14 +174,10 @@ async function listPullRequestComments(
  * The comment can be either a general comment or an inline code comment.
  *
  * @param args - Tool arguments containing workspace, repository, PR identifiers, and comment content
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response confirming the comment was added
  * @throws Will return error message if comment addition fails
  */
-async function addPullRequestComment(
-	args: AddPullRequestCommentToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function addPullRequestComment(args: AddPullRequestCommentToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
 		'addPullRequestComment',
@@ -235,14 +220,10 @@ async function addPullRequestComment(
  * Returns a formatted markdown response with the created pull request details.
  *
  * @param args - Tool arguments for creating a pull request
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted pull request details
  * @throws Will return error message if pull request creation fails
  */
-async function createPullRequest(
-	args: CreatePullRequestToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function createPullRequest(args: CreatePullRequestToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
 		'createPullRequest',

@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListWorkspacesToolArgs,
@@ -24,14 +23,10 @@ toolLogger.debug('Bitbucket workspaces tool initialized');
  * Returns a formatted markdown response with workspace details.
  *
  * @param args - Tool arguments for filtering workspaces
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted workspaces list
  * @throws Will return error message if workspace listing fails
  */
-async function listWorkspaces(
-	args: ListWorkspacesToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.workspaces.tool.ts',
 		'listWorkspaces',
@@ -71,14 +66,10 @@ async function listWorkspaces(
  * Returns a formatted markdown response with workspace metadata.
  *
  * @param args - Tool arguments containing the workspace slug
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted workspace details
  * @throws Will return error message if workspace retrieval fails
  */
-async function getWorkspace(
-	args: GetWorkspaceToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function getWorkspace(args: GetWorkspaceToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.workspaces.tool.ts',
 		'getWorkspace',

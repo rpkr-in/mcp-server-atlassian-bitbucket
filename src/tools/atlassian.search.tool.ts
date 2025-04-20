@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	SearchToolArgsType,
@@ -18,11 +17,10 @@ const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
  * Returns a formatted markdown response with search results.
  *
  * @param {SearchToolArgsType} args - Tool arguments for the search query
- * @param {RequestHandlerExtra} _extra - Extra request handler information (unused)
  * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted search results
  * @throws Will return error message if search fails
  */
-async function search(args: SearchToolArgsType, _extra: RequestHandlerExtra) {
+async function search(args: SearchToolArgsType) {
 	const methodLogger = toolLogger.forMethod('search');
 	methodLogger.debug('Searching Bitbucket with query:', args);
 

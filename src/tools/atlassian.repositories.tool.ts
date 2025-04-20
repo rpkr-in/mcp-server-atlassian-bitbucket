@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	ListRepositoriesToolArgs,
@@ -24,14 +23,10 @@ toolLogger.debug('Bitbucket repositories tool initialized');
  * Returns a formatted markdown response with repository details.
  *
  * @param args - Tool arguments for filtering repositories
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted repositories list
  * @throws Will return error message if repository listing fails
  */
-async function listRepositories(
-	args: ListRepositoriesToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function listRepositories(args: ListRepositoriesToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
 		'listRepositories',
@@ -75,14 +70,10 @@ async function listRepositories(
  * Returns a formatted markdown response with repository metadata.
  *
  * @param args - Tool arguments containing the workspace and repository slug
- * @param _extra - Extra request handler information (unused)
  * @returns MCP response with formatted repository details
  * @throws Will return error message if repository retrieval fails
  */
-async function getRepository(
-	args: GetRepositoryToolArgsType,
-	_extra: RequestHandlerExtra,
-) {
+async function getRepository(args: GetRepositoryToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
 		'getRepository',
