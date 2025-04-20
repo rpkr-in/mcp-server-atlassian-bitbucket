@@ -1,3 +1,10 @@
+## [1.15.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.1...v1.15.2) (2025-04-20)
+
+
+### Bug Fixes
+
+* Update dependencies and fix related type errors ([4acea85](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4acea85c681dce9af6f23f751384c4aae08480b7))
+
 ## [1.15.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.0...v1.15.1) (2025-04-09)
 
 
