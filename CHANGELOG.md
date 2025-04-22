@@ -1,3 +1,10 @@
+## [1.15.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.2...v1.15.3) (2025-04-22)
+
+
+### Performance Improvements
+
+* Update dependencies ([fae420e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/fae420ee00d9dd5c71dfce18610e33e8d8857403))
+
 ## [1.15.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.1...v1.15.2) (2025-04-20)
 
 
