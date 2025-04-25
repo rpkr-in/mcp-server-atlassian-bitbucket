@@ -127,34 +127,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bitbucket_list_repositories',
-		`List repositories within a specific Bitbucket workspace, with optional filtering and pagination. Requires 'workspaceSlug'.
-
-        PURPOSE: Discover repositories within a given workspace and retrieve their slugs, names, owners, and basic metadata. Essential for finding the 'repoSlug' needed for repository or pull request details tools.
-
-        WHEN TO USE:
-        - To find the 'repoSlug' for a known repository name within a specific workspace.
-        - To explore all repositories within a known workspace ('workspaceSlug' is required).
-        - To filter repositories based on name ('query'), your role ('role'), or sort them ('sort').
-        - Before using 'get_repository' or pull request tools if the 'repoSlug' is unknown.
-
-        WHEN NOT TO USE:
-        - When you don't know the 'workspaceSlug' (use 'list_workspaces' first).
-        - When you already have the 'repoSlug' and need full details (use 'get_repository').
-        - When you need pull request information (use pull request tools).
-
-        RETURNS: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Includes pagination details if applicable.
-
-        EXAMPLES:
-        - List repositories in a workspace: { workspaceSlug: "my-team" }
-        - Filter by name fragment: { workspaceSlug: "my-team", query: "backend-api" }
-        - Filter by your role: { workspaceSlug: "my-team", role: "contributor" }
-        - Sort by last update (descending): { workspaceSlug: "my-team", sort: "-updated_on" }
-        - Paginate results: { workspaceSlug: "my-team", limit: 10, cursor: "next-page-token" }
-
-        ERRORS:
-        - Workspace not found: Verify the 'workspaceSlug' is correct.
-        - Authentication failures: Check Bitbucket credentials.
-        - No repositories found: Workspace might be empty, filters too restrictive, or permissions lacking.`,
+		`Lists repositories within a workspace (\`workspaceSlug\`), optionally filtering by name (\`query\`), user role (\`role\`), or sorting (\`sort\`).\n- Use this to discover repositories and find their \`repoSlug\` needed for other repository or PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -162,28 +135,7 @@ function registerTools(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'bitbucket_get_repository',
-		`Get detailed information about a specific Bitbucket repository using its workspace and repository slugs. Requires 'workspaceSlug' and 'repoSlug'.
-
-        PURPOSE: Retrieves comprehensive metadata for a *known* repository, including UUID, owner, description, language, size, creation/update dates, and links.
-
-        WHEN TO USE:
-        - When you need full details about a *specific* repository and you know its 'workspaceSlug' and 'repoSlug'.
-        - After using 'list_repositories' to identify the target repository slugs.
-        - To get repository metadata before analyzing its pull requests or content.
-
-        WHEN NOT TO USE:
-        - When you don't know the 'workspaceSlug' or 'repoSlug' (use 'list_workspaces' and/or 'list_repositories' first).
-        - When you only need a list of repositories (use 'list_repositories').
-        - When you need pull request information (use pull request tools).
-
-        RETURNS: Detailed repository information including name, full name, UUID, description, language, size, owner, dates, and links. Fetches all available details by default.
-
-        EXAMPLES:
-        - Get details for a repository: { workspaceSlug: "my-team", repoSlug: "backend-api" }
-
-        ERRORS:
-        - Repository not found: Verify the 'workspaceSlug' and 'repoSlug' are correct and the repository exists.
-        - Permission errors: Ensure you have access to view the specified repository.`,
+		`Retrieves detailed information for a specific repository using its slugs (\`workspaceSlug\`, \`repoSlug\`).\n- Includes UUID, owner, description, language, size, dates, and links.\nUse this after finding the repository slugs to get its full details.\nReturns detailed repository information formatted as Markdown.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);

@@ -121,30 +121,7 @@ function registerTools(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'bitbucket_list_workspaces',
-		`List Bitbucket workspaces accessible to the authenticated user, with optional pagination.
-
-        PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list_repositories, get_repository, list_pull_requests, get_pull_request).
-
-        WHEN TO USE:
-        - To find the 'workspaceSlug' for a known workspace name.
-        - To explore all workspaces you have access to.
-        - To get a high-level overview before diving into specific repositories.
-        - When you don't know the exact slug required by other tools.
-
-        WHEN NOT TO USE:
-        - When you already have the 'workspaceSlug'.
-        - When you need detailed information about a *single* workspace (use 'get_workspace').
-        - When you need repository or pull request information (use repository/pull_request tools with a known 'workspaceSlug').
-
-        RETURNS: Formatted list of workspace memberships, including workspace name, slug, UUID, your permission level, and access dates. Includes pagination details if applicable.
-
-        EXAMPLES:
-        - List all accessible workspaces: {}
-        - Paginate results: { limit: 10, cursor: "some-cursor-value" }
-
-        ERRORS:
-        - Authentication failures: Check Bitbucket credentials.
-        - No workspaces found: You may not have access to any workspaces.`,
+		`Lists Bitbucket workspaces accessible to the user, with pagination support (\`limit\`, \`cursor\`).\n- Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools.\nReturns a formatted list of workspace memberships including name, slug, UUID, permission level, and dates.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);
@@ -152,28 +129,7 @@ function registerTools(server: McpServer) {
 	// Register the get workspace details tool
 	server.tool(
 		'bitbucket_get_workspace',
-		`Get detailed information about a specific Bitbucket workspace using its slug.
-
-        PURPOSE: Retrieves comprehensive metadata for a *known* workspace, including UUID, name, type, creation date, and links to related resources like repositories and projects.
-
-        WHEN TO USE:
-        - When you need full details about a *specific* workspace and you already know its 'workspaceSlug'.
-        - After using 'list_workspaces' to identify the target workspace slug.
-        - To get quick links to a workspace's repositories, projects, or members page.
-
-        WHEN NOT TO USE:
-        - When you don't know the workspace slug (use 'list_workspaces' first).
-        - When you only need a list of workspaces (use 'list_workspaces').
-        - When you need information about repositories *within* the workspace (use repository tools).
-
-        RETURNS: Detailed workspace information including slug, name, UUID, type, creation date, and links. Fetches all available details by default.
-
-        EXAMPLES:
-        - Get details for a workspace: { workspaceSlug: "my-dev-team" }
-
-        ERRORS:
-        - Workspace not found: Verify the 'workspaceSlug' is correct and exists.
-        - Permission errors: Ensure you have access to view the specified workspace.`,
+		`Retrieves detailed information about a specific Bitbucket workspace using its slug (\`workspaceSlug\`).\n- Includes UUID, name, type, creation date, and links to related resources (repositories, projects). \nUse this after finding a \`workspaceSlug\` to get its full details.\nReturns detailed workspace information formatted as Markdown.`,
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,
 	);

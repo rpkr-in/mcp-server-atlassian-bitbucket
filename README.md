@@ -123,7 +123,7 @@ This configuration launches the server automatically at runtime.
 
 This section covers the MCP tools available when using this server with an AI assistant. Note that MCP tools use `snake_case` for tool names and `camelCase` for parameters.
 
-## `list_workspaces`
+## `bitbucket_list_workspaces`
 
 List available Bitbucket workspaces.
 
@@ -141,7 +141,7 @@ _or:_
 
 ---
 
-## `get_workspace`
+## `bitbucket_get_workspace`
 
 Get full details for a specific workspace.
 
@@ -153,7 +153,7 @@ Get full details for a specific workspace.
 
 ---
 
-## `list_repositories`
+## `bitbucket_list_repositories`
 
 List repositories in a workspace.
 
@@ -171,7 +171,7 @@ _or:_
 
 ---
 
-## `get_repository`
+## `bitbucket_get_repository`
 
 Get details of a specific repository.
 
@@ -183,7 +183,7 @@ Get details of a specific repository.
 
 ---
 
-## `search`
+## `bitbucket_search`
 
 Search Bitbucket content.
 
@@ -225,7 +225,7 @@ Search Bitbucket content.
 
 ---
 
-## `list_pull_requests`
+## `bitbucket_list_pull_requests`
 
 List pull requests in a repository.
 
@@ -237,7 +237,7 @@ List pull requests in a repository.
 
 ---
 
-## `get_pull_request`
+## `bitbucket_get_pull_request`
 
 Get full details of a pull request, including code diffs and file changes.
 
@@ -249,7 +249,7 @@ Get full details of a pull request, including code diffs and file changes.
 
 ---
 
-## `list_pr_comments`
+## `bitbucket_list_pr_comments`
 
 List comments on a specific pull request.
 
@@ -261,7 +261,7 @@ List comments on a specific pull request.
 
 ---
 
-## `add_pr_comment`
+## `bitbucket_add_pr_comment`
 
 Add a comment to a pull request.
 
@@ -292,7 +292,7 @@ Add a comment to a pull request.
 
 ---
 
-## `pull_requests_create`
+## `bitbucket_create_pull_request`
 
 Create a new pull request.
 
@@ -311,13 +311,13 @@ Create a new pull request.
 
 # Command-Line Interface (CLI)
 
-The CLI uses kebab-case for commands (e.g., `list-workspaces`) and options (e.g., `--workspace-slug`).
+The CLI uses kebab-case for commands (e.g., `bitbucket-list-workspaces`) and options (e.g., `--workspace-slug`).
 
 ## Quick Use with `npx`
 
 ```bash
-npx -y @aashari/mcp-server-atlassian-bitbucket list-workspaces
-npx -y @aashari/mcp-server-atlassian-bitbucket get-repository \
+npx -y @aashari/mcp-server-atlassian-bitbucket bitbucket-list-workspaces
+npx -y @aashari/mcp-server-atlassian-bitbucket bitbucket-get-repository \
   --workspace-slug acme-corp \
   --repo-slug backend-api
 ```
@@ -331,7 +331,7 @@ npm install -g @aashari/mcp-server-atlassian-bitbucket
 Then run directly:
 
 ```bash
-mcp-atlassian-bitbucket list-workspaces
+mcp-atlassian-bitbucket bitbucket-list-workspaces
 ```
 
 ## Discover More CLI Options
@@ -345,9 +345,9 @@ mcp-atlassian-bitbucket --help
 Or get detailed help for a specific command:
 
 ```bash
-mcp-atlassian-bitbucket get-repository --help
-mcp-atlassian-bitbucket list-pull-requests --help
-mcp-atlassian-bitbucket search --help
+mcp-atlassian-bitbucket bitbucket-get-repository --help
+mcp-atlassian-bitbucket bitbucket-list-pull-requests --help
+mcp-atlassian-bitbucket bitbucket-search --help
 ```
 
 ---

@@ -75,54 +75,7 @@ function registerTools(server: McpServer) {
 	// Register the search tool
 	server.tool(
 		'bitbucket_search',
-		`Search across Bitbucket entities within a workspace or repository scope.
-
-        PURPOSE: Provides a unified search interface for Bitbucket workspaces, searching across repository names/descriptions, pull request titles/descriptions, commit messages, and code content to help locate resources.
-
-        WHEN TO USE:
-        - When you need to find repositories containing specific text in their name or description.
-        - When you need to find pull requests containing specific text in their title or description.
-        - When you need to find commits containing specific text in their message.
-        - When you need to search for specific code patterns or text within repository files.
-        - When you want to search across multiple types of Bitbucket content in a single operation.
-        - When you need to quickly locate resources within a workspace.
-
-        WHEN NOT TO USE:
-        - When you already know the exact repository and need its details (use 'get_repository' instead).
-        - When you already know the exact pull request and need its details (use 'get_pull_request' instead).
-        - When you need to list all repositories or pull requests without filtering (use respective list tools).
-
-        RETURNS: Formatted search results including:
-        - Repository results with name, description, and update information
-        - Pull request results with title, state, and branch information
-        - Commit results with hash, author, date, and message
-        - Code search results with file path, line numbers, and matching snippets
-        - Summary information and links to relevant resources
-        
-        Results can be paginated using the 'limit' and 'cursor' parameters.
-
-        EXAMPLES:
-        - Search repositories in a workspace: { workspaceSlug: "my-team", query: "api", scope: "repositories" }
-        - Search pull requests in a repository: { workspaceSlug: "my-team", repoSlug: "backend", query: "fix", scope: "pullrequests" }
-        - Search commits in a repository: { workspaceSlug: "my-team", repoSlug: "backend", query: "update", scope: "commits" }
-        - Search code in a workspace: { workspaceSlug: "my-team", query: "function getUser", scope: "code" }
-        - Search code in a specific repo: { workspaceSlug: "my-team", repoSlug: "backend", query: "class User", scope: "code" }
-        - Search both repositories and pull requests: { workspaceSlug: "my-team", repoSlug: "backend", query: "feature", scope: "all" }
-        
-        LIMITATIONS:
-        - Pull request search requires both workspace and repository slugs
-        - Commit search requires both workspace and repository slugs
-        - The repository and pull request search is limited to text matching in metadata, not semantic search
-        - Code search results are presented with line context but may not show the full file
-        - Pagination mechanisms differ between metadata search (cursor-based) and code search (page-based)
-
-        ERRORS:
-        - Missing workspace slug: The workspaceSlug parameter is required.
-        - Missing repository slug: The repoSlug parameter is required when scope is "pullrequests" or "commits".
-        - Missing query for code search: The query parameter is required when scope is "code".
-        - Repository not found: When searching pull requests or commits with an invalid repoSlug.
-        - Authentication failures: Check Bitbucket credentials.
-        - No results: Try broadening search criteria or different search terms.`,
+		`Searches Bitbucket content within a workspace (\`workspaceSlug\`) using a query (\`query\`), optionally filtering by scope (\`scope\`) and repository (\`repoSlug\`).\n- Scope can be 'repositories', 'pullrequests', 'commits', 'code', or 'all'.\n- Finds repositories (name/desc), PRs (title/desc), commits (message), or code matching the query.\n- Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope).\nReturns formatted search results based on the scope, including relevant metadata and links.\n**Note:** 'pullrequests' and 'commits' scopes require \`repoSlug\`. Code search pagination uses \`page\` (derived from \`cursor\`), others use \`cursor\`.`,
 		SearchToolArgs.shape,
 		search,
 	);

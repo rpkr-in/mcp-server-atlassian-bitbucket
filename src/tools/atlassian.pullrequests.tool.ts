@@ -278,34 +278,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'bitbucket_list_pull_requests',
-		`List pull requests for a specific Bitbucket repository, with optional filtering by state or query text. Requires 'workspaceSlug' and 'repoSlug'.
-
-        PURPOSE: Discover pull requests within a given repository and retrieve their IDs, titles, states, authors, and branches. Essential for finding the 'prId' needed for the 'get_pull_request' tool.
-
-        WHEN TO USE:
-        - To find open, merged, declined, or superseded pull requests within a specific repository.
-        - To get a list of recent PR activity for a repository.
-        - To search for PRs containing specific text in their title or description ('query' parameter).
-        - To obtain 'prId' values for use with 'get_pull_request'.
-        - Requires known 'workspaceSlug' and 'repoSlug'.
-
-        WHEN NOT TO USE:
-        - When you don't know the 'workspaceSlug' or 'repoSlug' (use workspace/repository listing tools first).
-        - When you already have the 'prId' and need full details (use 'get_pull_request').
-        - When you need repository information (use repository tools).
-
-        RETURNS: Formatted list of pull requests including ID, title, state, author, source/destination branches, a snippet of the description, and URL. Includes pagination details if applicable.
-
-        EXAMPLES:
-        - List open PRs: { workspaceSlug: "my-team", repoSlug: "backend-api", state: "OPEN" }
-        - List merged PRs: { workspaceSlug: "my-team", repoSlug: "backend-api", state: "MERGED" }
-        - Search PR titles/descriptions: { workspaceSlug: "my-team", repoSlug: "backend-api", query: "bugfix" }
-        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", limit: 10, cursor: "next-page-token" }
-
-        ERRORS:
-        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
-        - Permission errors: Ensure access to the repository's pull requests.
-        - Invalid state: Ensure 'state' is one of OPEN, MERGED, DECLINED, SUPERSEDED.`,
+		`Lists pull requests for a repository (\`workspaceSlug\`, \`repoSlug\`), optionally filtering by state (\`state\`) or query text (\`query\`).\n- Use this to find PRs by state (OPEN, MERGED, DECLINED, SUPERSEDED) or search titles/descriptions.\n- Provides \`prId\` values needed for other PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of pull requests including ID, title, state, author, branches, and description snippet.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -313,30 +286,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request details tool
 	server.tool(
 		'bitbucket_get_pull_request',
-		`Get detailed information about a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
-
-        PURPOSE: Retrieves comprehensive details for a *known* pull request, including its full description, state, author, reviewers, source/destination branches, and links to related resources like commits and diffs.
-
-        WHEN TO USE:
-        - When you need the full context, description, or reviewer list for a *specific* pull request.
-        - After using 'bitbucket_list_pull_requests' to identify the target 'prId'.
-        - To get links to view the PR diff, commits, or comments in the browser.
-        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
-
-        WHEN NOT TO USE:
-        - When you don't know the 'prId' (use 'bitbucket_list_pull_requests' first).
-        - When you only need a list of pull requests (use 'bitbucket_list_pull_requests').
-        - When you need repository information (use repository tools).
-
-        RETURNS: Detailed pull request information including title, full description, state, author, reviewers, branches, and links. Fetches all available details by default.
-
-        EXAMPLES:
-        - Get details for a specific PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
-
-        ERRORS:
-        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct.
-        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
-        - Permission errors: Ensure access to view the specified pull request.`,
+		`Retrieves detailed information for a specific pull request using its ID (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Includes full description, state, author, reviewers, branches, and links to commits/diffs.\nUse this after finding a \`prId\` to get its full context.\nReturns detailed pull request information formatted as Markdown.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);
@@ -344,32 +294,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull request comments tool
 	server.tool(
 		'bitbucket_list_pr_comments',
-		`List comments on a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
-
-        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
-
-        WHEN TO USE:
-        - To see what reviewers have said about a pull request.
-        - To find inline code comments and their context (file, line number).
-        - After identifying a PR of interest via 'bitbucket_list_pull_requests'.
-        - When you need to understand review history, discussions, and decisions.
-        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
-
-        WHEN NOT TO USE:
-        - When you don't know the pull request ID (use 'bitbucket_list_pull_requests' first).
-        - When you need the PR's metadata but not comments (use 'bitbucket_get_pull_request').
-        - When you need to post new comments (not supported).
-
-        RETURNS: Formatted list of comments with author, date, content, and for inline comments: the file path and line numbers. General and inline comments are included.
-
-        EXAMPLES:
-        - List all comments on a PR: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42" }
-        - Paginate results: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", limit: 25, cursor: "next-page-token" }
-
-        ERRORS:
-        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct.
-        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
-        - Permission errors: Ensure access to view the specified pull request comments.`,
+		`Lists comments (general and inline) for a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Use this to view review feedback and discussion context.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of comments including author, date, content, and inline comment context (file path, line).`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
 	);
@@ -377,32 +302,7 @@ function registerTools(server: McpServer) {
 	// Register the add pull request comment tool
 	server.tool(
 		'bitbucket_add_pr_comment',
-		`Add a comment to a specific Bitbucket pull request. Requires 'workspaceSlug', 'repoSlug', 'prId', and 'content'.
-
-        PURPOSE: Create comments on a pull request to provide feedback, ask questions, or communicate with other reviewers/developers. Supports both general PR comments and inline code comments.
-
-        WHEN TO USE:
-        - To provide feedback on a specific pull request.
-        - To add inline comments on specific lines of code.
-        - To respond to review feedback or discussions.
-        - When you need to add comments programmatically through the API.
-        - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
-
-        WHEN NOT TO USE:
-        - When you don't know the pull request ID (use 'bitbucket_list_pull_requests' first).
-        - When you need to read existing comments (use 'bitbucket_list_pr_comments').
-        - When you need to modify or delete existing comments (not supported).
-
-        RETURNS: Confirmation message indicating the comment was added successfully.
-
-        EXAMPLES:
-        - Add a general comment: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", content: "This looks good! Ready to merge." }
-        - Add an inline code comment: { workspaceSlug: "my-team", repoSlug: "backend-api", prId: "42", content: "Consider using a constant here.", inline: { path: "src/main.js", line: 42 } }
-
-        ERRORS:
-        - Pull Request not found: Verify 'workspaceSlug', 'repoSlug', and 'prId' are correct.
-        - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
-        - Permission errors: Ensure access to comment on the specified pull request.`,
+		`Adds a comment (\`content\`) to a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Supports both general PR comments and inline code comments via the optional \`inline\` object ({ path, line }).\nUse to provide feedback or participate in PR discussions.\nReturns a confirmation message upon success.`,
 		AddPullRequestCommentToolArgs.shape,
 		addPullRequestComment,
 	);
@@ -410,26 +310,7 @@ function registerTools(server: McpServer) {
 	// Register the tool for creating pull requests
 	server.tool(
 		'bitbucket_create_pull_request',
-		`Create a new pull request in a Bitbucket repository.
-
-    PURPOSE: Create a new pull request from one branch to another within a repository.
-
-    WHEN TO USE:
-    - When you need to initiate a code review for a completed feature or bug fix.
-    - When you want to merge changes from a feature branch into a main branch.
-    - When you've completed work in your branch and want to propose the changes.
-
-    RETURNS: Formatted details of the newly created pull request including ID, title, source/destination branches, and URL.
-
-    EXAMPLES:
-    - Create a basic PR: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Add user authentication", sourceBranch: "feature/auth" }
-    - Create PR with description: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Fix login bug", sourceBranch: "bugfix/login", description: "This fixes the login issue #123" }
-    - Close source branch after merge: { workspaceSlug: "my-team", repoSlug: "backend-api", title: "Update docs", sourceBranch: "docs/update", destinationBranch: "develop", closeSourceBranch: true }
-
-    ERRORS:
-    - Repository not found: Verify 'workspaceSlug' and 'repoSlug'.
-    - Branch not found: Verify the source and destination branches exist.
-    - Permission errors: Ensure you have permission to create pull requests in the repository.`,
+		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a title (\`title\`) and source branch (\`sourceBranch\`).\n- Optionally specify destination branch (\`destinationBranch\`, defaults usually to main/master), description (\`description\`),\n- and whether to close the source branch on merge (\`closeSourceBranch\`).\nUse this to initiate code review for a feature or bugfix branch.\nReturns formatted details of the newly created pull request.`,
 		CreatePullRequestToolArgs.shape,
 		createPullRequest,
 	);
