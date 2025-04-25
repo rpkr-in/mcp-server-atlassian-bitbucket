@@ -1,3 +1,15 @@
+# [1.16.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.3...v1.16.0) (2025-04-25)
+
+
+### Bug Fixes
+
+* unify tool names and descriptions for consistency ([075d996](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/075d9966cddad3101b5a1ea2331cffd44563d644))
+
+
+### Features
+
+* prefix Bitbucket tool names with 'bitbucket_' for uniqueness ([69d59a8](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/69d59a80f9a3ef08c649136cd771fbfd8181337b))
+
 ## [1.15.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.2...v1.15.3) (2025-04-22)
 
 
