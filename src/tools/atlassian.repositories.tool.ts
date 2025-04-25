@@ -126,7 +126,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list repositories tool
 	server.tool(
-		'list_repositories',
+		'bitbucket_list_repositories',
 		`List repositories within a specific Bitbucket workspace, with optional filtering and pagination. Requires 'workspaceSlug'.
 
         PURPOSE: Discover repositories within a given workspace and retrieve their slugs, names, owners, and basic metadata. Essential for finding the 'repoSlug' needed for repository or pull request details tools.
@@ -161,7 +161,7 @@ function registerTools(server: McpServer) {
 
 	// Register the get repository details tool
 	server.tool(
-		'get_repository',
+		'bitbucket_get_repository',
 		`Get detailed information about a specific Bitbucket repository using its workspace and repository slugs. Requires 'workspaceSlug' and 'repoSlug'.
 
         PURPOSE: Retrieves comprehensive metadata for a *known* repository, including UUID, owner, description, language, size, creation/update dates, and links.

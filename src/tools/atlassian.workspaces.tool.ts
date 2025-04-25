@@ -120,7 +120,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list workspaces tool
 	server.tool(
-		'list_workspaces',
+		'bitbucket_list_workspaces',
 		`List Bitbucket workspaces accessible to the authenticated user, with optional pagination.
 
         PURPOSE: Discover available workspaces and retrieve their slugs, names, and basic metadata. Essential for finding the correct 'workspaceSlug' needed as input for repository-related tools (list_repositories, get_repository, list_pull_requests, get_pull_request).
@@ -151,7 +151,7 @@ function registerTools(server: McpServer) {
 
 	// Register the get workspace details tool
 	server.tool(
-		'get_workspace',
+		'bitbucket_get_workspace',
 		`Get detailed information about a specific Bitbucket workspace using its slug.
 
         PURPOSE: Retrieves comprehensive metadata for a *known* workspace, including UUID, name, type, creation date, and links to related resources like repositories and projects.

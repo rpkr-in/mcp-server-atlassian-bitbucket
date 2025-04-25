@@ -74,8 +74,8 @@ function registerTools(server: McpServer) {
 
 	// Register the search tool
 	server.tool(
-		'search',
-		`Search Bitbucket content across repositories, pull requests, commits, and code.
+		'bitbucket_search',
+		`Search across Bitbucket entities within a workspace or repository scope.
 
         PURPOSE: Provides a unified search interface for Bitbucket workspaces, searching across repository names/descriptions, pull request titles/descriptions, commit messages, and code content to help locate resources.
 

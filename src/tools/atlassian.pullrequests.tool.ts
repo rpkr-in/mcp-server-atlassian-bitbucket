@@ -277,7 +277,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list pull requests tool
 	server.tool(
-		'list_pull_requests',
+		'bitbucket_list_pull_requests',
 		`List pull requests for a specific Bitbucket repository, with optional filtering by state or query text. Requires 'workspaceSlug' and 'repoSlug'.
 
         PURPOSE: Discover pull requests within a given repository and retrieve their IDs, titles, states, authors, and branches. Essential for finding the 'prId' needed for the 'get_pull_request' tool.
@@ -312,20 +312,20 @@ function registerTools(server: McpServer) {
 
 	// Register the get pull request details tool
 	server.tool(
-		'get_pull_request',
+		'bitbucket_get_pull_request',
 		`Get detailed information about a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
 
         PURPOSE: Retrieves comprehensive details for a *known* pull request, including its full description, state, author, reviewers, source/destination branches, and links to related resources like commits and diffs.
 
         WHEN TO USE:
         - When you need the full context, description, or reviewer list for a *specific* pull request.
-        - After using 'list_pull_requests' to identify the target 'prId'.
+        - After using 'bitbucket_list_pull_requests' to identify the target 'prId'.
         - To get links to view the PR diff, commits, or comments in the browser.
         - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the 'prId' (use 'list_pull_requests' first).
-        - When you only need a list of pull requests (use 'list_pull_requests').
+        - When you don't know the 'prId' (use 'bitbucket_list_pull_requests' first).
+        - When you only need a list of pull requests (use 'bitbucket_list_pull_requests').
         - When you need repository information (use repository tools).
 
         RETURNS: Detailed pull request information including title, full description, state, author, reviewers, branches, and links. Fetches all available details by default.
@@ -343,7 +343,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list pull request comments tool
 	server.tool(
-		'list_pr_comments',
+		'bitbucket_list_pr_comments',
 		`List comments on a specific Bitbucket pull request using its workspace slug, repository slug, and pull request ID. Requires 'workspaceSlug', 'repoSlug', and 'prId'.
 
         PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.
@@ -351,13 +351,13 @@ function registerTools(server: McpServer) {
         WHEN TO USE:
         - To see what reviewers have said about a pull request.
         - To find inline code comments and their context (file, line number).
-        - After identifying a PR of interest via 'list_pull_requests'.
+        - After identifying a PR of interest via 'bitbucket_list_pull_requests'.
         - When you need to understand review history, discussions, and decisions.
         - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the pull request ID (use 'list_pull_requests' first).
-        - When you need the PR's metadata but not comments (use 'get_pull_request').
+        - When you don't know the pull request ID (use 'bitbucket_list_pull_requests' first).
+        - When you need the PR's metadata but not comments (use 'bitbucket_get_pull_request').
         - When you need to post new comments (not supported).
 
         RETURNS: Formatted list of comments with author, date, content, and for inline comments: the file path and line numbers. General and inline comments are included.
@@ -376,7 +376,7 @@ function registerTools(server: McpServer) {
 
 	// Register the add pull request comment tool
 	server.tool(
-		'add_pr_comment',
+		'bitbucket_add_pr_comment',
 		`Add a comment to a specific Bitbucket pull request. Requires 'workspaceSlug', 'repoSlug', 'prId', and 'content'.
 
         PURPOSE: Create comments on a pull request to provide feedback, ask questions, or communicate with other reviewers/developers. Supports both general PR comments and inline code comments.
@@ -389,8 +389,8 @@ function registerTools(server: McpServer) {
         - Requires known 'workspaceSlug', 'repoSlug', and 'prId'.
 
         WHEN NOT TO USE:
-        - When you don't know the pull request ID (use 'list_pull_requests' first).
-        - When you need to read existing comments (use 'list_pr_comments').
+        - When you don't know the pull request ID (use 'bitbucket_list_pull_requests' first).
+        - When you need to read existing comments (use 'bitbucket_list_pr_comments').
         - When you need to modify or delete existing comments (not supported).
 
         RETURNS: Confirmation message indicating the comment was added successfully.
@@ -409,7 +409,7 @@ function registerTools(server: McpServer) {
 
 	// Register the tool for creating pull requests
 	server.tool(
-		'pull_requests_create',
+		'bitbucket_create_pull_request',
 		`Create a new pull request in a Bitbucket repository.
 
     PURPOSE: Create a new pull request from one branch to another within a repository.
