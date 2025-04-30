@@ -277,7 +277,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list pull requests tool
 	server.tool(
-		'bitbucket_list_pull_requests',
+		'bb_ls_prs',
 		`Lists pull requests for a repository (\`workspaceSlug\`, \`repoSlug\`), optionally filtering by state (\`state\`) or query text (\`query\`).\n- Use this to find PRs by state (OPEN, MERGED, DECLINED, SUPERSEDED) or search titles/descriptions.\n- Provides \`prId\` values needed for other PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of pull requests including ID, title, state, author, branches, and description snippet.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
@@ -285,7 +285,7 @@ function registerTools(server: McpServer) {
 
 	// Register the get pull request details tool
 	server.tool(
-		'bitbucket_get_pull_request',
+		'bb_get_pr',
 		`Retrieves detailed information for a specific pull request using its ID (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Includes full description, state, author, reviewers, branches, and links to commits/diffs.\nUse this after finding a \`prId\` to get its full context.\nReturns detailed pull request information formatted as Markdown.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
@@ -293,7 +293,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list pull request comments tool
 	server.tool(
-		'bitbucket_list_pr_comments',
+		'bb_ls_pr_comments',
 		`Lists comments (general and inline) for a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Use this to view review feedback and discussion context.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of comments including author, date, content, and inline comment context (file path, line).`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
@@ -301,7 +301,7 @@ function registerTools(server: McpServer) {
 
 	// Register the add pull request comment tool
 	server.tool(
-		'bitbucket_add_pr_comment',
+		'bb_add_pr_comment',
 		`Adds a comment (\`content\`) to a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Supports both general PR comments and inline code comments via the optional \`inline\` object ({ path, line }).\nUse to provide feedback or participate in PR discussions.\nReturns a confirmation message upon success.`,
 		AddPullRequestCommentToolArgs.shape,
 		addPullRequestComment,
@@ -309,7 +309,7 @@ function registerTools(server: McpServer) {
 
 	// Register the tool for creating pull requests
 	server.tool(
-		'bitbucket_create_pull_request',
+		'bb_create_pr',
 		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a title (\`title\`) and source branch (\`sourceBranch\`).\n- Optionally specify destination branch (\`destinationBranch\`, defaults usually to main/master), description (\`description\`),\n- and whether to close the source branch on merge (\`closeSourceBranch\`).\nUse this to initiate code review for a feature or bugfix branch.\nReturns formatted details of the newly created pull request.`,
 		CreatePullRequestToolArgs.shape,
 		createPullRequest,

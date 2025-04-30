@@ -120,7 +120,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list workspaces tool
 	server.tool(
-		'bitbucket_list_workspaces',
+		'bb_ls_workspaces',
 		`Lists Bitbucket workspaces accessible to the user, with pagination support (\`limit\`, \`cursor\`).\n- Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools.\nReturns a formatted list of workspace memberships including name, slug, UUID, permission level, and dates.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
@@ -128,7 +128,7 @@ function registerTools(server: McpServer) {
 
 	// Register the get workspace details tool
 	server.tool(
-		'bitbucket_get_workspace',
+		'bb_get_workspace',
 		`Retrieves detailed information about a specific Bitbucket workspace using its slug (\`workspaceSlug\`).\n- Includes UUID, name, type, creation date, and links to related resources (repositories, projects). \nUse this after finding a \`workspaceSlug\` to get its full details.\nReturns detailed workspace information formatted as Markdown.`,
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,

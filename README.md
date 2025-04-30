@@ -123,7 +123,7 @@ This configuration launches the server automatically at runtime.
 
 This section covers the MCP tools available when using this server with an AI assistant. Note that MCP tools use `snake_case` for tool names and `camelCase` for parameters.
 
-## `bitbucket_list_workspaces`
+## `bb_ls_workspaces`
 
 List available Bitbucket workspaces.
 
@@ -141,7 +141,7 @@ _or:_
 
 ---
 
-## `bitbucket_get_workspace`
+## `bb_get_workspace`
 
 Get full details for a specific workspace.
 
@@ -153,7 +153,7 @@ Get full details for a specific workspace.
 
 ---
 
-## `bitbucket_list_repositories`
+## `bb_ls_repos`
 
 List repositories in a workspace.
 
@@ -171,7 +171,7 @@ _or:_
 
 ---
 
-## `bitbucket_get_repository`
+## `bb_get_repo`
 
 Get details of a specific repository.
 
@@ -183,7 +183,7 @@ Get details of a specific repository.
 
 ---
 
-## `bitbucket_search`
+## `bb_search`
 
 Search Bitbucket content.
 
@@ -225,7 +225,7 @@ Search Bitbucket content.
 
 ---
 
-## `bitbucket_list_pull_requests`
+## `bb_ls_prs`
 
 List pull requests in a repository.
 
@@ -237,7 +237,7 @@ List pull requests in a repository.
 
 ---
 
-## `bitbucket_get_pull_request`
+## `bb_get_pr`
 
 Get full details of a pull request, including code diffs and file changes.
 
@@ -249,7 +249,7 @@ Get full details of a pull request, including code diffs and file changes.
 
 ---
 
-## `bitbucket_list_pr_comments`
+## `bb_ls_pr_comments`
 
 List comments on a specific pull request.
 
@@ -261,7 +261,7 @@ List comments on a specific pull request.
 
 ---
 
-## `bitbucket_add_pr_comment`
+## `bb_add_pr_comment`
 
 Add a comment to a pull request.
 
@@ -292,7 +292,7 @@ Add a comment to a pull request.
 
 ---
 
-## `bitbucket_create_pull_request`
+## `bb_create_pr`
 
 Create a new pull request.
 

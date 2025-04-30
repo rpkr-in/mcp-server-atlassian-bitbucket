@@ -126,7 +126,7 @@ function registerTools(server: McpServer) {
 
 	// Register the list repositories tool
 	server.tool(
-		'bitbucket_list_repositories',
+		'bb_ls_repos',
 		`Lists repositories within a workspace (\`workspaceSlug\`), optionally filtering by name (\`query\`), user role (\`role\`), or sorting (\`sort\`).\n- Use this to discover repositories and find their \`repoSlug\` needed for other repository or PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
@@ -134,7 +134,7 @@ function registerTools(server: McpServer) {
 
 	// Register the get repository details tool
 	server.tool(
-		'bitbucket_get_repository',
+		'bb_get_repo',
 		`Retrieves detailed information for a specific repository using its slugs (\`workspaceSlug\`, \`repoSlug\`).\n- Includes UUID, owner, description, language, size, dates, and links.\nUse this after finding the repository slugs to get its full details.\nReturns detailed repository information formatted as Markdown.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
