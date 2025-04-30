@@ -20,41 +20,31 @@ function register(program: Command) {
 	program
 		.command('search')
 		.description(
-			'Search for Bitbucket content across repositories, pull requests, commits, and code\n\n' +
-				'        PURPOSE: Provides a unified search interface for Bitbucket workspaces, searching across repository names/descriptions, ' +
-				'pull request titles/descriptions, commit messages, and code content to help locate resources.\n\n' +
-				'        Use Case: Useful when you need to find specific content across your Bitbucket workspace such as ' +
-				'repositories by name, pull requests by description, commits by message, or code by content.\n\n' +
-				'        Output: Formatted search results including repository details, pull request information, commit data, or code snippets ' +
-				'with matching content highlighted. Supports pagination.\n\n' +
-				'        Examples:\n' +
-				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --scope repositories --query "api"\n' +
-				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --repo-slug backend --scope commits --query "update"\n' +
-				'  $ mcp-atlassian-bitbucket search --workspace-slug my-team --query "function getUser" --scope code',
+			'Search for Bitbucket content across various scopes within a workspace.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the content to search',
+			'Workspace slug containing the content to search. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.option(
 			'-r, --repo-slug <slug>',
-			'Repository slug (required for pull request search, optional for code search)',
+			'Repository slug to search within. Required for pull requests search. Optional for code search (limits search to the specified repo). Example: "backend-api"',
 		)
 		.option(
 			'-q, --query <query>',
-			'Search query to filter results by name, description, etc. (required for code search)',
+			'Search query to filter results by name, description, or code content. Required for code search. Use this to find specific content matching certain terms.',
 		)
 		.option(
 			'-s, --scope <scope>',
-			'Search scope: "repositories", "pullrequests", "commits", "code", or "all" (default)',
+			'Scope of the search. Options include: "repositories" (search only repositories), "pullrequests" (search only pull requests), "commits" (search only commits), "code" (search file content), or "all" (search both repositories and pull requests). Defaults to "all" if not specified.',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return per page (1-100)',
+			'Maximum number of items to return (1-100). Use this to control the response size. Useful for pagination or when you only need a few results.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for repositories/PRs, or page number for code search',
+			'Pagination cursor for retrieving the next set of results. For repositories and pull requests, this is a cursor string. For code search, this is a page number. Use this to navigate through large result sets.',
 		)
 		.action(async (options) => {
 			try {

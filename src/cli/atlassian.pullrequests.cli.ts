@@ -33,43 +33,41 @@ interface PullRequestControllerOptions {
  */
 function registerCreatePullRequestCommand(program: Command): void {
 	program
-		.command('create-pull-request')
-		.description(
-			`Create a new pull request in a Bitbucket repository.
-
-    PURPOSE: Create a new pull request from one branch to another within a repository.
-
-    EXAMPLES:
-    $ mcp-atlassian-bitbucket create-pull-request -w workspace-slug -r repo-slug -t "New feature" -s feature/branch -d main
-    $ mcp-atlassian-bitbucket create-pull-request -w workspace-slug -r repo-slug -t "Bug fix" -s bugfix/issue-123 -d develop --description "This fixes issue #123" --close-source-branch`,
-		)
+		.command('create-pr')
+		.description('Create a new pull request in a Bitbucket repository.')
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug to create the pull request in',
+			'Repository slug to create the pull request in. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
-		.requiredOption('-t, --title <title>', 'Title for the pull request')
+		.requiredOption(
+			'-t, --title <title>',
+			'Title for the pull request. Example: "Add new feature"',
+		)
 		.requiredOption(
 			'-s, --source-branch <branch>',
-			'Source branch name (the branch containing your changes)',
+			'Source branch name (the branch containing your changes). Example: "feature/new-login"',
 		)
 		.option(
 			'-d, --destination-branch <branch>',
-			'Destination branch name (the branch you want to merge into, defaults to main)',
+			'Destination branch name (the branch you want to merge into, defaults to main). Example: "develop"',
 		)
-		.option('--description <text>', 'Description for the pull request')
+		.option(
+			'--description <text>',
+			'Optional description for the pull request.',
+		)
 		.option(
 			'--close-source-branch',
-			'Close source branch after pull request is merged',
+			'Whether to close the source branch after the pull request is merged. Default: false',
 			false,
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'create-pull-request',
+				'create-pr',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -118,40 +116,38 @@ export function register(program: Command): void {
  */
 function registerListPullRequestsCommand(program: Command): void {
 	program
-		.command('list-pull-requests')
+		.command('ls-prs')
 		.description(
-			`List pull requests within a specific Bitbucket repository.
-
-        PURPOSE: Discover pull requests in a repository and get their basic metadata, including title, state, author, source/destination branches, and reviewer information. Requires workspace and repository slugs.`,
+			'List pull requests within a specific Bitbucket repository, with filtering and pagination.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug to list pull requests from',
+			'Repository slug containing the pull requests. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
 		.option(
 			'-S, --state <state>',
-			'Filter by pull request state: OPEN, MERGED, DECLINED, SUPERSEDED',
+			'Filter pull requests by state. Options: "OPEN" (active PRs), "MERGED" (completed PRs), "DECLINED" (rejected PRs), or "SUPERSEDED" (replaced PRs). If omitted, defaults to showing all states.',
 		)
 		.option(
 			'-q, --query <text>',
-			'Filter pull requests by title, description, or other properties (simple text search, not query language)',
+			'Filter pull requests by title, description, or author (text search). Uses Bitbucket query syntax.',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of pull requests to return (1-100)',
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results',
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'list-pull-requests',
+				'ls-prs',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -208,25 +204,26 @@ function registerListPullRequestsCommand(program: Command): void {
  */
 function registerGetPullRequestCommand(program: Command): void {
 	program
-		.command('get-pull-request')
+		.command('get-pr')
 		.description(
-			`Get detailed information about a specific Bitbucket pull request.
-
-        PURPOSE: Retrieve comprehensive metadata for a pull request, including its description, state, author, reviewers, branches, and links.`,
+			'Get detailed information about a specific Bitbucket pull request using its ID.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug containing the pull request',
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
-		.requiredOption('-p, --pr-id <id>', 'Pull request ID to retrieve')
+		.requiredOption(
+			'-p, --pr-id <id>',
+			'Numeric ID of the pull request to retrieve as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
+		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'get-pull-request',
+				'get-pr',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -254,36 +251,34 @@ function registerGetPullRequestCommand(program: Command): void {
  */
 function registerListPullRequestCommentsCommand(program: Command): void {
 	program
-		.command('list-pr-comments')
+		.command('ls-pr-comments')
 		.description(
-			`List comments on a specific Bitbucket pull request.
-
-        PURPOSE: View all review feedback, discussions, and task comments on a pull request to understand code review context without accessing the web UI.`,
+			'List comments on a specific Bitbucket pull request, with pagination.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug containing the pull request',
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
 		.requiredOption(
 			'-p, --pr-id <id>',
-			'Pull request ID to list comments from',
+			'Numeric ID of the pull request to retrieve comments from as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of comments to return (1-100)',
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results',
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'list-pr-comments',
+				'ls-pr-comments',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -341,31 +336,28 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 	program
 		.command('add-pr-comment')
 		.description(
-			`Add a comment to a specific Bitbucket pull request.
-
-        PURPOSE: Create comments on a pull request to provide feedback, ask questions, or communicate with other reviewers/developers. Supports both general PR comments and inline code comments.
-
-        EXAMPLES:
-        $ mcp-atlassian-bitbucket add-pr-comment -w workspace-slug -r repo-slug -p 1 -c "This looks good to merge!"
-        $ mcp-atlassian-bitbucket add-pr-comment -w workspace-slug -r repo-slug -p 1 -c "Consider using a const here" --file src/utils.ts --line 42`,
+			'Add a comment to a specific Bitbucket pull request. Supports inline comments.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug containing the pull request',
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
-		.requiredOption('-p, --pr-id <id>', 'Pull request ID to comment on')
-		.requiredOption('-c, --content <text>', 'Content of the comment to add')
-		.option(
-			'--file <path>',
-			'File path for inline comments (requires --line)',
+		.requiredOption(
+			'-p, --pr-id <id>',
+			'Numeric ID of the pull request to add a comment to as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		)
+		.requiredOption(
+			'-c, --content <text>',
+			'The content of the comment to add to the pull request. Can include markdown formatting.',
+		)
+		.option('--file <path>', 'The file path to add the comment to.')
 		.option(
 			'--line <number>',
-			'Line number for inline comments (requires --file)',
+			'The line number to add the comment to.',
 			(val) => parseInt(val, 10),
 		)
 		.action(async (options) => {

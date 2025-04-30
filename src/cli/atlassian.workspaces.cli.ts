@@ -41,34 +41,24 @@ function register(program: Command): void {
  */
 function registerListWorkspacesCommand(program: Command): void {
 	program
-		.command('list-workspaces')
+		.command('ls-workspaces')
 		.description(
-			`List Bitbucket workspaces accessible to the authenticated user.
-
-        PURPOSE: Discover available workspaces, find their slugs for use in other commands, and get a high-level overview of permissions and access dates.
-
-        Use Case: Useful when you don't know the exact slug of a workspace you need to interact with, or when exploring available team/project containers.
-
-        Output: Formatted list including workspace name, slug, UUID, your permission level, and access dates. Supports pagination.
-
-        Examples:
-  $ mcp-atlassian-bitbucket list-workspaces --limit 10
-  $ mcp-atlassian-bitbucket list-workspaces --cursor "some-cursor-value"`,
+			'List Bitbucket workspaces accessible to the user, with pagination support.',
 		)
 		// NOTE: Sort option has been removed as the Bitbucket API's /2.0/user/permissions/workspaces endpoint
 		// does not support sorting on any field
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of workspaces to return (1-100)',
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results',
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.workspaces.cli.ts',
-				'list-workspaces',
+				'ls-workspaces',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -132,20 +122,11 @@ function registerGetWorkspaceCommand(program: Command): void {
 	program
 		.command('get-workspace')
 		.description(
-			`Get detailed information about a specific Bitbucket workspace using its slug.
-
-        PURPOSE: Retrieve comprehensive details for a *known* workspace, including its UUID, name, type, creation date, and links to related resources like repositories and projects.
-
-        Use Case: Useful when you have a specific workspace slug (often obtained via 'list-workspaces') and need its full metadata or links.
-
-        Output: Formatted details of the specified workspace. Fetches all available details by default.
-
-        Examples:
-  $ mcp-atlassian-bitbucket get-workspace --workspace-slug my-dev-team`,
+			'Get detailed information about a specific Bitbucket workspace using its slug.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Slug of the workspace to retrieve (identifies the workspace)',
+			'Workspace slug to retrieve detailed information for. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(

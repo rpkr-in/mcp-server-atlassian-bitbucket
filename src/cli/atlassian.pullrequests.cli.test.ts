@@ -33,7 +33,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 	} | null> {
 		// First, get a list of workspaces
 		const workspacesResult = await CliTestUtil.runCommand([
-			'list-workspaces',
+			'ls-workspaces',
 		]);
 
 		// Skip if no workspaces are available
@@ -57,7 +57,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		// Get repositories for this workspace
 		const reposResult = await CliTestUtil.runCommand([
-			'list-repositories',
+			'ls-repos',
 			'--workspace-slug',
 			workspaceSlug,
 		]);
@@ -83,7 +83,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		};
 	}
 
-	describe('list-pull-requests command', () => {
+	describe('ls-prs command', () => {
 		it('should list pull requests for a repository', async () => {
 			if (skipIfNoCredentials()) {
 				return;
@@ -97,7 +97,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Run the CLI command
 			const result = await CliTestUtil.runCommand([
-				'list-pull-requests',
+				'ls-prs',
 				'--workspace-slug',
 				repoInfo.workspace,
 				'--repo-slug',
@@ -145,7 +145,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			for (const state of states) {
 				// Run the CLI command with state filter
 				const result = await CliTestUtil.runCommand([
-					'list-pull-requests',
+					'ls-prs',
 					'--workspace-slug',
 					repoInfo.workspace,
 					'--repo-slug',
@@ -186,7 +186,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Run the CLI command with limit
 			const result = await CliTestUtil.runCommand([
-				'list-pull-requests',
+				'ls-prs',
 				'--workspace-slug',
 				repoInfo.workspace,
 				'--repo-slug',
@@ -216,7 +216,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		}, 30000);
 	});
 
-	describe('get-pull-request command', () => {
+	describe('get-pr command', () => {
 		it('should retrieve details for a specific pull request', async () => {
 			if (skipIfNoCredentials()) {
 				return;
@@ -230,7 +230,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// First, list pull requests to find a valid ID
 			const listResult = await CliTestUtil.runCommand([
-				'list-pull-requests',
+				'ls-prs',
 				'--workspace-slug',
 				repoInfo.workspace,
 				'--repo-slug',
@@ -257,9 +257,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Skip the full validation since we can't guarantee PRs exist
 			// Just verify that the test can find a valid ID and run the command
 			if (prId) {
-				// Run the get-pull-request command
+				// Run the get-pr command
 				const getResult = await CliTestUtil.runCommand([
-					'get-pull-request',
+					'get-pr',
 					'--workspace-slug',
 					repoInfo.workspace,
 					'--repo-slug',
@@ -284,7 +284,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without workspace parameter
 			const missingWorkspace = await CliTestUtil.runCommand([
-				'get-pull-request',
+				'get-pr',
 				'--repo-slug',
 				'some-repo',
 				'--pr-id',
@@ -297,7 +297,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without repository parameter
 			const missingRepo = await CliTestUtil.runCommand([
-				'get-pull-request',
+				'get-pr',
 				'--workspace-slug',
 				'some-workspace',
 				'--pr-id',
@@ -310,7 +310,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without pull-request parameter
 			const missingPR = await CliTestUtil.runCommand([
-				'get-pull-request',
+				'get-pr',
 				'--workspace-slug',
 				'some-workspace',
 				'--repo-slug',
@@ -323,7 +323,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		}, 15000);
 	});
 
-	describe('list-pr-comments command', () => {
+	describe('ls-pr-comments command', () => {
 		it('should list comments for a specific pull request', async () => {
 			if (skipIfNoCredentials()) {
 				return;
@@ -337,7 +337,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// First, list pull requests to find a valid ID
 			const listResult = await CliTestUtil.runCommand([
-				'list-pull-requests',
+				'ls-prs',
 				'--workspace-slug',
 				repoInfo.workspace,
 				'--repo-slug',
@@ -364,9 +364,9 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			// Skip the full validation since we can't guarantee PRs exist
 			// Just verify that the test can find a valid ID and run the command
 			if (prId) {
-				// Run the list-pr-comments command
+				// Run the ls-pr-comments command
 				const result = await CliTestUtil.runCommand([
-					'list-pr-comments',
+					'ls-pr-comments',
 					'--workspace-slug',
 					repoInfo.workspace,
 					'--repo-slug',
@@ -391,7 +391,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without workspace parameter
 			const missingWorkspace = await CliTestUtil.runCommand([
-				'list-pr-comments',
+				'ls-pr-comments',
 				'--repo-slug',
 				'some-repo',
 				'--pr-id',
@@ -404,7 +404,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without repository parameter
 			const missingRepo = await CliTestUtil.runCommand([
-				'list-pr-comments',
+				'ls-pr-comments',
 				'--workspace-slug',
 				'some-workspace',
 				'--pr-id',
@@ -417,7 +417,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// Test without pull-request parameter
 			const missingPR = await CliTestUtil.runCommand([
-				'list-pr-comments',
+				'ls-pr-comments',
 				'--workspace-slug',
 				'some-workspace',
 				'--repo-slug',
@@ -430,7 +430,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		}, 15000);
 	});
 
-	describe('list-pr-comments with pagination', () => {
+	describe('ls-pr-comments with pagination', () => {
 		it('should list comments for a specific pull request with pagination', async () => {
 			if (skipIfNoCredentials()) {
 				return;
@@ -444,7 +444,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 			// First, list pull requests to find a valid ID
 			const listResult = await CliTestUtil.runCommand([
-				'list-pull-requests',
+				'ls-prs',
 				'--workspace-slug',
 				repoInfo.workspace,
 				'--repo-slug',
@@ -473,7 +473,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			if (prId) {
 				// Run with pagination limit
 				const limitResult = await CliTestUtil.runCommand([
-					'list-pr-comments',
+					'ls-pr-comments',
 					'--workspace-slug',
 					repoInfo.workspace,
 					'--repo-slug',
@@ -579,5 +579,73 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		});
 
 		// Note: API call test has been removed to avoid creating comments on real PRs during tests
+	});
+
+	describe('create-pr command', () => {
+		it('should display help information', async () => {
+			const result = await CliTestUtil.runCommand([
+				'create-pr',
+				'--help',
+			]);
+			expect(result.exitCode).toBe(0);
+			expect(result.stdout).toContain(
+				'Create a new pull request in a Bitbucket repository',
+			);
+			expect(result.stdout).toContain('--workspace-slug');
+			expect(result.stdout).toContain('--repo-slug');
+			expect(result.stdout).toContain('--title');
+			expect(result.stdout).toContain('--source-branch');
+			expect(result.stdout).toContain('--destination-branch');
+			expect(result.stdout).toContain('--description');
+			expect(result.stdout).toContain('--close-source-branch');
+		});
+
+		it('should require workspace-slug parameter', async () => {
+			const result = await CliTestUtil.runCommand(['create-pr']);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('workspace-slug');
+		});
+
+		it('should require repo-slug parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'create-pr',
+				'--workspace-slug',
+				'test-ws',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('repo-slug');
+		});
+
+		it('should require title parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'create-pr',
+				'--workspace-slug',
+				'test-ws',
+				'--repo-slug',
+				'test-repo',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('title');
+		});
+
+		it('should require source-branch parameter', async () => {
+			const result = await CliTestUtil.runCommand([
+				'create-pr',
+				'--workspace-slug',
+				'test-ws',
+				'--repo-slug',
+				'test-repo',
+				'--title',
+				'Test PR',
+			]);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			expect(result.stderr).toContain('source-branch');
+		});
+
+		// Note: API call test has been removed to avoid creating PRs on real repos during tests
 	});
 });

@@ -41,49 +41,38 @@ function register(program: Command): void {
  */
 function registerListRepositoriesCommand(program: Command): void {
 	program
-		.command('list-repositories')
+		.command('ls-repos')
 		.description(
-			`List repositories within a specific Bitbucket workspace.
-
-        PURPOSE: Discover repositories within a given workspace, find their slugs, and get basic metadata like owner, description, and URLs. Requires the workspace slug as input.
-
-        Use Case: Essential for finding the 'repoSlug' needed for pull request commands or 'get-repository'. Allows filtering by name, role, and sorting.
-
-        Output: Formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL. Supports filtering and sorting.
-
-        Examples:
-  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --limit 25
-  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --query "backend-api" --role contributor
-  $ mcp-atlassian-bitbucket list-repositories --workspace-slug my-team --sort "-updated_on" --cursor "next-page-token"`,
+			'List repositories within a specific Bitbucket workspace, with filtering and pagination.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repositories',
+			'Workspace slug containing the repositories. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.option(
 			'-q, --query <text>',
-			'Filter repositories by name or other properties (simple text search, not query language)',
+			'Query string to filter repositories by name or other properties (text search). Example: "api" for repositories with "api" in the name/description. If omitted, returns all repositories.',
 		)
 		.option(
 			'-r, --role <string>',
-			'Filter repositories by the user\'s role (e.g., "owner", "admin", "contributor")',
+			'Filter repositories by the authenticated user\'s role. Common values: "owner", "admin", "contributor", "member". If omitted, returns repositories of all roles.',
 		)
 		.option(
 			'-s, --sort <string>',
-			'Field to sort results by (e.g., "name", "-updated_on")',
+			'Field to sort results by. Common values: "name", "created_on", "updated_on". Prefix with "-" for descending order. Example: "-updated_on" for most recently updated first.',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of repositories to return (1-100)',
+			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results',
+			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.repositories.cli.ts',
-				'list-repositories',
+				'ls-repos',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -156,24 +145,22 @@ function registerListRepositoriesCommand(program: Command): void {
  */
 function registerGetRepositoryCommand(program: Command): void {
 	program
-		.command('get-repository')
+		.command('get-repo')
 		.description(
-			`Get detailed information about a specific Bitbucket repository.
-
-        PURPOSE: Retrieve comprehensive metadata for a repository, including its full description, owner, language, size, dates, and links.`,
+			'Get detailed information about a specific Bitbucket repository using its slugs.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Slug of the repository to retrieve',
+			'Repository slug to retrieve. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.repositories.cli.ts',
-				'get-repository',
+				'get-repo',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);

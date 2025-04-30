@@ -313,15 +313,24 @@ Create a new pull request.
 
 # Command-Line Interface (CLI)
 
-The CLI uses kebab-case for commands (e.g., `bitbucket-list-workspaces`) and options (e.g., `--workspace-slug`).
+The CLI uses kebab-case for commands (e.g., `ls-workspaces`) and options (e.g., `--workspace-slug`).
 
 ## Quick Use with `npx`
 
 ```bash
-npx -y @aashari/mcp-server-atlassian-bitbucket bitbucket-list-workspaces
-npx -y @aashari/mcp-server-atlassian-bitbucket bitbucket-get-repository \
+npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+npx -y @aashari/mcp-server-atlassian-bitbucket get-repo \
   --workspace-slug acme-corp \
   --repo-slug backend-api
+npx -y @aashari/mcp-server-atlassian-bitbucket ls-prs \
+  --workspace-slug acme-corp \
+  --repo-slug frontend-app \
+  --state OPEN
+npx -y @aashari/mcp-server-atlassian-bitbucket add-pr-comment \
+  --workspace-slug acme-corp \
+  --repo-slug frontend-app \
+  --pr-id 42 \
+  --content "Looks good to merge."
 ```
 
 ## Install Globally
@@ -333,7 +342,8 @@ npm install -g @aashari/mcp-server-atlassian-bitbucket
 Then run directly:
 
 ```bash
-mcp-atlassian-bitbucket bitbucket-list-workspaces
+mcp-atlassian-bitbucket ls-workspaces
+mcp-atlassian-bitbucket get-repo --workspace-slug acme-corp --repo-slug backend-api
 ```
 
 ## Discover More CLI Options
@@ -347,9 +357,16 @@ mcp-atlassian-bitbucket --help
 Or get detailed help for a specific command:
 
 ```bash
-mcp-atlassian-bitbucket bitbucket-get-repository --help
-mcp-atlassian-bitbucket bitbucket-list-pull-requests --help
-mcp-atlassian-bitbucket bitbucket-search --help
+mcp-atlassian-bitbucket ls-workspaces --help
+mcp-atlassian-bitbucket get-workspace --help
+mcp-atlassian-bitbucket ls-repos --help
+mcp-atlassian-bitbucket get-repo --help
+mcp-atlassian-bitbucket ls-prs --help
+mcp-atlassian-bitbucket get-pr --help
+mcp-atlassian-bitbucket ls-pr-comments --help
+mcp-atlassian-bitbucket add-pr-comment --help
+mcp-atlassian-bitbucket create-pr --help
+mcp-atlassian-bitbucket search --help
 ```
 
 ---

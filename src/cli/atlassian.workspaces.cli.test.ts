@@ -26,7 +26,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 		return false;
 	};
 
-	describe('list-workspaces command', () => {
+	describe('ls-workspaces command', () => {
 		// Test default behavior (list all workspaces)
 		it('should list available workspaces', async () => {
 			if (skipIfNoCredentials()) {
@@ -34,7 +34,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 			}
 
 			// Run the CLI command
-			const result = await CliTestUtil.runCommand(['list-workspaces']);
+			const result = await CliTestUtil.runCommand(['ls-workspaces']);
 
 			// Check command exit code
 			expect(result.exitCode).toBe(0);
@@ -62,7 +62,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 
 			// Run the CLI command with limit
 			const result = await CliTestUtil.runCommand([
-				'list-workspaces',
+				'ls-workspaces',
 				'--limit',
 				'1',
 			]);
@@ -90,7 +90,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 
 			// Run the CLI command with a non-existent parameter
 			const result = await CliTestUtil.runCommand([
-				'list-workspaces',
+				'ls-workspaces',
 				'--non-existent-parameter',
 				'value',
 			]);
@@ -111,9 +111,7 @@ describe('Atlassian Workspaces CLI Commands', () => {
 			}
 
 			// First, get a list of workspaces to find a valid slug
-			const listResult = await CliTestUtil.runCommand([
-				'list-workspaces',
-			]);
+			const listResult = await CliTestUtil.runCommand(['ls-workspaces']);
 
 			// Skip if no workspaces are available
 			if (listResult.stdout.includes('No Bitbucket workspaces found.')) {
