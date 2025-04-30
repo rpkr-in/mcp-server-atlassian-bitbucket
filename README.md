@@ -63,7 +63,7 @@ Create or edit `~/.mcp/configs.json`:
 
 ```json
 {
-	"@aashari/mcp-server-atlassian-bitbucket": {
+	"bitbucket": {
 		"environments": {
 			"ATLASSIAN_BITBUCKET_USERNAME": "<your_username>",
 			"ATLASSIAN_BITBUCKET_APP_PASSWORD": "<your_app_password>"
@@ -76,7 +76,7 @@ Create or edit `~/.mcp/configs.json`:
 
 ```json
 {
-	"@aashari/mcp-server-atlassian-bitbucket": {
+	"bitbucket": {
 		"environments": {
 			"ATLASSIAN_SITE_NAME": "bitbucket",
 			"ATLASSIAN_USER_EMAIL": "<your_email>",
@@ -85,6 +85,8 @@ Create or edit `~/.mcp/configs.json`:
 	}
 }
 ```
+
+**Note:** For backward compatibility, the server will also recognize configurations under the full package name (`@aashari/mcp-server-atlassian-bitbucket`), the unscoped package name (`mcp-server-atlassian-bitbucket`), or the `atlassian-bitbucket` format if the recommended `bitbucket` key is not found. However, using the short `bitbucket` key is preferred for new configurations.
 
 ### Method B: Environment Variables
 
@@ -107,7 +109,7 @@ Configure your MCP-compatible client to launch this server.
 ```json
 {
 	"mcpServers": {
-		"aashari/mcp-server-atlassian-bitbucket": {
+		"bitbucket": {
 			"command": "npx",
 			"args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"]
 		}
