@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.1...v1.17.2) (2025-04-30)
+
+
+### Bug Fixes
+
+* **cli:** Align command names and descriptions with tool definitions ([d474994](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d474994c1f4b0358a53ac9557be4bd7a306247a8))
+
 ## [1.17.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.0...v1.17.1) (2025-04-30)
 
 
