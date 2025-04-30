@@ -1,3 +1,15 @@
+# [1.17.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.16.0...v1.17.0) (2025-04-30)
+
+
+### Bug Fixes
+
+* Standardize and shorten MCP tool names ([3c66a60](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3c66a6000be1033c657a52de37ca4c369664b23a))
+
+
+### Features
+
+* Support multiple keys for global config lookup ([7df9c41](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/7df9c414e4719d547113eec58cf38f4b67bf268e))
+
 # [1.16.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.15.3...v1.16.0) (2025-04-25)
 
 
