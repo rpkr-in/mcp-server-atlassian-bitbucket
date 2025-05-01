@@ -12,7 +12,7 @@ import {
 	GetPullRequestCommentsParams,
 	PullRequestCommentsResponse,
 	PullRequestComment,
-	AddPullRequestCommentParams,
+	CreatePullRequestCommentParams,
 	CreatePullRequestParams,
 	DiffstatResponse,
 } from './vendor.atlassian.pullrequests.types.js';
@@ -250,7 +250,7 @@ async function getComments(
  *
  * @async
  * @memberof VendorAtlassianPullRequestsService
- * @param {AddPullRequestCommentParams} params - Parameters for the request
+ * @param {CreatePullRequestCommentParams} params - Parameters for the request
  * @param {string} params.workspace - The workspace slug or UUID
  * @param {string} params.repo_slug - The repository slug or UUID
  * @param {number} params.pull_request_id - The ID of the pull request
@@ -279,15 +279,15 @@ async function getComments(
  *   inline: { path: "src/main.js", to: 42 }
  * });
  */
-async function addComment(
-	params: AddPullRequestCommentParams,
+async function createComment(
+	params: CreatePullRequestCommentParams,
 ): Promise<PullRequestComment> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.pullrequests.service.ts',
-		'addComment',
+		'createComment',
 	);
 	methodLogger.debug(
-		`Adding comment to Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+		`Creating comment on Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
 	);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
@@ -521,7 +521,7 @@ export default {
 	list,
 	get,
 	getComments,
-	addComment,
+	createComment,
 	create,
 	getRawDiff,
 	getDiffstat,

@@ -8,8 +8,8 @@ import {
 	GetPullRequestToolArgsType,
 	ListPullRequestCommentsToolArgs,
 	ListPullRequestCommentsToolArgsType,
-	AddPullRequestCommentToolArgs,
-	AddPullRequestCommentToolArgsType,
+	CreatePullRequestCommentToolArgs,
+	CreatePullRequestCommentToolArgsType,
 	CreatePullRequestToolArgs,
 	CreatePullRequestToolArgsType,
 } from './atlassian.pullrequests.types.js';
@@ -168,7 +168,7 @@ async function listPullRequestComments(
 }
 
 /**
- * MCP Tool: Add Comment to Bitbucket Pull Request
+ * MCP Tool: Create a new Comment on Bitbucket Pull Request
  *
  * Adds a new comment to a specific Bitbucket pull request.
  * The comment can be either a general comment or an inline code comment.
@@ -177,19 +177,21 @@ async function listPullRequestComments(
  * @returns MCP response confirming the comment was added
  * @throws Will return error message if comment addition fails
  */
-async function addPullRequestComment(args: AddPullRequestCommentToolArgsType) {
+async function createPullRequestComment(
+	args: CreatePullRequestCommentToolArgsType,
+) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
-		'addPullRequestComment',
+		'createPullRequestComment',
 	);
 
 	methodLogger.debug(
-		`Adding comment to pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
+		`Creating comment on pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
 		args,
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.addComment({
+		const message = await atlassianPullRequestsController.createComment({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
@@ -299,12 +301,12 @@ function registerTools(server: McpServer) {
 		listPullRequestComments,
 	);
 
-	// Register the add pull request comment tool
+	// Register the create pull request comment tool
 	server.tool(
-		'bb_add_pr_comment',
-		`Adds a comment (\`content\`) to a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Supports both general PR comments and inline code comments via the optional \`inline\` object ({ path, line }).\nUse to provide feedback or participate in PR discussions.\nReturns a confirmation message upon success.`,
-		AddPullRequestCommentToolArgs.shape,
-		addPullRequestComment,
+		'bb_create_pr_comment',
+		`Creates a comment (\`content\`) on a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Supports both general PR comments and inline code comments via the optional \`inline\` object ({ path, line }).\nUse to provide feedback or participate in PR discussions.\nReturns a confirmation message upon success.`,
+		CreatePullRequestCommentToolArgs.shape,
+		createPullRequestComment,
 	);
 
 	// Register the tool for creating pull requests

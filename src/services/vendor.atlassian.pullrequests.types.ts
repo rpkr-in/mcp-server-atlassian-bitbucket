@@ -187,9 +187,9 @@ export interface GetPullRequestCommentsParams {
 }
 
 /**
- * Parameters for adding a comment to a pull request
+ * Parameters for creating a comment to a pull request
  */
-export interface AddPullRequestCommentParams {
+export interface CreatePullRequestCommentParams {
 	/**
 	 * The workspace slug or UUID
 	 */

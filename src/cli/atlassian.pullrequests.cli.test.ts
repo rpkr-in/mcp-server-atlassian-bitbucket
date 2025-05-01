@@ -494,15 +494,19 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		}, 45000); // Increased timeout for multiple API calls
 	});
 
-	describe('add-pr-comment command', () => {
+	// Test suite for the add-pr-comment command
+	describe('create-pr-comment command', () => {
+		// Test case for displaying help information for the command
 		it('should display help information', async () => {
+			// Run the command with the --help flag
 			const result = await CliTestUtil.runCommand([
-				'add-pr-comment',
+				'create-pr-comment', // Use renamed command
 				'--help',
 			]);
+			// Check for successful exit code and presence of command description and options
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain(
-				'Add a comment to a specific Bitbucket pull request',
+				'Create a comment on a specific Bitbucket pull request', // Use updated description
 			);
 			expect(result.stdout).toContain('--workspace-slug');
 			expect(result.stdout).toContain('--repo-slug');
@@ -510,18 +514,20 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stdout).toContain('--content');
 			expect(result.stdout).toContain('--file');
 			expect(result.stdout).toContain('--line');
-		});
+		}, 15000);
 
+		// Test case for requiring workspace-slug parameter
 		it('should require workspace-slug parameter', async () => {
-			const result = await CliTestUtil.runCommand(['add-pr-comment']);
+			const result = await CliTestUtil.runCommand(['create-pr-comment']); // Use renamed command
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain('required option');
 			expect(result.stderr).toContain('workspace-slug');
 		});
 
+		// Test case for requiring repo-slug parameter
 		it('should require repo-slug parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'add-pr-comment',
+				'create-pr-comment', // Use renamed command
 				'--workspace-slug',
 				'codapayments',
 			]);
@@ -530,9 +536,10 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stderr).toContain('repo-slug');
 		});
 
+		// Test case for requiring pr-id parameter
 		it('should require pr-id parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'add-pr-comment',
+				'create-pr-comment', // Use renamed command
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -543,9 +550,10 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stderr).toContain('pr-id');
 		});
 
+		// Test case for requiring content parameter
 		it('should require content parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'add-pr-comment',
+				'create-pr-comment', // Use renamed command
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -558,9 +566,10 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stderr).toContain('content');
 		});
 
+		// Test case for detecting incomplete inline comment parameters
 		it('should detect incomplete inline comment parameters', async () => {
 			const result = await CliTestUtil.runCommand([
-				'add-pr-comment',
+				'create-pr-comment', // Use renamed command
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -568,7 +577,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				'--pr-id',
 				'1',
 				'--content',
-				'Test',
+				'Test comment',
 				'--file',
 				'README.md',
 			]);
@@ -577,8 +586,6 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				'Both --file and --line must be provided',
 			);
 		});
-
-		// Note: API call test has been removed to avoid creating comments on real PRs during tests
 	});
 
 	describe('create-pr command', () => {

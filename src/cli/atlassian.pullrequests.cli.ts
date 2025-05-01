@@ -104,7 +104,7 @@ export function register(program: Command): void {
 	registerListPullRequestsCommand(program);
 	registerGetPullRequestCommand(program);
 	registerListPullRequestCommentsCommand(program);
-	registerAddPullRequestCommentCommand(program);
+	registerCreatePullRequestCommentCommand(program);
 	registerCreatePullRequestCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
@@ -329,14 +329,14 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 }
 
 /**
- * Register the command for adding a comment to a pull request
+ * Register the command for creating a comment on a pull request
  * @param program - The Commander program instance
  */
-function registerAddPullRequestCommentCommand(program: Command): void {
+function registerCreatePullRequestCommentCommand(program: Command): void {
 	program
-		.command('add-pr-comment')
+		.command('create-pr-comment')
 		.description(
-			'Add a comment to a specific Bitbucket pull request. Supports inline comments.',
+			'Create a comment on a specific Bitbucket pull request. Supports inline comments.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
@@ -363,7 +363,7 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'add-pr-comment',
+				'create-pr-comment',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -384,16 +384,15 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 						? { path: options.file, line: options.line }
 						: undefined;
 
-				// Call controller
-				const result = await atlassianPullRequestsController.addComment(
-					{
+				// Call renamed controller function
+				const result =
+					await atlassianPullRequestsController.createComment({
 						workspaceSlug: options.workspaceSlug,
 						repoSlug: options.repoSlug,
 						prId: options.prId,
 						content: options.content,
 						inline,
-					},
-				);
+					});
 
 				console.log(result.content);
 			} catch (error) {

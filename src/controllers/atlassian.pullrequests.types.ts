@@ -76,9 +76,9 @@ export interface ListPullRequestCommentsOptions extends PaginationOptions {
 }
 
 /**
- * Options for adding a comment to a pull request
+ * Options for creating a comment on a pull request
  */
-export interface AddPullRequestCommentOptions {
+export interface CreatePullRequestCommentOptions {
 	/**
 	 * The workspace slug
 	 */

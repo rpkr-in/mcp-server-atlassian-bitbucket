@@ -158,9 +158,9 @@ export type ListPullRequestCommentsToolArgsType = z.infer<
 >;
 
 /**
- * Schema for add-pr-comment tool arguments
+ * Schema for create-pr-comment tool arguments
  */
-export const AddPullRequestCommentToolArgs = z.object({
+export const CreatePullRequestCommentToolArgs = z.object({
 	/**
 	 * Workspace slug containing the repository
 	 */
@@ -222,8 +222,8 @@ export const AddPullRequestCommentToolArgs = z.object({
 		),
 });
 
-export type AddPullRequestCommentToolArgsType = z.infer<
-	typeof AddPullRequestCommentToolArgs
+export type CreatePullRequestCommentToolArgsType = z.infer<
+	typeof CreatePullRequestCommentToolArgs
 >;
 
 /**
