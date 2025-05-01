@@ -1,6 +1,8 @@
 import {
 	Repository,
 	RepositoriesResponse,
+	PaginatedCommits,
+	Commit,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
@@ -174,6 +176,62 @@ export function formatRepositoryDetails(
 		`*Repository information retrieved at ${formatDate(new Date())}*`,
 	);
 	lines.push(`*To view this repository in Bitbucket, visit: ${repoUrl}*`);
+
+	return lines.join('\n');
+}
+
+/**
+ * Format commit history for display.
+ * @param commitsData - Raw paginated commits data from the API.
+ * @param options - Filtering options used to retrieve the history.
+ * @returns Formatted string with commit history in markdown format.
+ */
+export function formatCommitHistory(
+	commitsData: PaginatedCommits,
+	options: { revision?: string; path?: string } = {},
+): string {
+	const commits = commitsData.values || [];
+
+	if (commits.length === 0) {
+		return 'No commits found matching your criteria.';
+	}
+
+	const headerParts = ['Commit History'];
+	if (options.revision) {
+		headerParts.push(`for revision \`${options.revision}\``);
+	}
+	if (options.path) {
+		headerParts.push(`on path \`${options.path}\``);
+	}
+
+	const lines: string[] = [formatHeading(headerParts.join(' '), 1), ''];
+
+	const formattedList = formatNumberedList(commits, (commit: Commit) => {
+		const commitLines: string[] = [];
+		const author =
+			commit.author?.user?.display_name ||
+			commit.author?.raw ||
+			'Unknown';
+		const commitUrl = commit.links?.html?.href;
+		const shortHash = commit.hash.substring(0, 7);
+
+		// Header: Hash (linked) - Date
+		commitLines.push(
+			`**${commitUrl ? formatUrl(commitUrl, shortHash) : shortHash}** - ${formatDate(commit.date)}`,
+		);
+
+		// Author
+		commitLines.push(` Author: ${author}`);
+
+		// Message (indented blockquote)
+		const message = commit.message.trim().replace(/n/g, 'n > ');
+		commitLines.push(' >');
+		commitLines.push(` > ${message}`);
+
+		return commitLines.join('\n');
+	});
+
+	lines.push(formattedList);
 
 	return lines.join('\n');
 }

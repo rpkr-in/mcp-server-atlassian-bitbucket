@@ -102,3 +102,38 @@ export const GetRepositoryToolArgs = z.object({
 });
 
 export type GetRepositoryToolArgsType = z.infer<typeof GetRepositoryToolArgs>;
+
+/**
+ * Schema for get-commit-history tool arguments.
+ */
+export const GetCommitHistoryToolArgs = z.object({
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe(
+			'Workspace slug containing the repository. Example: "myteam"',
+		),
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug whose commit history is to be retrieved. Example: "project-api"',
+		),
+	revision: z
+		.string()
+		.optional()
+		.describe(
+			'Optional branch name, tag, or commit hash to view history from. If omitted, uses the default branch.',
+		),
+	path: z
+		.string()
+		.optional()
+		.describe(
+			'Optional file path to filter commit history. Only shows commits affecting this file.',
+		),
+	...PaginationArgs, // Includes limit and cursor
+});
+
+export type GetCommitHistoryToolArgsType = z.infer<
+	typeof GetCommitHistoryToolArgs
+>;

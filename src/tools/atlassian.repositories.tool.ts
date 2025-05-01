@@ -6,6 +6,8 @@ import {
 	ListRepositoriesToolArgsType,
 	GetRepositoryToolArgs,
 	GetRepositoryToolArgsType,
+	GetCommitHistoryToolArgs,
+	GetCommitHistoryToolArgsType,
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
@@ -110,6 +112,54 @@ async function getRepository(args: GetRepositoryToolArgsType) {
 }
 
 /**
+ * MCP Tool: Get Bitbucket Commit History
+ *
+ * Retrieves the commit history for a specific repository.
+ *
+ * @param args Tool arguments including workspace/repo slugs and optional filters.
+ * @returns MCP response with formatted commit history.
+ * @throws Will return error message if history retrieval fails.
+ */
+async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'handleGetCommitHistory',
+	);
+	methodLogger.debug('Getting commit history with args:', args);
+
+	try {
+		// Separate identifier from options
+		const identifier = {
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
+		};
+		const options = {
+			revision: args.revision,
+			path: args.path,
+			limit: args.limit,
+			cursor: args.cursor,
+		};
+
+		const result = await atlassianRepositoriesController.getCommitHistory(
+			identifier, // Pass identifier object
+			options, // Pass options object
+		);
+
+		methodLogger.debug(
+			'Successfully retrieved commit history from controller',
+		);
+
+		return {
+			content: [{ type: 'text' as const, text: result.content }],
+			metadata: { pagination: result.pagination }, // Include pagination in metadata
+		};
+	} catch (error) {
+		methodLogger.error('Failed to get commit history', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register Atlassian Repositories MCP Tools
  *
  * Registers the repositories-related tools with the MCP server.
@@ -138,6 +188,14 @@ function registerTools(server: McpServer) {
 		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including UUID, owner information, description, primary language, size, creation date, last updated time, and relevant links. Use this after discovering a repository's slug to get its complete details.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
+	);
+
+	// Register the get commit history tool
+	server.tool(
+		'bb_get_commit_history',
+		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\`. Optionally filters history starting from a specific branch, tag, or hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message.`,
+		GetCommitHistoryToolArgs.shape,
+		handleGetCommitHistory,
 	);
 
 	methodLogger.debug('Successfully registered Atlassian Repositories tools');

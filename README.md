@@ -311,6 +311,33 @@ Create a new pull request.
 
 ---
 
+## `bb_get_commit_history`
+
+Retrieve the commit history for a repository.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api"
+}
+```
+
+_or (filter by branch and path):_
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api",
+	"revision": "develop",
+	"path": "src/main/java/com/acme/service/UserService.java"
+}
+```
+
+> "Show me the commit history for the 'backend-api' repository."
+> "Get commits on the develop branch for UserService.java."
+
+---
+
 # Command-Line Interface (CLI)
 
 The CLI uses kebab-case for commands (e.g., `ls-workspaces`) and options (e.g., `--workspace-slug`).
@@ -331,6 +358,10 @@ npx -y @aashari/mcp-server-atlassian-bitbucket create-pr-comment \
   --repo-slug frontend-app \
   --pr-id 42 \
   --content "Looks good to merge."
+npx -y @aashari/mcp-server-atlassian-bitbucket get-commit-history \
+  --workspace-slug acme-corp \
+  --repo-slug backend-api \
+  --revision develop
 ```
 
 ## Install Globally
@@ -367,6 +398,7 @@ mcp-atlassian-bitbucket ls-pr-comments --help
 mcp-atlassian-bitbucket create-pr-comment --help
 mcp-atlassian-bitbucket create-pr --help
 mcp-atlassian-bitbucket search --help
+mcp-atlassian-bitbucket get-commit-history --help
 ```
 
 ---

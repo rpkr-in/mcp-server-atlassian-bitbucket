@@ -2,7 +2,10 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
-import { ListRepositoriesOptions } from '../controllers/atlassian.repositories.types.js';
+import {
+	ListRepositoriesOptions,
+	GetCommitHistoryOptions,
+} from '../controllers/atlassian.repositories.types.js';
 import { formatPagination } from '../utils/formatter.util.js';
 
 /**
@@ -31,6 +34,7 @@ function register(program: Command): void {
 
 	registerListRepositoriesCommand(program);
 	registerGetRepositoryCommand(program);
+	registerGetCommitHistoryCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -199,6 +203,111 @@ function registerGetRepositoryCommand(program: Command): void {
 				actionLogger.debug('API call completed, displaying results...');
 
 				console.log(result.content);
+			} catch (error) {
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for retrieving commit history for a repository.
+ * @param program - The Commander program instance
+ */
+function registerGetCommitHistoryCommand(program: Command): void {
+	program
+		.command('get-commit-history')
+		.description(
+			'Retrieve the commit history for a specific repository, with optional branch/path filtering.',
+		)
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository.',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug to retrieve history from.',
+		)
+		.option(
+			'-rev, --revision <string>',
+			'Optional branch, tag, or commit hash to start history from.',
+		)
+		.option(
+			'-p, --path <string>',
+			'Optional file path to filter commits by.',
+		)
+		.option(
+			'-l, --limit <number>',
+			'Maximum number of commits to return (1-100).',
+		)
+		.option(
+			'-c, --cursor <string>',
+			'Pagination cursor (page number) for the next set of results.',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'get-commit-history',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate required slugs
+				if (!options.workspaceSlug || !options.repoSlug) {
+					throw new Error(
+						'Workspace slug and repository slug are required.',
+					);
+				}
+
+				// Map CLI options to controller format
+				const identifier = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+				};
+				const controllerOptions: GetCommitHistoryOptions = {};
+
+				if (options.revision) {
+					controllerOptions.revision = options.revision;
+				}
+				if (options.path) {
+					controllerOptions.path = options.path;
+				}
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit < 1 || limit > 100) {
+						throw new Error(
+							'Limit must be a number between 1 and 100',
+						);
+					}
+					controllerOptions.limit = limit;
+				}
+				if (options.cursor) {
+					controllerOptions.cursor = options.cursor;
+				}
+
+				actionLogger.debug(
+					'Calling controller with identifier:',
+					identifier,
+					'and options:',
+					controllerOptions,
+				);
+				const result =
+					await atlassianRepositoriesController.getCommitHistory(
+						identifier,
+						controllerOptions,
+					);
+				actionLogger.debug('API call completed, displaying results...');
+
+				console.log(result.content);
+
+				if (result.pagination) {
+					console.log(
+						formatPagination(
+							result.pagination.count || 0,
+							result.pagination.hasMore,
+							result.pagination.nextCursor,
+						),
+					);
+				}
 			} catch (error) {
 				handleCliError(error);
 			}

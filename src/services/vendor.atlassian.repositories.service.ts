@@ -9,6 +9,8 @@ import {
 	RepositoriesResponse,
 	ListRepositoriesParams,
 	GetRepositoryParams,
+	ListCommitsParams,
+	PaginatedCommits,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -143,4 +145,60 @@ async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
 	return fetchAtlassian<RepositoryDetailed>(credentials, path);
 }
 
-export default { list, get };
+/**
+ * Lists commits for a specific repository and optional revision/path.
+ *
+ * @param params Parameters including workspace, repo slug, and optional filters.
+ * @returns Promise resolving to paginated commit data.
+ * @throws {Error} If workspace or repo_slug are missing, or if credentials are not found.
+ */
+async function listCommits(
+	params: ListCommitsParams,
+): Promise<PaginatedCommits> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'listCommits',
+	);
+	methodLogger.debug(
+		`Listing commits for ${params.workspace}/${params.repo_slug}`,
+		params,
+	);
+
+	if (!params.workspace || !params.repo_slug) {
+		throw new Error('Both workspace and repo_slug parameters are required');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const queryParams = new URLSearchParams();
+	if (params.include) {
+		queryParams.set('include', params.include);
+	}
+	if (params.exclude) {
+		queryParams.set('exclude', params.exclude);
+	}
+	if (params.path) {
+		queryParams.set('path', params.path);
+	}
+	if (params.pagelen) {
+		queryParams.set('pagelen', params.pagelen.toString());
+	}
+	if (params.page) {
+		queryParams.set('page', params.page.toString());
+	}
+
+	const queryString = queryParams.toString()
+		? `?${queryParams.toString()}`
+		: '';
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/commits${queryString}`;
+
+	methodLogger.debug(`Sending commit history request to: ${path}`);
+	return fetchAtlassian<PaginatedCommits>(credentials, path);
+}
+
+export default { list, get, listCommits };

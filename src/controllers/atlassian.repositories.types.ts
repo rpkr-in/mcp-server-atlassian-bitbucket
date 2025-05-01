@@ -47,3 +47,20 @@ export interface RepositoryIdentifier extends EntityIdentifier {
 	 */
 	repoSlug: string;
 }
+
+/**
+ * Options for retrieving commit history.
+ * Extends pagination options and adds filtering capabilities.
+ */
+export interface GetCommitHistoryOptions extends PaginationOptions {
+	/**
+	 * The specific branch, tag, or commit hash to retrieve history for.
+	 * If omitted, defaults to the repository's main branch.
+	 */
+	revision?: string;
+
+	/**
+	 * Filter commits by a specific file path.
+	 */
+	path?: string;
+}

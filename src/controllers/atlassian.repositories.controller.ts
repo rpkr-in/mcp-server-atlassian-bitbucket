@@ -10,14 +10,17 @@ import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListRepositoriesOptions,
 	RepositoryIdentifier,
+	GetCommitHistoryOptions,
 } from './atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
 	formatRepositoryDetails,
+	formatCommitHistory,
 } from './atlassian.repositories.formatter.js';
 import {
 	ListRepositoriesParams,
 	GetRepositoryParams,
+	ListCommitsParams,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
@@ -203,4 +206,77 @@ async function get(
 	}
 }
 
-export default { list, get };
+/**
+ * Retrieves the commit history for a repository.
+ * @param identifier Repository identifier including workspace and repo slug.
+ * @param options Optional filtering and pagination options (revision, path, limit, cursor).
+ * @returns Formatted commit history with pagination information.
+ */
+async function getCommitHistory(
+	identifier: RepositoryIdentifier,
+	options: GetCommitHistoryOptions = {},
+): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug } = identifier;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'getCommitHistory',
+	);
+
+	methodLogger.debug(
+		`Getting commit history for ${workspaceSlug}/${repoSlug}`,
+		options,
+	);
+
+	try {
+		const defaults: Partial<GetCommitHistoryOptions> = {
+			limit: DEFAULT_PAGE_SIZE,
+		};
+		const mergedOptions = applyDefaults<GetCommitHistoryOptions>(
+			options,
+			defaults,
+		);
+
+		const serviceParams: ListCommitsParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			include: mergedOptions.revision,
+			path: mergedOptions.path,
+			pagelen: mergedOptions.limit,
+			page: mergedOptions.cursor
+				? parseInt(mergedOptions.cursor, 10)
+				: undefined,
+		};
+
+		methodLogger.debug('Using commit service parameters:', serviceParams);
+
+		const commitsData =
+			await atlassianRepositoriesService.listCommits(serviceParams);
+		methodLogger.debug(
+			`Retrieved ${commitsData.values?.length || 0} commits`,
+		);
+
+		const pagination = extractPaginationInfo(
+			commitsData,
+			PaginationType.PAGE,
+		);
+
+		const formattedHistory = formatCommitHistory(commitsData, {
+			revision: mergedOptions.revision,
+			path: mergedOptions.path,
+		});
+
+		return {
+			content: formattedHistory,
+			pagination,
+		};
+	} catch (error) {
+		handleControllerError(error, {
+			entityType: 'Commit History',
+			operation: 'retrieving',
+			source: 'controllers/atlassian.repositories.controller.ts@getCommitHistory',
+			additionalInfo: { identifier, options },
+		});
+	}
+}
+
+export default { list, get, getCommitHistory };

@@ -129,3 +129,73 @@ export interface RepositoriesResponse {
 	previous?: string;
 	values: Repository[];
 }
+
+// --- Commit History Types ---
+
+/**
+ * Parameters for listing commits.
+ */
+export interface ListCommitsParams {
+	workspace: string;
+	repo_slug: string;
+	include?: string; // Branch, tag, or hash to include history from
+	exclude?: string; // Branch, tag, or hash to exclude history up to
+	path?: string; // File path to filter commits by
+	page?: number;
+	pagelen?: number;
+}
+
+/**
+ * Represents the author of a commit.
+ */
+export interface CommitAuthor {
+	raw: string; // Raw author string (e.g., "Andi A <andi@example.com>")
+	type: string; // Usually 'author'
+	user?: {
+		display_name?: string;
+		nickname?: string;
+		account_id?: string;
+		uuid?: string;
+		type: string; // Usually 'user'
+		links?: {
+			self?: { href: string };
+			avatar?: { href: string };
+		};
+	};
+}
+
+/**
+ * Represents a single commit in the history.
+ */
+export interface Commit {
+	hash: string;
+	type: string; // Usually 'commit'
+	author: CommitAuthor;
+	date: string; // ISO 8601 format date string
+	message: string;
+	links: {
+		self?: { href: string };
+		html?: { href: string };
+		diff?: { href: string };
+		approve?: { href: string };
+		comments?: { href: string };
+	};
+	summary?: {
+		raw?: string;
+		markup?: string; // e.g., 'markdown'
+		html?: string;
+	};
+	parents: Array<{ hash: string; type: string; links: unknown }>;
+}
+
+/**
+ * API response for listing commits (paginated).
+ */
+export interface PaginatedCommits {
+	pagelen: number;
+	page: number;
+	size: number;
+	next?: string;
+	previous?: string;
+	values: Commit[];
+}
