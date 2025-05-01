@@ -1,3 +1,22 @@
+# [1.18.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.3...v1.18.0) (2025-05-01)
+
+
+### Bug Fixes
+
+* correct option flag format for get-commit-history command ([c97ad6f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c97ad6f25675d19eea953db08c49daad3a84ada6))
+* remove unused configuration objects to reduce dead code ([f51dc65](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f51dc6502282c38fd54a8ec6f885f34165c1aa97))
+* remove unused formatRelativeTime function for cleaner codebase ([6663157](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/666315765dce68e2ff4cb41c5a9e61580e8504ba))
+
+
+### Features
+
+* add commit history tool and cli command ([811c155](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/811c1559c1b7a7fbb32fa45a37cbebebc3b225f6))
+
+
+### Performance Improvements
+
+* streamline Bitbucket tool descriptions for better AI consumption ([1136c3f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1136c3f5f91dda81c34fde0c63e261c670b938cc))
+
 ## [1.17.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.2...v1.17.3) (2025-05-01)
 
 
