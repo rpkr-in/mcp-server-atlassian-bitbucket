@@ -1,3 +1,11 @@
+## [1.17.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.2...v1.17.3) (2025-05-01)
+
+
+### Bug Fixes
+
+* standardize on 'create' verb for PR comments ([d3443ea](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d3443eac077fb2a93c77fc41df478a37c04d8709))
+* Standardize on 'create' verb for PR comments ([cdcfb66](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/cdcfb663db8fb86d4c1f463114f697b77ffb7519))
+
 ## [1.17.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.1...v1.17.2) (2025-04-30)
 
 
