@@ -127,7 +127,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace (\`workspaceSlug\`), optionally filtering by name (\`query\`), user role (\`role\`), or sorting (\`sort\`).\n- Use this to discover repositories and find their \`repoSlug\` needed for other repository or PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of repositories including name, full name, owner, description, privacy status, dates, and URL.`,
+		`Lists repositories within a workspace identified by \`workspaceSlug\`. Supports filtering by name using \`query\`, user access level with \`role\`, and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs needed for other repository operations.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -135,7 +135,7 @@ function registerTools(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'bb_get_repo',
-		`Retrieves detailed information for a specific repository using its slugs (\`workspaceSlug\`, \`repoSlug\`).\n- Includes UUID, owner, description, language, size, dates, and links.\nUse this after finding the repository slugs to get its full details.\nReturns detailed repository information formatted as Markdown.`,
+		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including UUID, owner information, description, primary language, size, creation date, last updated time, and relevant links. Use this after discovering a repository's slug to get its complete details.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);

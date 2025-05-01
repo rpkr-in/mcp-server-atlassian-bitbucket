@@ -280,7 +280,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'bb_ls_prs',
-		`Lists pull requests for a repository (\`workspaceSlug\`, \`repoSlug\`), optionally filtering by state (\`state\`) or query text (\`query\`).\n- Use this to find PRs by state (OPEN, MERGED, DECLINED, SUPERSEDED) or search titles/descriptions.\n- Provides \`prId\` values needed for other PR tools.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of pull requests including ID, title, state, author, branches, and description snippet.`,
+		`Lists pull requests for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Allows filtering by \`state\` (OPEN, MERGED, DECLINED, SUPERSEDED) or \`query\` text and supports pagination via \`limit\` and \`cursor\`. Use this to find PRs and their \`prId\` for other tools. Returns a formatted Markdown list including ID, title, state, author, branches, and description snippet.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -288,7 +288,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request details tool
 	server.tool(
 		'bb_get_pr',
-		`Retrieves detailed information for a specific pull request using its ID (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Includes full description, state, author, reviewers, branches, and links to commits/diffs.\nUse this after finding a \`prId\` to get its full context.\nReturns detailed pull request information formatted as Markdown.`,
+		`Retrieves detailed information for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Returns the PR's full description, state, author, reviewers, branches, and links to commits/diffs as formatted Markdown. Use this after finding a \`prId\` to get its complete context.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);
@@ -296,7 +296,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull request comments tool
 	server.tool(
 		'bb_ls_pr_comments',
-		`Lists comments (general and inline) for a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Use this to view review feedback and discussion context.\n- Supports pagination via \`limit\` and \`cursor\`.\nReturns a formatted list of comments including author, date, content, and inline comment context (file path, line).`,
+		`Lists comments (general and inline) for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list of comments including author, date, content, and file context for inline comments. Use this to view review feedback and discussion threads.`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
 	);
@@ -304,7 +304,7 @@ function registerTools(server: McpServer) {
 	// Register the create pull request comment tool
 	server.tool(
 		'bb_create_pr_comment',
-		`Creates a comment (\`content\`) on a specific pull request (\`prId\`) within a repository (\`workspaceSlug\`, \`repoSlug\`).\n- Supports both general PR comments and inline code comments via the optional \`inline\` object ({ path, line }).\nUse to provide feedback or participate in PR discussions.\nReturns a confirmation message upon success.`,
+		`Creates a comment with specified \`content\` on a pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports both general PR comments and inline code comments via the optional \`inline\` object with \`path\` and \`line\` properties. Returns a confirmation message as Markdown upon successful creation.`,
 		CreatePullRequestCommentToolArgs.shape,
 		createPullRequestComment,
 	);
@@ -312,7 +312,7 @@ function registerTools(server: McpServer) {
 	// Register the tool for creating pull requests
 	server.tool(
 		'bb_create_pr',
-		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a title (\`title\`) and source branch (\`sourceBranch\`).\n- Optionally specify destination branch (\`destinationBranch\`, defaults usually to main/master), description (\`description\`),\n- and whether to close the source branch on merge (\`closeSourceBranch\`).\nUse this to initiate code review for a feature or bugfix branch.\nReturns formatted details of the newly created pull request.`,
+		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a \`title\` from \`sourceBranch\` to \`destinationBranch\` (defaults to main/master). Optionally includes a \`description\` and can automatically close the source branch when merged via \`closeSourceBranch\`. Returns formatted details of the newly created pull request as Markdown.`,
 		CreatePullRequestToolArgs.shape,
 		createPullRequest,
 	);
