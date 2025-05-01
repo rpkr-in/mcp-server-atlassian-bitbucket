@@ -228,7 +228,7 @@ function registerGetCommitHistoryCommand(program: Command): void {
 			'Repository slug to retrieve history from.',
 		)
 		.option(
-			'-rev, --revision <string>',
+			'--rev, --revision <string>',
 			'Optional branch, tag, or commit hash to start history from.',
 		)
 		.option(
