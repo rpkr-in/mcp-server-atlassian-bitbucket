@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.19.3...v1.20.0) (2025-05-02)
+
+
+### Features
+
+* Standardize pagination output in tool content text ([f072ae7](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f072ae74a3ca9bfaecf6eb32ddc01cd35d25718a))
+
 ## [1.19.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.19.2...v1.19.3) (2025-05-02)
 
 
