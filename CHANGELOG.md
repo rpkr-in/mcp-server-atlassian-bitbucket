@@ -1,3 +1,10 @@
+## [1.19.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.19.1...v1.19.2) (2025-05-02)
+
+
+### Bug Fixes
+
+* **bitbucket:** correct repository list formatting and remove redundant title in search ([e32071f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e32071f223e83305de6c1056a97f26e9b352ca3a))
+
 ## [1.19.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.19.0...v1.19.1) (2025-05-02)
 
 
