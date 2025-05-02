@@ -1,3 +1,15 @@
+# [1.19.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.18.0...v1.19.0) (2025-05-02)
+
+
+### Features
+
+* **bitbucket:** add --full-diff option to bb_get_pr tool ([3039fae](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3039faec68ca605898872e87bedec05cc5b1e920))
+
+
+### Performance Improvements
+
+* Update dependencies ([77dcad9](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/77dcad9050c7cd4001af2029bc58d781c1b4d3fe))
+
 # [1.18.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.17.3...v1.18.0) (2025-05-01)
 
 
