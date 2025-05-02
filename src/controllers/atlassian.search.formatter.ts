@@ -4,7 +4,51 @@ import {
 	CommitsResponse,
 	CommitResult,
 } from '../services/vendor.atlassian.search.service.js';
-import { formatDate } from '../utils/formatter.util.js';
+import {
+	formatDate,
+	formatHeading,
+	formatUrl,
+	formatSeparator,
+} from '../utils/formatter.util.js';
+import path from 'path';
+
+/**
+ * Try to guess the language from the file path
+ */
+function getLanguageHint(filePath: string): string {
+	const ext = path.extname(filePath).toLowerCase();
+	const langMap: Record<string, string> = {
+		'.js': 'javascript',
+		'.jsx': 'jsx',
+		'.ts': 'typescript',
+		'.tsx': 'tsx',
+		'.py': 'python',
+		'.java': 'java',
+		'.rb': 'ruby',
+		'.php': 'php',
+		'.cs': 'csharp',
+		'.go': 'go',
+		'.rs': 'rust',
+		'.c': 'c',
+		'.cpp': 'cpp',
+		'.h': 'c',
+		'.hpp': 'cpp',
+		'.tf': 'terraform',
+		'.hcl': 'hcl',
+		'.sh': 'bash',
+		'.zsh': 'zsh',
+		'.json': 'json',
+		'.yaml': 'yaml',
+		'.yml': 'yaml',
+		'.xml': 'xml',
+		'.md': 'markdown',
+		'.sql': 'sql',
+		'.dockerfile': 'dockerfile',
+		dockerfile: 'dockerfile',
+		'.gitignore': 'gitignore',
+	};
+	return langMap[ext] || '';
+}
 
 /**
  * Format a single code search result into markdown
@@ -13,21 +57,25 @@ import { formatDate } from '../utils/formatter.util.js';
  * @returns Formatted markdown string
  */
 function formatCodeSearchResult(result: CodeSearchResult): string {
-	// Format the file path with matches highlighted
-	const pathFormatted = result.path_matches
-		.map((part) => (part.match ? `**${part.text}**` : part.text))
-		.join('');
+	// Format the file path - No highlighting needed here
+	const filePath = result.file.path || 'Unknown File'; // <-- Use direct path
+
+	// Fix the link text
+	const fileLink = result.file.links?.self?.href
+		? formatUrl(result.file.links.self.href, filePath) // Use filePath for link text
+		: filePath;
 
 	// Build markdown output
-	let markdown = `### [${pathFormatted}](${result.file.links.self.href})\n\n`;
+	let markdown = `### ${fileLink}\n\n`; // Use fixed fileLink
 
 	// Add match summary
 	markdown += `${result.content_match_count} ${
 		result.content_match_count === 1 ? 'match' : 'matches'
 	} found\n\n`;
 
-	// Add code blocks with matched content
-	markdown += '```\n';
+	// Get language hint for code block
+	const langHint = getLanguageHint(filePath);
+	markdown += '```' + langHint + '\n'; // Add language hint
 
 	// Process each content match
 	result.content_matches.forEach((contentMatch) => {
@@ -39,10 +87,9 @@ function formatCodeSearchResult(result: CodeSearchResult): string {
 			// Process segments (some may be highlighted matches)
 			if (line.segments.length) {
 				line.segments.forEach((segment) => {
-					// In a code block we can't use bold, so use a different
-					// representation for matches (e.g., adding >>> <<< around matches)
+					// Use standard bold markdown for highlighting
 					markdown += segment.match
-						? `>>>${segment.text}<<<`
+						? `**${segment.text}**` // <-- Changed highlighting
 						: segment.text;
 				});
 			}
@@ -50,7 +97,10 @@ function formatCodeSearchResult(result: CodeSearchResult): string {
 			markdown += '\n';
 		});
 
-		markdown += '\n';
+		// Add space between match groups only if there are multiple lines shown
+		if (contentMatch.lines.length > 1) {
+			markdown += '\n';
+		}
 	});
 
 	markdown += '```\n\n';
@@ -120,30 +170,36 @@ function formatCommitResult(commit: CommitResult): string {
  * Format commits search results into markdown
  *
  * @param response The commits response from the API
- * @param repoSlug The repository slug
- * @param workspaceSlug The workspace slug
+ * @param repoSlug The repository slug (if applicable)
+ * @param workspaceSlug The workspace slug (if applicable)
  * @returns Markdown formatted string of commits search results
  */
 export function formatCommitsResults(
 	response: CommitsResponse,
-	repoSlug: string,
-	workspaceSlug: string,
+	repoSlug?: string,
+	workspaceSlug?: string,
 ): string {
 	if (!response.values || response.values.length === 0) {
 		return '**No commits found matching your query.**\n\n';
 	}
 
-	// Count the number of commits
-	const commitCount = response.values.length;
+	const commitCount = response.size || response.values.length;
+	let header = 'Commit Search Results';
+	if (workspaceSlug && repoSlug) {
+		header = `Commit Search Results in ${workspaceSlug}/${repoSlug}`;
+	} else if (workspaceSlug) {
+		header = `Commit Search Results in Workspace ${workspaceSlug}`;
+	}
 
-	// Start with a header and summary
-	let markdown = `# Commits in ${workspaceSlug}/${repoSlug}\n\n`;
-	markdown += `## Search Results\n\nFound ${commitCount} commits matching your query.\n\n`;
+	let markdown = formatHeading(header, 1) + '\n\n';
+	markdown += `Found ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} matching your query.\n\n`;
 
-	// Format each result
-	response.values.forEach((commit) => {
+	response.values.forEach((commit, index) => {
 		markdown += formatCommitResult(commit);
-		markdown += '---\n\n';
+		// Add a single separator unless it's the last item
+		if (index < response.values.length - 1) {
+			markdown += '\n' + formatSeparator() + '\n\n'; // Ensure single separator and spacing
+		}
 	});
 
 	return markdown;
