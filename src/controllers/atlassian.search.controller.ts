@@ -13,6 +13,7 @@ import {
 	formatCommitsResults,
 } from './atlassian.search.formatter.js';
 import atlassianSearchService from '../services/vendor.atlassian.search.service.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 const controllerLogger = Logger.forContext(
 	'controllers/atlassian.search.controller.ts',
@@ -279,20 +280,35 @@ async function search(
 		}
 
 		// Add a summary at the top
-		const summaryContent = `## Search Summary\n\nFound ${totalCount} results for query "${query}" in workspace "${workspaceSlug}".\n\n${combinedContent}`;
+		let summaryContent = `## Search Summary\n\nFound ${totalCount} results for query "${query}" in workspace "${workspaceSlug}".\n\n${combinedContent}`;
 
 		// Create pagination response
 		const pagination: ResponsePagination = {
 			count: totalCount,
 			hasMore,
-			// We don't have a proper way to combine cursors from both sources,
-			// so we just use one of them if available (not ideal but functional)
 			nextCursor:
 				(repoResults.pagination as ResponsePagination | undefined)
 					?.nextCursor ||
 				(prResults.pagination as ResponsePagination | undefined)
 					?.nextCursor,
+			// Note: Total is not easily available when combining results
 		};
+
+		// Format pagination string using the combined pagination info
+		const formattedPagination =
+			pagination.count !== undefined
+				? formatPagination(
+						pagination.count,
+						pagination.hasMore,
+						pagination.nextCursor,
+						pagination.total, // Will be undefined here
+					)
+				: '';
+
+		// Append formatted pagination to the summary content
+		if (formattedPagination) {
+			summaryContent += `\n\n${formattedPagination}`;
+		}
 
 		methodLogger.debug(
 			'Successfully retrieved and formatted search results',
@@ -300,8 +316,8 @@ async function search(
 		);
 
 		return {
-			content: summaryContent,
-			pagination,
+			content: summaryContent, // Return the content with pagination appended
+			pagination, // Keep the combined pagination object
 		};
 	} catch (error) {
 		return handleControllerError(error, {

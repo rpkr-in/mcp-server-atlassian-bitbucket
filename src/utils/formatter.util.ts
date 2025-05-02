@@ -3,6 +3,10 @@
  * These functions should be used by all formatters to ensure consistent formatting.
  */
 
+import { Logger } from './logger.util.js'; // Ensure logger is imported
+
+const formatterLogger = Logger.forContext('utils/formatter.util.ts'); // Define logger instance
+
 /**
  * Format a date in a standardized way: YYYY-MM-DD HH:MM:SS UTC
  * @param dateString - ISO date string or Date object
@@ -44,21 +48,46 @@ export function formatUrl(url?: string, title?: string): string {
 
 /**
  * Format pagination information in a standardized way
- * @param totalItems - Number of items in the current result set
+ * @param count - Number of items in the current result set
  * @param hasMore - Whether there are more results available
  * @param nextCursor - Cursor for the next page of results
+ * @param total - Total number of items (optional)
  * @returns Formatted pagination information
  */
 export function formatPagination(
-	totalItems: number,
+	count: number,
 	hasMore: boolean,
 	nextCursor?: string,
+	total?: number, // Add optional total parameter
 ): string {
-	if (!hasMore) {
-		return `*Showing ${totalItems} item${totalItems === 1 ? '' : 's'}.*`;
+	const methodLogger = formatterLogger.forMethod('formatPagination');
+	const parts: string[] = [];
+
+	// Showing count and potentially total
+	if (total !== undefined && total > 0) {
+		parts.push(`*Showing ${count} of ${total} total items.*`);
+	} else if (count > 0) {
+		parts.push(`*Showing ${count} item${count !== 1 ? 's' : ''}.*`);
+	} else if (total === 0) {
+		parts.push('*Showing 0 of 0 total items.*'); // Handle zero total case
+	} else {
+		// If count is 0 and total is undefined, perhaps don't show count message
+		// parts.push('*Showing 0 items.*');
 	}
 
-	return `*Showing ${totalItems} item${totalItems === 1 ? '' : 's'}. More results are available.*\n\nTo see more results, use --cursor "${nextCursor}"`;
+	// More results availability
+	if (hasMore) {
+		parts.push('More results are available.');
+	}
+
+	// Prompt for next cursor
+	if (hasMore && nextCursor) {
+		parts.push(`\nTo see more results, use --cursor "${nextCursor}"`);
+	}
+
+	const result = parts.join(' ').trim(); // Join with space, trim ends
+	methodLogger.debug(`Formatted pagination: ${result}`);
+	return result;
 }
 
 /**

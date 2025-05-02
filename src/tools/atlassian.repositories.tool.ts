@@ -151,7 +151,6 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
-			metadata: { pagination: result.pagination }, // Include pagination in metadata
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get commit history', error);
