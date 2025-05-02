@@ -51,6 +51,8 @@ Generate one from [Bitbucket App Passwords](https://bitbucket.org/account/settin
 
 Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
 
+**Note:** While the server _may_ function using an Atlassian API Token (via the standard `ATLASSIAN_*` variables) due to the shared Atlassian account system, **Bitbucket App Passwords are the strongly recommended and officially supported method** for this integration. App Passwords allow for more granular, Bitbucket-specific permission scopes, enhancing security compared to potentially broader-scoped API Tokens.
+
 ---
 
 ## Step 2: Configure Credentials
