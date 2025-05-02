@@ -1,3 +1,10 @@
+## [1.19.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.19.0...v1.19.1) (2025-05-02)
+
+
+### Bug Fixes
+
+* **bitbucket:** improve formatting for bb_search code results ([5469e37](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5469e3734aa02a532668c36468287ecc8a3760b8))
+
 # [1.19.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.18.0...v1.19.0) (2025-05-02)
 
 
