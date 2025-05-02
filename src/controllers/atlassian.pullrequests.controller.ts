@@ -9,10 +9,10 @@ import {
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListPullRequestsOptions,
-	PullRequestIdentifier,
 	ListPullRequestCommentsOptions,
 	CreatePullRequestCommentOptions,
 	CreatePullRequestOptions,
+	GetPullRequestOptions,
 } from './atlassian.pullrequests.types.js';
 import {
 	formatPullRequestsList,
@@ -25,6 +25,7 @@ import {
 	GetPullRequestCommentsParams,
 	CreatePullRequestCommentParams,
 	CreatePullRequestParams,
+	DiffstatResponse,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
@@ -144,17 +145,18 @@ async function list(
 
 /**
  * Get details of a specific Bitbucket pull request, including code changes
- * @param identifier - Object containing pull request identifiers
- * @param identifier.workspaceSlug - The workspace slug containing the repository
- * @param identifier.repoSlug - The repository slug containing the pull request
- * @param identifier.prId - The pull request ID
+ * @param options - Options for retrieving the pull request
+ * @param options.workspaceSlug - The workspace slug containing the repository
+ * @param options.repoSlug - The repository slug containing the pull request
+ * @param options.prId - The pull request ID
+ * @param options.fullDiff - Optional flag to retrieve the full diff
  * @returns Promise with formatted pull request details content, including code changes
  * @throws Error if pull request retrieval fails
  */
 async function get(
-	identifier: PullRequestIdentifier,
+	options: GetPullRequestOptions,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, prId } = identifier;
+	const { workspaceSlug, repoSlug, prId, fullDiff } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'get',
@@ -162,6 +164,7 @@ async function get(
 
 	methodLogger.debug(
 		`Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
+		options,
 	);
 
 	try {
@@ -172,24 +175,33 @@ async function get(
 			pull_request_id: parseInt(prId, 10),
 		};
 
-		// Fetch pull request details, diffstat, and raw diff in parallel for better performance
-		const [pullRequestData, diffstatData, rawDiff] = await Promise.all([
-			atlassianPullRequestsService.get(params),
-			atlassianPullRequestsService.getDiffstat(params).catch((error) => {
-				// Log but don't fail if diffstat can't be retrieved
-				methodLogger.warn(
-					`Failed to retrieve diffstat: ${error.message}`,
-				);
-				return null;
-			}),
-			atlassianPullRequestsService.getRawDiff(params).catch((error) => {
-				// Log but don't fail if diff can't be retrieved
-				methodLogger.warn(
-					`Failed to retrieve raw diff: ${error.message}`,
-				);
-				return null;
-			}),
-		]);
+		// Fetch PR details first
+		const pullRequestData = await atlassianPullRequestsService.get(params);
+
+		// Conditionally fetch diffstat or full diff
+		let diffstatData: DiffstatResponse | null = null;
+		let rawDiff: string | null = null;
+
+		if (fullDiff) {
+			try {
+				rawDiff = await atlassianPullRequestsService.getRawDiff(params);
+				methodLogger.debug('Retrieved full raw diff.');
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : String(error);
+				methodLogger.warn(`Failed to retrieve raw diff: ${message}`);
+			}
+		} else {
+			try {
+				diffstatData =
+					await atlassianPullRequestsService.getDiffstat(params);
+				methodLogger.debug('Retrieved diffstat.');
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : String(error);
+				methodLogger.warn(`Failed to retrieve diffstat: ${message}`);
+			}
+		}
 
 		methodLogger.debug(`Retrieved pull request: ${pullRequestData.id}`);
 
@@ -207,9 +219,15 @@ async function get(
 		// Use the standardized error handler
 		handleControllerError(error, {
 			entityType: 'Pull Request',
-			entityId: identifier,
+			entityId: prId,
 			operation: 'retrieving',
 			source: 'controllers/atlassian.pullrequests.controller.ts@get',
+			additionalInfo: {
+				workspaceSlug,
+				repoSlug,
+				prId,
+				fullDiff: !!fullDiff,
+			},
 		});
 	}
 }

@@ -95,6 +95,7 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
+			fullDiff: args.fullDiff,
 		});
 
 		methodLogger.debug(
@@ -288,7 +289,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request details tool
 	server.tool(
 		'bb_get_pr',
-		`Retrieves detailed information for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Returns the PR's full description, state, author, reviewers, branches, and links to commits/diffs as formatted Markdown. Use this after finding a \`prId\` to get its complete context.`,
+		`Retrieves detailed information for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Returns the PR's full description, state, author, reviewers, branches, links, and either diff statistics or the full code diff if \`fullDiff\` is set to true. Use this after finding a \`prId\` to get its complete context and review changes.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);

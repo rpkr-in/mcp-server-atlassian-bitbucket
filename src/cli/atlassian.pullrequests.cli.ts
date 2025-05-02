@@ -3,7 +3,10 @@ import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
 import { formatPagination } from '../utils/formatter.util.js';
-import { ListPullRequestsOptions } from '../controllers/atlassian.pullrequests.types.js';
+import {
+	ListPullRequestsOptions,
+	GetPullRequestOptions,
+} from '../controllers/atlassian.pullrequests.types.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -220,6 +223,10 @@ function registerGetPullRequestCommand(program: Command): void {
 			'-p, --pr-id <id>',
 			'Numeric ID of the pull request to retrieve as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		)
+		.option(
+			'--full-diff',
+			'Optional: Retrieve the full diff instead of summary',
+		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
@@ -229,10 +236,11 @@ function registerGetPullRequestCommand(program: Command): void {
 				actionLogger.debug('Processing command options:', options);
 
 				// Map CLI options to controller format
-				const params = {
+				const params: GetPullRequestOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					prId: options.prId,
+					fullDiff: options.fullDiff,
 				};
 
 				const result =

@@ -21,6 +21,31 @@ export interface PullRequestIdentifier extends EntityIdentifier {
 }
 
 /**
+ * Options for getting a specific Bitbucket pull request
+ */
+export interface GetPullRequestOptions {
+	/**
+	 * The workspace slug
+	 */
+	workspaceSlug: string;
+
+	/**
+	 * The repository slug
+	 */
+	repoSlug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	prId: string;
+
+	/**
+	 * Optional: If true, retrieve the full diff instead of summary stats
+	 */
+	fullDiff?: boolean;
+}
+
+/**
  * Options for listing Bitbucket pull requests
  */
 export interface ListPullRequestsOptions extends PaginationOptions {

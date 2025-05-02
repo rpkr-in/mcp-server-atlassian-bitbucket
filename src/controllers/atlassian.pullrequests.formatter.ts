@@ -191,7 +191,7 @@ export function formatPullRequestDetails(
 	// Detailed Diff Content
 	if (rawDiff) {
 		lines.push('');
-		lines.push(formatHeading('Code Changes', 2));
+		lines.push(formatHeading('Code Changes (Full Diff)', 2));
 		lines.push(formatDiff(rawDiff));
 	}
 

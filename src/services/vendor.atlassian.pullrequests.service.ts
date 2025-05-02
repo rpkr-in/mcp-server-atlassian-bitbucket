@@ -468,10 +468,10 @@ async function getRawDiff(params: GetPullRequestParams): Promise<string> {
 	methodLogger.debug(`Sending request to: ${path}`);
 
 	// Override the Accept header to get raw diff content instead of JSON
+	// The transport utility handles the text response automatically
 	return fetchAtlassian<string>(credentials, path, {
 		headers: {
 			Accept: 'text/plain',
-			'Content-Type': 'text/plain',
 		},
 	});
 }

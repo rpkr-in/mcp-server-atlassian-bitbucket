@@ -109,6 +109,16 @@ export const GetPullRequestToolArgs = z.object({
 		.describe(
 			'Numeric ID of the pull request to retrieve as a string. Must be a valid pull request ID in the specified repository. Example: "42"',
 		),
+
+	/**
+	 * Optional flag to request the full diff
+	 */
+	fullDiff: z
+		.boolean()
+		.optional()
+		.describe(
+			'Optional: If true, retrieves the full diff content instead of just the summary. Default: false',
+		),
 });
 
 export type GetPullRequestToolArgsType = z.infer<typeof GetPullRequestToolArgs>;
