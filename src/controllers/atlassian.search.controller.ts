@@ -264,7 +264,7 @@ async function search(
 		let hasMore = false;
 
 		if (scope === 'all' || scope === 'repositories') {
-			combinedContent += `# Repository Search Results\n\n${repoResults.content}\n\n`;
+			combinedContent += `${repoResults.content}\n\n`;
 			totalCount += repoResults.pagination?.count || 0;
 			hasMore = hasMore || repoResults.pagination?.hasMore || false;
 		}

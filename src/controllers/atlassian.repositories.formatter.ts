@@ -31,7 +31,7 @@ export function formatRepositoriesList(
 	const lines: string[] = [formatHeading('Bitbucket Repositories', 1), ''];
 
 	// Format each repository with its details
-	const formattedList = formatNumberedList(repositories, (repo, index) => {
+	const formattedList = formatNumberedList(repositories, (repo, _index) => {
 		const itemLines: string[] = [];
 		itemLines.push(formatHeading(repo.name, 2));
 
@@ -57,12 +57,6 @@ export function formatRepositoriesList(
 
 		// Format as a bullet list
 		itemLines.push(formatBulletList(properties, (key) => key));
-
-		// Add separator between repositories except for the last one
-		if (index < repositories.length - 1) {
-			itemLines.push('');
-			itemLines.push(formatSeparator());
-		}
 
 		return itemLines.join('\n');
 	});
