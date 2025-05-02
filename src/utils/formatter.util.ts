@@ -163,9 +163,7 @@ export function formatNumberedList<T>(
 		return 'No items.';
 	}
 
-	return items
-		.map((item, index) => formatter(item, index))
-		.join('\n\n' + formatSeparator() + '\n\n');
+	return items.map((item, index) => formatter(item, index)).join('\n\n');
 }
 
 /**
