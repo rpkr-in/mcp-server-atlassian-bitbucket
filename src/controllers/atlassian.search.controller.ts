@@ -13,7 +13,6 @@ import {
 	formatCommitsResults,
 } from './atlassian.search.formatter.js';
 import atlassianSearchService from '../services/vendor.atlassian.search.service.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 const controllerLogger = Logger.forContext(
 	'controllers/atlassian.search.controller.ts',
@@ -280,7 +279,7 @@ async function search(
 		}
 
 		// Add a summary at the top
-		let summaryContent = `## Search Summary\n\nFound ${totalCount} results for query "${query}" in workspace "${workspaceSlug}".\n\n${combinedContent}`;
+		const summaryContent = `## Search Summary\n\nFound ${totalCount} results for query "${query}" in workspace "${workspaceSlug}".\n\n${combinedContent}`;
 
 		// Create pagination response
 		const pagination: ResponsePagination = {
@@ -294,30 +293,14 @@ async function search(
 			// Note: Total is not easily available when combining results
 		};
 
-		// Format pagination string using the combined pagination info
-		const formattedPagination =
-			pagination.count !== undefined
-				? formatPagination(
-						pagination.count,
-						pagination.hasMore,
-						pagination.nextCursor,
-						pagination.total, // Will be undefined here
-					)
-				: '';
-
-		// Append formatted pagination to the summary content
-		if (formattedPagination) {
-			summaryContent += `\n\n${formattedPagination}`;
-		}
-
 		methodLogger.debug(
 			'Successfully retrieved and formatted search results',
 			{ totalCount, hasMore },
 		);
 
 		return {
-			content: summaryContent, // Return the content with pagination appended
-			pagination, // Keep the combined pagination object
+			content: summaryContent, // Return ONLY the combined content
+			pagination, // Return the combined pagination object separately
 		};
 	} catch (error) {
 		return handleControllerError(error, {
