@@ -1,3 +1,10 @@
+## [1.20.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.2...v1.20.3) (2025-05-04)
+
+
+### Bug Fixes
+
+* **bitbucket:** implement Zod validation and align types ([7611404](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/761140440996878f0170c2e453def84d73f9af94))
+
 ## [1.20.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.1...v1.20.2) (2025-05-04)
 
 
