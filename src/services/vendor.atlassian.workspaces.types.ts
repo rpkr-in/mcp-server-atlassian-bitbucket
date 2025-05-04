@@ -94,22 +94,6 @@ export interface ListWorkspacesParams {
 }
 
 /**
- * Parameters for getting a workspace by ID
- * @remarks This is intentionally left as a Record<string, never> for future extensibility
- */
-export type GetWorkspaceByIdParams = Record<string, never>;
-
-/**
- * API response for listing workspaces
- */
-export interface WorkspacesResponse {
-	pagelen: number;
-	page: number;
-	size: number;
-	values: WorkspaceMembership[];
-}
-
-/**
  * API response for user permissions on workspaces
  */
 export interface WorkspacePermissionsResponse {

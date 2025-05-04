@@ -1,24 +1,4 @@
-import { PaginationOptions, EntityIdentifier } from '../types/common.types.js';
-
-/**
- * Pull request identifier for retrieving specific pull requests
- */
-export interface PullRequestIdentifier extends EntityIdentifier {
-	/**
-	 * The workspace slug
-	 */
-	workspaceSlug: string;
-
-	/**
-	 * The repository slug
-	 */
-	repoSlug: string;
-
-	/**
-	 * The pull request ID
-	 */
-	prId: string;
-}
+import { PaginationOptions } from '../types/common.types.js';
 
 /**
  * Options for getting a specific Bitbucket pull request

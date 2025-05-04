@@ -128,5 +128,9 @@ if (require.main === module) {
 
 // Export key utilities for library users
 export { Logger, config };
-export * from './utils/error.util.js';
-export { VERSION, PACKAGE_NAME, CLI_NAME } from './utils/constants.util.js';
+
+// Export only the needed error utilities instead of using re-export
+export { createUnexpectedError } from './utils/error.util.js';
+
+// Only export the constants that are actually used
+export { VERSION, PACKAGE_NAME } from './utils/constants.util.js';

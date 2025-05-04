@@ -204,8 +204,3 @@ export function formatCommitsResults(
 
 	return markdown;
 }
-
-export default {
-	formatCodeSearchResults,
-	formatCommitsResults,
-};
