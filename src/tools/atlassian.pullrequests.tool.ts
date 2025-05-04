@@ -101,7 +101,7 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
-			fullDiff: args.fullDiff,
+			includeFullDiff: args.includeFullDiff,
 		});
 
 		methodLogger.debug(
@@ -295,7 +295,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'bb_ls_prs',
-		`Lists pull requests for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Allows filtering by \`state\` (OPEN, MERGED, DECLINED, SUPERSEDED) or \`query\` text and supports pagination via \`limit\` and \`cursor\`. Use this to find PRs and their \`prId\` for other tools. Returns a formatted Markdown list including ID, title, state, author, branches, and description snippet.`,
+		`Lists pull requests for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Allows filtering by \`state\` (OPEN, MERGED, DECLINED, SUPERSEDED) or \`query\` text and supports pagination via \`limit\` and \`cursor\` (page number). Use this to find PRs and their \`prId\` for other tools. Returns a formatted Markdown list including ID, title, state, author, branches, and description snippet. Requires Bitbucket credentials to be configured.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -303,7 +303,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request details tool
 	server.tool(
 		'bb_get_pr',
-		`Retrieves detailed information for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Returns the PR's full description, state, author, reviewers, branches, links, and either diff statistics or the full code diff if \`fullDiff\` is set to true. Use this after finding a \`prId\` to get its complete context and review changes.`,
+		`Retrieves detailed information for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Returns the PR's full description, state, author, reviewers, branches, links, and either diff statistics or the full code diff if \`includeFullDiff\` is set to true. Use this after finding a \`prId\` to get its complete context and review changes. Requires Bitbucket credentials to be configured.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);
@@ -311,7 +311,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull request comments tool
 	server.tool(
 		'bb_ls_pr_comments',
-		`Lists comments (general and inline) for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list of comments including author, date, content, and file context for inline comments. Use this to view review feedback and discussion threads.`,
+		`Lists comments (general and inline) for a specific pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of comments including author, date, content, and file context for inline comments. Use this to view review feedback and discussion threads. Requires Bitbucket credentials to be configured.`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
 	);
@@ -319,7 +319,7 @@ function registerTools(server: McpServer) {
 	// Register the create pull request comment tool
 	server.tool(
 		'bb_create_pr_comment',
-		`Creates a comment with specified \`content\` on a pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports both general PR comments and inline code comments via the optional \`inline\` object with \`path\` and \`line\` properties. Returns a confirmation message as Markdown upon successful creation.`,
+		`Creates a comment with specified \`content\` on a pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports both general PR comments and inline code comments via the optional \`inline\` object with \`path\` and \`line\` properties. Returns a confirmation message as Markdown upon successful creation. Requires Bitbucket credentials to be configured.`,
 		CreatePullRequestCommentToolArgs.shape,
 		createPullRequestComment,
 	);
@@ -327,7 +327,7 @@ function registerTools(server: McpServer) {
 	// Register the tool for creating pull requests
 	server.tool(
 		'bb_create_pr',
-		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a \`title\` from \`sourceBranch\` to \`destinationBranch\` (defaults to main/master). Optionally includes a \`description\` and can automatically close the source branch when merged via \`closeSourceBranch\`. Returns formatted details of the newly created pull request as Markdown.`,
+		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a \`title\` from \`sourceBranch\` to \`destinationBranch\` (defaults to main/master). Optionally includes a \`description\` and can automatically close the source branch when merged via \`closeSourceBranch\`. Returns formatted details of the newly created pull request as Markdown. Requires Bitbucket credentials to be configured.`,
 		CreatePullRequestToolArgs.shape,
 		createPullRequest,
 	);

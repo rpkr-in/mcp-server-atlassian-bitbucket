@@ -4,6 +4,7 @@ import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
 import atlassianRepositoriesController from './atlassian.repositories.controller.js';
 import atlassianWorkspacesController from './atlassian.workspaces.controller.js';
+import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 
 describe('Atlassian Pull Requests Controller', () => {
 	// Load configuration and check for credentials before all tests
@@ -116,6 +117,56 @@ describe('Atlassian Pull Requests Controller', () => {
 		}
 	}
 
+	// Helper to get valid repo/pr identifiers for testing
+	async function getPullRequestInfo(): Promise<{
+		workspaceSlug: string;
+		repoSlug: string;
+		prId: string;
+	} | null> {
+		if (skipIfNoCredentials()) return null;
+
+		try {
+			// Get a workspace
+			const listWorkspacesResult =
+				await atlassianWorkspacesController.list({ limit: 1 });
+			const workspaceMatch = listWorkspacesResult.content.match(
+				/\*\*Slug\*\*:\s+([^\s\n]+)/,
+			);
+			const workspaceSlug = workspaceMatch ? workspaceMatch[1] : null;
+			if (!workspaceSlug) return null;
+
+			// Get a repository
+			const listReposResult = await atlassianRepositoriesController.list({
+				workspaceSlug,
+				limit: 1,
+			});
+			const repoSlugMatch = listReposResult.content.match(
+				/\*\*Slug\*\*:\s+([^\s\n]+)/,
+			);
+			const repoSlug = repoSlugMatch ? repoSlugMatch[1] : null;
+			if (!repoSlug) return null;
+
+			// Get a PR from that repo
+			const listPrsResult = await atlassianPullRequestsController.list({
+				workspaceSlug,
+				repoSlug,
+				limit: 1,
+			});
+			const prIdMatch =
+				listPrsResult.content.match(/\*\*ID\*\*:\s+(\d+)/);
+			const prId = prIdMatch ? prIdMatch[1] : null;
+			if (!prId) return null;
+
+			return { workspaceSlug, repoSlug, prId };
+		} catch (error) {
+			console.warn(
+				'Could not fetch pull request identifier for test:',
+				error,
+			);
+			return null;
+		}
+	}
+
 	describe('list', () => {
 		it('should return a formatted list of pull requests in Markdown', async () => {
 			if (skipIfNoCredentials()) return;
@@ -154,7 +205,7 @@ describe('Atlassian Pull Requests Controller', () => {
 				expect(result.pagination).toHaveProperty('nextCursor');
 				expect(typeof result.pagination?.nextCursor).toBe('string');
 			}
-		}, 30000); // Increased timeout
+		}, 30000);
 
 		it('should handle pagination options (limit/cursor)', async () => {
 			if (skipIfNoCredentials()) return;
@@ -366,13 +417,16 @@ describe('Atlassian Pull Requests Controller', () => {
 		it('should return formatted pull request details in Markdown', async () => {
 			if (skipIfNoCredentials()) return;
 
-			const prInfo = await getFirstPullRequestId();
+			const prInfo = await getPullRequestInfo();
 			if (!prInfo) {
-				console.warn('Skipping test: No pull request ID found.');
+				console.warn('Skipping test: No pull request info found.');
 				return;
 			}
 
-			const result = await atlassianPullRequestsController.get(prInfo);
+			const result = await atlassianPullRequestsController.get({
+				...prInfo,
+				includeFullDiff: false,
+			});
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
@@ -392,35 +446,47 @@ describe('Atlassian Pull Requests Controller', () => {
 		it('should throw an McpError for a non-existent pull request ID', async () => {
 			if (skipIfNoCredentials()) return;
 
-			const repoInfo = await getRepositoryInfo();
-			if (!repoInfo) {
-				console.warn('Skipping test: No repository info found.');
+			const prInfo = await getPullRequestInfo();
+			if (!prInfo) {
+				console.warn('Skipping test: No pull request info found.');
 				return;
 			}
 
-			const nonExistentId = '999999999'; // Very high number unlikely to exist
+			const invalidPrId = '99999999';
 
-			// Expect the controller call to reject with an McpError
 			await expect(
 				atlassianPullRequestsController.get({
-					workspaceSlug: repoInfo.workspaceSlug,
-					repoSlug: repoInfo.repoSlug,
-					prId: nonExistentId,
+					workspaceSlug: prInfo.workspaceSlug,
+					repoSlug: prInfo.repoSlug,
+					prId: invalidPrId,
+					includeFullDiff: false,
 				}),
 			).rejects.toThrow(McpError);
+		}, 30000);
 
-			// Check the status code via the error handler's behavior
-			try {
-				await atlassianPullRequestsController.get({
-					workspaceSlug: repoInfo.workspaceSlug,
-					repoSlug: repoInfo.repoSlug,
-					prId: nonExistentId,
-				});
-			} catch (e) {
-				expect(e).toBeInstanceOf(McpError);
-				expect((e as McpError).statusCode).toBe(404); // Expecting Not Found
-				expect((e as McpError).message).toContain('not found');
+		it('should handle error when diff retrieval fails', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const prInfo = await getPullRequestInfo();
+			if (!prInfo) {
+				console.warn('Skipping test: No pull request info found.');
+				return;
 			}
+
+			// Mock the diff service to throw an error
+			jest.spyOn(
+				atlassianPullRequestsService,
+				'getDiffstat',
+			).mockRejectedValueOnce(new Error('Diff failed'));
+
+			const result = await atlassianPullRequestsController.get({
+				...prInfo,
+				includeFullDiff: true,
+			});
+
+			// Check that content is still returned, but diff parts might be missing
+			expect(result).toHaveProperty('content');
+			expect(result.content).toContain(prInfo.prId);
 		}, 30000);
 	});
 

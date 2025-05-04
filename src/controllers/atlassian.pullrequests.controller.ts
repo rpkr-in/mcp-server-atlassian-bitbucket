@@ -131,7 +131,7 @@ async function list(
 async function get(
 	options: GetPullRequestToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, prId, fullDiff } = options;
+	const { workspaceSlug, repoSlug, prId, includeFullDiff } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'get',
@@ -139,7 +139,7 @@ async function get(
 
 	methodLogger.debug(
 		`Getting pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
-		{ fullDiff },
+		{ includeFullDiff },
 	);
 
 	try {
@@ -169,7 +169,7 @@ async function get(
 			methodLogger.debug('Retrieved diff statistics');
 
 			// If full diff is requested, get the complete diff content
-			if (fullDiff) {
+			if (includeFullDiff) {
 				diffContent =
 					await atlassianPullRequestsService.getRawDiff(
 						serviceParams,

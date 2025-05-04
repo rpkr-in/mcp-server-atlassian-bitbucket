@@ -76,12 +76,6 @@ async function search(
 			);
 		}
 
-		if (!mergedOptions.query) {
-			return {
-				content: 'Please provide a search query.',
-			};
-		}
-
 		// For scope-specific searches
 		let result: ControllerResponse;
 

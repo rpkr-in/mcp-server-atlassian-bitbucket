@@ -89,6 +89,7 @@ describe('Atlassian Search Controller', () => {
 				workspaceSlug: repoInfo.workspaceSlug,
 				repoSlug: repoInfo.repoSlug,
 				scope: 'all',
+				query: 'initial commit',
 			});
 
 			// Verify the response structure
@@ -120,6 +121,7 @@ describe('Atlassian Search Controller', () => {
 			const result = await atlassianSearchController.search({
 				workspaceSlug: repoInfo.workspaceSlug,
 				scope: 'repositories',
+				query: repoInfo.repoSlug,
 			});
 
 			// Verify the response structure
@@ -150,6 +152,7 @@ describe('Atlassian Search Controller', () => {
 				workspaceSlug: repoInfo.workspaceSlug,
 				repoSlug: repoInfo.repoSlug,
 				scope: 'pullrequests',
+				query: 'test',
 			});
 
 			// Verify the response structure
@@ -212,6 +215,7 @@ describe('Atlassian Search Controller', () => {
 				workspaceSlug: repoInfo.workspaceSlug,
 				scope: 'repositories',
 				limit: 1,
+				query: repoInfo.repoSlug,
 			});
 
 			// If pagination is possible, test cursor-based pagination
@@ -221,6 +225,7 @@ describe('Atlassian Search Controller', () => {
 					scope: 'repositories',
 					limit: 1,
 					cursor: result1.pagination.nextCursor,
+					query: repoInfo.repoSlug,
 				});
 
 				// Both responses should have proper structure
@@ -243,7 +248,8 @@ describe('Atlassian Search Controller', () => {
 			await expect(
 				atlassianSearchController.search({
 					scope: 'repositories',
-					workspaceSlug: '', // Add empty string to trigger validation error
+					workspaceSlug: '',
+					query: 'test',
 				}),
 			).rejects.toThrow(/workspaceSlug.*required/i);
 		}, 10000);
@@ -261,6 +267,7 @@ describe('Atlassian Search Controller', () => {
 			const result = await atlassianSearchController.search({
 				workspaceSlug: repoInfo.workspaceSlug,
 				scope: 'repositories',
+				query: repoInfo.repoSlug,
 			});
 
 			// Verify the response structure
@@ -283,6 +290,7 @@ describe('Atlassian Search Controller', () => {
 			const result = await atlassianSearchController.search({
 				workspaceSlug: repoInfo.workspaceSlug,
 				scope: 'pullrequests',
+				query: 'test',
 				// Intentionally omit repoSlug
 			});
 

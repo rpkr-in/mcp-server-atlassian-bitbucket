@@ -175,7 +175,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace identified by \`workspaceSlug\`. Supports filtering by name using \`query\`, user access level with \`role\`, and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs needed for other repository operations.`,
+		`Lists repositories within a workspace identified by \`workspaceSlug\`. Supports filtering by name using \`query\`, user access level with \`role\`, and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs needed for other repository operations. Requires Bitbucket credentials to be configured.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -183,7 +183,7 @@ function registerTools(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'bb_get_repo',
-		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including UUID, owner information, description, primary language, size, creation date, last updated time, and relevant links. Use this after discovering a repository's slug to get its complete details.`,
+		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including UUID, owner information, description, primary language, size, creation date, last updated time, recent pull requests, and relevant links. Use this after discovering a repository's slug to get its complete details. Requires Bitbucket credentials to be configured.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);
@@ -191,7 +191,7 @@ function registerTools(server: McpServer) {
 	// Register the get commit history tool
 	server.tool(
 		'bb_get_commit_history',
-		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\`. Optionally filters history starting from a specific branch, tag, or hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message.`,
+		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (page number). Optionally filters history starting from a specific branch, tag, or hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message. Requires Bitbucket credentials to be configured.`,
 		GetCommitHistoryToolArgs.shape,
 		handleGetCommitHistory,
 	);

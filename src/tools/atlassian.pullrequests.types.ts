@@ -113,12 +113,13 @@ export const GetPullRequestToolArgs = z.object({
 	/**
 	 * Optional flag to request the full diff
 	 */
-	fullDiff: z
+	includeFullDiff: z
 		.boolean()
 		.optional()
 		.describe(
-			'Optional: If true, retrieves the full diff content instead of just the summary. Default: false',
-		),
+			'Set to true to retrieve the full diff content instead of just the summary. Default: false',
+		)
+		.default(false),
 });
 
 export type GetPullRequestToolArgsType = z.infer<typeof GetPullRequestToolArgs>;

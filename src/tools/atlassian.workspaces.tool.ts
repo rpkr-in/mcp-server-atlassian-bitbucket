@@ -128,7 +128,7 @@ function registerTools(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'bb_ls_workspaces',
-		`Lists Bitbucket workspaces accessible to the user, with pagination support (\`limit\`, \`cursor\`).\n- Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools.\nReturns a formatted list of workspace memberships including name, slug, UUID, permission level, and dates.`,
+		`Lists Bitbucket workspaces accessible to the user. Supports pagination via \`limit\` and \`cursor\` (page number). Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools. Returns a formatted Markdown list of workspace memberships including name, slug, UUID, permission level, and dates. Requires Bitbucket credentials to be configured.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);
@@ -136,7 +136,7 @@ function registerTools(server: McpServer) {
 	// Register the get workspace details tool
 	server.tool(
 		'bb_get_workspace',
-		`Retrieves detailed information about a specific Bitbucket workspace using its slug (\`workspaceSlug\`).\n- Includes UUID, name, type, creation date, and links to related resources (repositories, projects). \nUse this after finding a \`workspaceSlug\` to get its full details.\nReturns detailed workspace information formatted as Markdown.`,
+		`Retrieves detailed information about a specific Bitbucket workspace using its slug (\`workspaceSlug\`). Includes UUID, name, type, creation date, and links to related resources (repositories, projects). Use this after finding a \`workspaceSlug\` to get its full details. Returns detailed workspace information formatted as Markdown. Requires Bitbucket credentials to be configured.`,
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,
 	);

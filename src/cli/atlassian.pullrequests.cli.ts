@@ -150,7 +150,7 @@ function registerGetPullRequestCommand(program: Command): void {
 			'Numeric ID of the pull request to retrieve. Must be a valid pull request ID in the specified repository. Example: "42"',
 		)
 		.option(
-			'-f, --full-diff',
+			'--include-full-diff',
 			'Retrieve the full diff content instead of just the summary. Default: false',
 			false,
 		)
@@ -167,7 +167,7 @@ function registerGetPullRequestCommand(program: Command): void {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					prId: options.prId,
-					fullDiff: options.fullDiff,
+					includeFullDiff: options.includeFullDiff,
 				};
 
 				actionLogger.debug('Fetching pull request:', params);
