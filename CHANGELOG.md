@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.0...v1.21.1) (2025-05-04)
+
+
+### Bug Fixes
+
+* refine tool definitions and parameter naming ([1efb27e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1efb27e51c5b13ed4e548098a8600674f2034fd7))
+
 # [1.21.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.4...v1.21.0) (2025-05-04)
 
 
