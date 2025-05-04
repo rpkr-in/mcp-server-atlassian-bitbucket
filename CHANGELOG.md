@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.4...v1.21.0) (2025-05-04)
+
+
+### Features
+
+* **format:** standardize CLI and Tool output formatting ([2ad3f05](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/2ad3f05e08848271975695bfab7c9bd97a0d2ff0))
+
 ## [1.20.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.3...v1.20.4) (2025-05-04)
 
 
