@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Types for Atlassian Bitbucket Workspaces API
  */
@@ -5,61 +7,64 @@
 /**
  * Workspace type (basic object)
  */
-export type WorkspaceType = 'workspace';
+export const WorkspaceTypeSchema = z.literal('workspace');
+export type WorkspaceType = z.infer<typeof WorkspaceTypeSchema>;
 
 /**
  * Workspace user object
  */
-export interface WorkspaceUser {
-	type: 'user';
-	uuid: string;
-	nickname: string;
-	display_name: string;
-}
+export const WorkspaceUserSchema = z.object({
+	type: z.literal('user'),
+	uuid: z.string(),
+	nickname: z.string(),
+	display_name: z.string(),
+});
+export type WorkspaceUser = z.infer<typeof WorkspaceUserSchema>;
 
 /**
  * Workspace permission type
  */
-export type WorkspacePermission = 'owner' | 'collaborator' | 'member';
-
-/**
- * Workspace membership object
- */
-export interface WorkspaceMembership {
-	type: 'workspace_membership';
-	permission: WorkspacePermission;
-	last_accessed?: string;
-	added_on?: string;
-	user: WorkspaceUser;
-	workspace: Workspace;
-}
+export const WorkspacePermissionSchema = z.enum([
+	'owner',
+	'collaborator',
+	'member',
+]);
+export type WorkspacePermission = z.infer<typeof WorkspacePermissionSchema>;
 
 /**
  * Workspace links object
  */
-export interface WorkspaceLinks {
-	avatar?: { href: string; name?: string };
-	html?: { href: string; name?: string };
-	members?: { href: string; name?: string };
-	owners?: { href: string; name?: string };
-	projects?: { href: string; name?: string };
-	repositories?: { href: string; name?: string };
-	snippets?: { href: string; name?: string };
-	self?: { href: string; name?: string };
-}
+const LinkSchema = z.object({
+	href: z.string(),
+	name: z.string().optional(),
+});
+
+export const WorkspaceLinksSchema = z.object({
+	avatar: LinkSchema.optional(),
+	html: LinkSchema.optional(),
+	members: LinkSchema.optional(),
+	owners: LinkSchema.optional(),
+	projects: LinkSchema.optional(),
+	repositories: LinkSchema.optional(),
+	snippets: LinkSchema.optional(),
+	self: LinkSchema.optional(),
+});
+export type WorkspaceLinks = z.infer<typeof WorkspaceLinksSchema>;
 
 /**
  * Workspace forking mode
  */
-export type WorkspaceForkingMode =
-	| 'allow_forks'
-	| 'no_public_forks'
-	| 'no_forks';
+export const WorkspaceForkingModeSchema = z.enum([
+	'allow_forks',
+	'no_public_forks',
+	'no_forks',
+]);
+export type WorkspaceForkingMode = z.infer<typeof WorkspaceForkingModeSchema>;
 
 /**
  * Workspace object returned from the API
  */
-export interface Workspace {
+export const WorkspaceSchema: z.ZodType<{
 	type: WorkspaceType;
 	uuid: string;
 	name: string;
@@ -70,37 +75,67 @@ export interface Workspace {
 	created_on?: string;
 	updated_on?: string;
 	links: WorkspaceLinks;
-}
+}> = z.object({
+	type: WorkspaceTypeSchema,
+	uuid: z.string(),
+	name: z.string(),
+	slug: z.string(),
+	is_private: z.boolean().optional(),
+	is_privacy_enforced: z.boolean().optional(),
+	forking_mode: WorkspaceForkingModeSchema.optional(),
+	created_on: z.string().optional(),
+	updated_on: z.string().optional(),
+	links: WorkspaceLinksSchema,
+});
+export type Workspace = z.infer<typeof WorkspaceSchema>;
+
+/**
+ * Workspace membership object
+ */
+export const WorkspaceMembershipSchema = z.object({
+	type: z.literal('workspace_membership'),
+	permission: WorkspacePermissionSchema,
+	last_accessed: z.string().optional(),
+	added_on: z.string().optional(),
+	user: WorkspaceUserSchema,
+	workspace: WorkspaceSchema,
+});
+export type WorkspaceMembership = z.infer<typeof WorkspaceMembershipSchema>;
 
 /**
  * Extended workspace object with optional fields
  * @remarks Currently identical to Workspace, but allows for future extension
  */
-export type WorkspaceDetailed = Workspace;
+export const WorkspaceDetailedSchema = WorkspaceSchema;
+export type WorkspaceDetailed = z.infer<typeof WorkspaceDetailedSchema>;
 
 /**
  * Parameters for listing workspaces
  */
-export interface ListWorkspacesParams {
+export const ListWorkspacesParamsSchema = z.object({
 	/**
 	 * Sort parameter
 	 * @deprecated The /2.0/user/permissions/workspaces endpoint does not support sorting,
 	 * despite this parameter being included in the type. Any value provided will be ignored.
 	 */
-	sort?: string;
-	q?: string;
-	page?: number;
-	pagelen?: number;
-}
+	sort: z.string().optional(),
+	q: z.string().optional(),
+	page: z.number().optional(),
+	pagelen: z.number().optional(),
+});
+export type ListWorkspacesParams = z.infer<typeof ListWorkspacesParamsSchema>;
 
 /**
  * API response for user permissions on workspaces
  */
-export interface WorkspacePermissionsResponse {
-	pagelen: number;
-	page: number;
-	size: number;
-	next?: string;
-	previous?: string;
-	values: WorkspaceMembership[];
-}
+export const WorkspacePermissionsResponseSchema = z.object({
+	pagelen: z.number(),
+	page: z.number(),
+	size: z.number(),
+	next: z.string().optional(),
+	previous: z.string().optional(),
+	values: z.array(WorkspaceMembershipSchema),
+});
+export type WorkspacePermissionsResponse = z.infer<
+	typeof WorkspacePermissionsResponseSchema
+>;

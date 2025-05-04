@@ -7,10 +7,9 @@ import {
 } from '../utils/pagination.util.js';
 import { ControllerResponse } from '../types/common.types.js';
 import {
-	ListWorkspacesOptions,
-	GetWorkspaceOptions,
-	WorkspaceIdentifier,
-} from './atlassian.workspaces.types.js';
+	ListWorkspacesToolArgsType,
+	GetWorkspaceToolArgsType,
+} from '../tools/atlassian.workspaces.types.js';
 import {
 	formatWorkspacesList,
 	formatWorkspaceDetails,
@@ -39,7 +38,7 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
  * @returns Promise with formatted workspace list content and pagination information
  */
 async function list(
-	options: ListWorkspacesOptions,
+	options: ListWorkspacesToolArgsType,
 ): Promise<ControllerResponse> {
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.workspaces.controller.ts',
@@ -49,12 +48,12 @@ async function list(
 
 	try {
 		// Create defaults object with proper typing
-		const defaults: Partial<ListWorkspacesOptions> = {
+		const defaults: Partial<ListWorkspacesToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
 
 		// Apply defaults
-		const mergedOptions = applyDefaults<ListWorkspacesOptions>(
+		const mergedOptions = applyDefaults<ListWorkspacesToolArgsType>(
 			options,
 			defaults,
 		);
@@ -93,7 +92,7 @@ async function list(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Workspaces',
 			operation: 'listing',
 			source: 'controllers/atlassian.workspaces.controller.ts@list',
@@ -106,13 +105,11 @@ async function list(
  * Get details of a specific Bitbucket workspace
  * @param identifier - Object containing the workspace slug
  * @param identifier.workspaceSlug - The slug of the workspace to retrieve
- * @param options - Options for retrieving the workspace (not currently used)
  * @returns Promise with formatted workspace details content
  * @throws Error if workspace retrieval fails
  */
 async function get(
-	identifier: WorkspaceIdentifier,
-	options: GetWorkspaceOptions = {},
+	identifier: GetWorkspaceToolArgsType,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug } = identifier;
 	const methodLogger = Logger.forContext(
@@ -145,11 +142,11 @@ async function get(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Workspace',
 			operation: 'retrieving',
 			source: 'controllers/atlassian.workspaces.controller.ts@get',
-			additionalInfo: { options },
+			additionalInfo: { identifier },
 		});
 	}
 }

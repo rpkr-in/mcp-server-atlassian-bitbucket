@@ -1,201 +1,267 @@
+import { z } from 'zod';
+
 /**
  * Types for Atlassian Bitbucket Repositories API
  */
 
+// Link href schema
+const LinkSchema = z.object({
+	href: z.string(),
+	name: z.string().optional(),
+});
+
 /**
  * Repository SCM type
  */
-export type RepositorySCM = 'git' | 'hg';
+export const RepositorySCMSchema = z.enum(['git', 'hg']);
+export type RepositorySCM = z.infer<typeof RepositorySCMSchema>;
 
 /**
  * Repository fork policy
  */
-export type RepositoryForkPolicy =
-	| 'allow_forks'
-	| 'no_public_forks'
-	| 'no_forks';
+export const RepositoryForkPolicySchema = z.enum([
+	'allow_forks',
+	'no_public_forks',
+	'no_forks',
+]);
+export type RepositoryForkPolicy = z.infer<typeof RepositoryForkPolicySchema>;
 
 /**
  * Repository links object
  */
-export interface RepositoryLinks {
-	self?: { href: string; name?: string };
-	html?: { href: string; name?: string };
-	avatar?: { href: string; name?: string };
-	pullrequests?: { href: string; name?: string };
-	commits?: { href: string; name?: string };
-	forks?: { href: string; name?: string };
-	watchers?: { href: string; name?: string };
-	downloads?: { href: string; name?: string };
-	clone?: Array<{ href: string; name?: string }>;
-	hooks?: { href: string; name?: string };
-	issues?: { href: string; name?: string };
-}
+export const RepositoryLinksSchema = z.object({
+	self: LinkSchema.optional(),
+	html: LinkSchema.optional(),
+	avatar: LinkSchema.optional(),
+	pullrequests: LinkSchema.optional(),
+	commits: LinkSchema.optional(),
+	forks: LinkSchema.optional(),
+	watchers: LinkSchema.optional(),
+	downloads: LinkSchema.optional(),
+	clone: z.array(LinkSchema).optional(),
+	hooks: LinkSchema.optional(),
+	issues: LinkSchema.optional(),
+});
+export type RepositoryLinks = z.infer<typeof RepositoryLinksSchema>;
+
+/**
+ * Repository owner links schema
+ */
+const OwnerLinksSchema = z.object({
+	self: LinkSchema.optional(),
+	html: LinkSchema.optional(),
+	avatar: LinkSchema.optional(),
+});
 
 /**
  * Repository owner object
  */
-export interface RepositoryOwner {
-	type: 'user' | 'team';
-	username?: string;
-	display_name?: string;
-	uuid?: string;
-	links?: {
-		self?: { href: string };
-		html?: { href: string };
-		avatar?: { href: string };
-	};
-}
+export const RepositoryOwnerSchema = z.object({
+	type: z.enum(['user', 'team']),
+	username: z.string().optional(),
+	display_name: z.string().optional(),
+	uuid: z.string().optional(),
+	links: OwnerLinksSchema.optional(),
+});
+export type RepositoryOwner = z.infer<typeof RepositoryOwnerSchema>;
 
 /**
  * Repository branch object
  */
-export interface RepositoryBranch {
-	type: 'branch';
-	name: string;
-}
+export const RepositoryBranchSchema = z.object({
+	type: z.literal('branch'),
+	name: z.string(),
+});
+export type RepositoryBranch = z.infer<typeof RepositoryBranchSchema>;
+
+/**
+ * Repository project links schema
+ */
+const ProjectLinksSchema = z.object({
+	self: LinkSchema.optional(),
+	html: LinkSchema.optional(),
+});
 
 /**
  * Repository project object
  */
-export interface RepositoryProject {
-	type: 'project';
-	key: string;
-	uuid: string;
-	name: string;
-	links?: {
-		self?: { href: string };
-		html?: { href: string };
-	};
-}
+export const RepositoryProjectSchema = z.object({
+	type: z.literal('project'),
+	key: z.string(),
+	uuid: z.string(),
+	name: z.string(),
+	links: ProjectLinksSchema.optional(),
+});
+export type RepositoryProject = z.infer<typeof RepositoryProjectSchema>;
 
 /**
  * Repository object returned from the API
  */
-export interface Repository {
-	type: 'repository';
-	uuid: string;
-	full_name: string;
-	name: string;
-	description?: string;
-	is_private: boolean;
-	fork_policy?: RepositoryForkPolicy;
-	created_on?: string;
-	updated_on?: string;
-	size?: number;
-	language?: string;
-	has_issues?: boolean;
-	has_wiki?: boolean;
-	scm: RepositorySCM;
-	owner: RepositoryOwner;
-	mainbranch?: RepositoryBranch;
-	project?: RepositoryProject;
-	links: RepositoryLinks;
-}
+export const RepositorySchema = z.object({
+	type: z.literal('repository'),
+	uuid: z.string(),
+	full_name: z.string(),
+	name: z.string(),
+	description: z.string().optional(),
+	is_private: z.boolean(),
+	fork_policy: RepositoryForkPolicySchema.optional(),
+	created_on: z.string().optional(),
+	updated_on: z.string().optional(),
+	size: z.number().optional(),
+	language: z.string().optional(),
+	has_issues: z.boolean().optional(),
+	has_wiki: z.boolean().optional(),
+	scm: RepositorySCMSchema,
+	owner: RepositoryOwnerSchema,
+	mainbranch: RepositoryBranchSchema.optional(),
+	project: RepositoryProjectSchema.optional(),
+	links: RepositoryLinksSchema,
+});
+export type Repository = z.infer<typeof RepositorySchema>;
 
 /**
  * Extended repository object with optional fields
  * @remarks Currently identical to Repository, but allows for future extension
  */
-export type RepositoryDetailed = Repository;
+export const RepositoryDetailedSchema = RepositorySchema;
+export type RepositoryDetailed = z.infer<typeof RepositoryDetailedSchema>;
 
 /**
  * Parameters for listing repositories
  */
-export interface ListRepositoriesParams {
-	workspace: string;
-	q?: string;
-	sort?: string;
-	page?: number;
-	pagelen?: number;
-}
+export const ListRepositoriesParamsSchema = z.object({
+	workspace: z.string(),
+	q: z.string().optional(),
+	sort: z.string().optional(),
+	page: z.number().optional(),
+	pagelen: z.number().optional(),
+	role: z.string().optional(),
+});
+export type ListRepositoriesParams = z.infer<
+	typeof ListRepositoriesParamsSchema
+>;
 
 /**
  * Parameters for getting a repository by identifier
  */
-export interface GetRepositoryParams {
-	workspace: string;
-	repo_slug: string;
-}
+export const GetRepositoryParamsSchema = z.object({
+	workspace: z.string(),
+	repo_slug: z.string(),
+});
+export type GetRepositoryParams = z.infer<typeof GetRepositoryParamsSchema>;
 
 /**
  * API response for listing repositories
  */
-export interface RepositoriesResponse {
-	pagelen: number;
-	page: number;
-	size: number;
-	next?: string;
-	previous?: string;
-	values: Repository[];
-}
+export const RepositoriesResponseSchema = z.object({
+	pagelen: z.number(),
+	page: z.number(),
+	size: z.number(),
+	next: z.string().optional(),
+	previous: z.string().optional(),
+	values: z.array(RepositorySchema),
+});
+export type RepositoriesResponse = z.infer<typeof RepositoriesResponseSchema>;
 
 // --- Commit History Types ---
 
 /**
  * Parameters for listing commits.
  */
-export interface ListCommitsParams {
-	workspace: string;
-	repo_slug: string;
-	include?: string; // Branch, tag, or hash to include history from
-	exclude?: string; // Branch, tag, or hash to exclude history up to
-	path?: string; // File path to filter commits by
-	page?: number;
-	pagelen?: number;
-}
+export const ListCommitsParamsSchema = z.object({
+	workspace: z.string(),
+	repo_slug: z.string(),
+	include: z.string().optional(), // Branch, tag, or hash to include history from
+	exclude: z.string().optional(), // Branch, tag, or hash to exclude history up to
+	path: z.string().optional(), // File path to filter commits by
+	page: z.number().optional(),
+	pagelen: z.number().optional(),
+});
+export type ListCommitsParams = z.infer<typeof ListCommitsParamsSchema>;
 
 /**
- * Represents the author of a commit.
+ * Commit author user links schema
  */
-export interface CommitAuthor {
-	raw: string; // Raw author string (e.g., "Andi A <andi@example.com>")
-	type: string; // Usually 'author'
-	user?: {
-		display_name?: string;
-		nickname?: string;
-		account_id?: string;
-		uuid?: string;
-		type: string; // Usually 'user'
-		links?: {
-			self?: { href: string };
-			avatar?: { href: string };
-		};
-	};
-}
+const CommitAuthorUserLinksSchema = z.object({
+	self: LinkSchema.optional(),
+	avatar: LinkSchema.optional(),
+});
+
+/**
+ * Commit author user schema
+ */
+const CommitAuthorUserSchema = z.object({
+	display_name: z.string().optional(),
+	nickname: z.string().optional(),
+	account_id: z.string().optional(),
+	uuid: z.string().optional(),
+	type: z.string(), // Usually 'user'
+	links: CommitAuthorUserLinksSchema.optional(),
+});
+
+/**
+ * Commit author schema
+ */
+export const CommitAuthorSchema = z.object({
+	raw: z.string(),
+	type: z.string(), // Usually 'author'
+	user: CommitAuthorUserSchema.optional(),
+});
+export type CommitAuthor = z.infer<typeof CommitAuthorSchema>;
+
+/**
+ * Commit links schema
+ */
+const CommitLinksSchema = z.object({
+	self: LinkSchema.optional(),
+	html: LinkSchema.optional(),
+	diff: LinkSchema.optional(),
+	approve: LinkSchema.optional(),
+	comments: LinkSchema.optional(),
+});
+
+/**
+ * Commit summary schema
+ */
+const CommitSummarySchema = z.object({
+	raw: z.string().optional(),
+	markup: z.string().optional(),
+	html: z.string().optional(),
+});
+
+/**
+ * Commit parent schema
+ */
+const CommitParentSchema = z.object({
+	hash: z.string(),
+	type: z.string(),
+	links: z.unknown(),
+});
 
 /**
  * Represents a single commit in the history.
  */
-export interface Commit {
-	hash: string;
-	type: string; // Usually 'commit'
-	author: CommitAuthor;
-	date: string; // ISO 8601 format date string
-	message: string;
-	links: {
-		self?: { href: string };
-		html?: { href: string };
-		diff?: { href: string };
-		approve?: { href: string };
-		comments?: { href: string };
-	};
-	summary?: {
-		raw?: string;
-		markup?: string; // e.g., 'markdown'
-		html?: string;
-	};
-	parents: Array<{ hash: string; type: string; links: unknown }>;
-}
+export const CommitSchema = z.object({
+	hash: z.string(),
+	type: z.string(), // Usually 'commit'
+	author: CommitAuthorSchema,
+	date: z.string(), // ISO 8601 format date string
+	message: z.string(),
+	links: CommitLinksSchema,
+	summary: CommitSummarySchema.optional(),
+	parents: z.array(CommitParentSchema),
+});
+export type Commit = z.infer<typeof CommitSchema>;
 
 /**
  * API response for listing commits (paginated).
  */
-export interface PaginatedCommits {
-	pagelen: number;
-	page: number;
-	size: number;
-	next?: string;
-	previous?: string;
-	values: Commit[];
-}
+export const PaginatedCommitsSchema = z.object({
+	pagelen: z.number(),
+	page: z.number().optional(),
+	size: z.number().optional(),
+	next: z.string().optional(),
+	previous: z.string().optional(),
+	values: z.array(CommitSchema),
+});
+export type PaginatedCommits = z.infer<typeof PaginatedCommitsSchema>;

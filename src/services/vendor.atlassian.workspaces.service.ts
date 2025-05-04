@@ -1,13 +1,19 @@
-import { createAuthMissingError } from '../utils/error.util.js';
+import { z } from 'zod';
+import {
+	createAuthMissingError,
+	createApiError,
+	McpError,
+} from '../utils/error.util.js';
 import { Logger } from '../utils/logger.util.js';
 import {
 	fetchAtlassian,
 	getAtlassianCredentials,
 } from '../utils/transport.util.js';
 import {
-	WorkspaceDetailed,
-	WorkspacePermissionsResponse,
-	ListWorkspacesParams,
+	WorkspaceDetailedSchema,
+	WorkspacePermissionsResponseSchema,
+	ListWorkspacesParamsSchema,
+	type ListWorkspacesParams,
 } from './vendor.atlassian.workspaces.types.js';
 
 /**
@@ -47,8 +53,8 @@ serviceLogger.debug('Bitbucket workspaces service initialized');
  * @param {string} [params.q] - Filter by workspace name
  * @param {number} [params.page] - Page number
  * @param {number} [params.pagelen] - Number of items per page
- * @returns {Promise<WorkspacePermissionsResponse>} Promise containing the workspaces response with results and pagination info
- * @throws {Error} If Atlassian credentials are missing or API request fails
+ * @returns {Promise<z.infer<typeof WorkspacePermissionsResponseSchema>>} Promise containing the validated workspaces response
+ * @throws {McpError} If validation fails, credentials are missing, or API request fails
  * @example
  * // List workspaces with pagination
  * const response = await list({
@@ -57,12 +63,30 @@ serviceLogger.debug('Bitbucket workspaces service initialized');
  */
 async function list(
 	params: ListWorkspacesParams = {},
-): Promise<WorkspacePermissionsResponse> {
+): Promise<z.infer<typeof WorkspacePermissionsResponseSchema>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.workspaces.service.ts',
 		'list',
 	);
 	methodLogger.debug('Listing Bitbucket workspaces with params:', params);
+
+	// Validate params with Zod
+	try {
+		ListWorkspacesParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to list workspaces:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
+	}
 
 	const credentials = getAtlassianCredentials();
 	if (!credentials) {
@@ -93,7 +117,37 @@ async function list(
 	const path = `${API_PATH}/user/permissions/workspaces${queryString}`;
 
 	methodLogger.debug(`Sending request to: ${path}`);
-	return fetchAtlassian<WorkspacePermissionsResponse>(credentials, path);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData =
+				WorkspacePermissionsResponseSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to list workspaces: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
 }
 
 /**
@@ -104,13 +158,15 @@ async function list(
  * @async
  * @memberof VendorAtlassianWorkspacesService
  * @param {string} workspace - The workspace slug
- * @returns {Promise<WorkspaceDetailed>} Promise containing the detailed workspace information
- * @throws {Error} If Atlassian credentials are missing or API request fails
+ * @returns {Promise<z.infer<typeof WorkspaceDetailedSchema>>} Promise containing the validated workspace information
+ * @throws {McpError} If validation fails, credentials are missing, or API request fails
  * @example
  * // Get workspace details
  * const workspace = await get('my-workspace');
  */
-async function get(workspace: string): Promise<WorkspaceDetailed> {
+async function get(
+	workspace: string,
+): Promise<z.infer<typeof WorkspaceDetailedSchema>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.workspaces.service.ts',
 		'get',
@@ -128,7 +184,36 @@ async function get(workspace: string): Promise<WorkspaceDetailed> {
 	const path = `${API_PATH}/workspaces/${workspace}`;
 
 	methodLogger.debug(`Sending request to: ${path}`);
-	return fetchAtlassian<WorkspaceDetailed>(credentials, path);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData = WorkspaceDetailedSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to get workspace details: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
 }
 
 export default { list, get };

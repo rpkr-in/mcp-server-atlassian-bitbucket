@@ -8,10 +8,10 @@ import {
 } from '../utils/pagination.util.js';
 import { ControllerResponse } from '../types/common.types.js';
 import {
-	ListRepositoriesOptions,
-	RepositoryIdentifier,
-	GetCommitHistoryOptions,
-} from './atlassian.repositories.types.js';
+	ListRepositoriesToolArgsType,
+	GetRepositoryToolArgsType,
+	GetCommitHistoryToolArgsType,
+} from '../tools/atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
 	formatRepositoryDetails,
@@ -44,7 +44,7 @@ controllerLogger.debug('Bitbucket repositories controller initialized');
  * @returns Formatted list of repositories with pagination information
  */
 async function list(
-	options: ListRepositoriesOptions,
+	options: ListRepositoriesToolArgsType,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
@@ -59,13 +59,13 @@ async function list(
 
 	try {
 		// Create defaults object with proper typing
-		const defaults: Partial<ListRepositoriesOptions> = {
+		const defaults: Partial<ListRepositoriesToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 			sort: '-updated_on',
 		};
 
 		// Apply defaults
-		const mergedOptions = applyDefaults<ListRepositoriesOptions>(
+		const mergedOptions = applyDefaults<ListRepositoriesToolArgsType>(
 			options,
 			defaults,
 		);
@@ -116,7 +116,7 @@ async function list(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Repositories',
 			operation: 'listing',
 			source: 'controllers/atlassian.repositories.controller.ts@list',
@@ -131,7 +131,7 @@ async function list(
  * @returns Formatted repository details
  */
 async function get(
-	identifier: RepositoryIdentifier,
+	identifier: GetRepositoryToolArgsType,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug, repoSlug } = identifier;
 	const methodLogger = Logger.forContext(
@@ -197,7 +197,7 @@ async function get(
 			content: formattedRepository,
 		};
 	} catch (error) {
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			source: 'controllers/atlassian.repositories.controller.ts@get',
 			entityType: 'Repository',
 			operation: 'retrieving',
@@ -208,15 +208,13 @@ async function get(
 
 /**
  * Retrieves the commit history for a repository.
- * @param identifier Repository identifier including workspace and repo slug.
- * @param options Optional filtering and pagination options (revision, path, limit, cursor).
+ * @param options Options containing repository identifier and optional filtering parameters
  * @returns Formatted commit history with pagination information.
  */
 async function getCommitHistory(
-	identifier: RepositoryIdentifier,
-	options: GetCommitHistoryOptions = {},
+	options: GetCommitHistoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug } = identifier;
+	const { workspaceSlug, repoSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'getCommitHistory',
@@ -228,10 +226,10 @@ async function getCommitHistory(
 	);
 
 	try {
-		const defaults: Partial<GetCommitHistoryOptions> = {
+		const defaults: Partial<GetCommitHistoryToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
-		const mergedOptions = applyDefaults<GetCommitHistoryOptions>(
+		const mergedOptions = applyDefaults<GetCommitHistoryToolArgsType>(
 			options,
 			defaults,
 		);
@@ -270,11 +268,11 @@ async function getCommitHistory(
 			pagination,
 		};
 	} catch (error) {
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Commit History',
 			operation: 'retrieving',
 			source: 'controllers/atlassian.repositories.controller.ts@getCommitHistory',
-			additionalInfo: { identifier, options },
+			additionalInfo: { options },
 		});
 	}
 }

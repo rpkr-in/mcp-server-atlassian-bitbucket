@@ -1,16 +1,24 @@
-import { createAuthMissingError } from '../utils/error.util.js';
+import { z } from 'zod';
+import {
+	createAuthMissingError,
+	createApiError,
+	McpError,
+} from '../utils/error.util.js';
 import { Logger } from '../utils/logger.util.js';
 import {
 	fetchAtlassian,
 	getAtlassianCredentials,
 } from '../utils/transport.util.js';
 import {
-	RepositoryDetailed,
-	RepositoriesResponse,
-	ListRepositoriesParams,
-	GetRepositoryParams,
-	ListCommitsParams,
-	PaginatedCommits,
+	ListRepositoriesParamsSchema,
+	GetRepositoryParamsSchema,
+	ListCommitsParamsSchema,
+	RepositoriesResponseSchema,
+	RepositoryDetailedSchema,
+	PaginatedCommitsSchema,
+	type ListRepositoriesParams,
+	type GetRepositoryParams,
+	type ListCommitsParams,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -56,15 +64,29 @@ serviceLogger.debug('Bitbucket repositories service initialized');
  */
 async function list(
 	params: ListRepositoriesParams,
-): Promise<RepositoriesResponse> {
+): Promise<z.infer<typeof RepositoriesResponseSchema>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.repositories.service.ts',
 		'list',
 	);
 	methodLogger.debug('Listing Bitbucket repositories with params:', params);
 
-	if (!params.workspace) {
-		throw new Error('Workspace parameter is required');
+	// Validate params with Zod
+	try {
+		ListRepositoriesParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to list repositories:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
 	}
 
 	const credentials = getAtlassianCredentials();
@@ -97,7 +119,36 @@ async function list(
 	const path = `${API_PATH}/repositories/${params.workspace}${queryString}`;
 
 	methodLogger.debug(`Sending request to: ${path}`);
-	return fetchAtlassian<RepositoriesResponse>(credentials, path);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData = RepositoriesResponseSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to list repositories: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
 }
 
 /**
@@ -119,7 +170,9 @@ async function list(
  *   repo_slug: 'my-repo'
  * });
  */
-async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
+async function get(
+	params: GetRepositoryParams,
+): Promise<z.infer<typeof RepositoryDetailedSchema>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.repositories.service.ts',
 		'get',
@@ -128,8 +181,22 @@ async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
 		`Getting Bitbucket repository: ${params.workspace}/${params.repo_slug}`,
 	);
 
-	if (!params.workspace || !params.repo_slug) {
-		throw new Error('Both workspace and repo_slug parameters are required');
+	// Validate params with Zod
+	try {
+		GetRepositoryParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to get repository:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
 	}
 
 	const credentials = getAtlassianCredentials();
@@ -142,7 +209,36 @@ async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}`;
 
 	methodLogger.debug(`Sending request to: ${path}`);
-	return fetchAtlassian<RepositoryDetailed>(credentials, path);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData = RepositoryDetailedSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to get repository details: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
 }
 
 /**
@@ -154,7 +250,7 @@ async function get(params: GetRepositoryParams): Promise<RepositoryDetailed> {
  */
 async function listCommits(
 	params: ListCommitsParams,
-): Promise<PaginatedCommits> {
+): Promise<z.infer<typeof PaginatedCommitsSchema>> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.repositories.service.ts',
 		'listCommits',
@@ -164,8 +260,22 @@ async function listCommits(
 		params,
 	);
 
-	if (!params.workspace || !params.repo_slug) {
-		throw new Error('Both workspace and repo_slug parameters are required');
+	// Validate params with Zod
+	try {
+		ListCommitsParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to list commits:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
 	}
 
 	const credentials = getAtlassianCredentials();
@@ -198,7 +308,36 @@ async function listCommits(
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/commits${queryString}`;
 
 	methodLogger.debug(`Sending commit history request to: ${path}`);
-	return fetchAtlassian<PaginatedCommits>(credentials, path);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData = PaginatedCommitsSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to list commits: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
 }
 
 export default { list, get, listCommits };

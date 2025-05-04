@@ -128,22 +128,9 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 	methodLogger.debug('Getting commit history with args:', args);
 
 	try {
-		// Separate identifier from options
-		const identifier = {
-			workspaceSlug: args.workspaceSlug,
-			repoSlug: args.repoSlug,
-		};
-		const options = {
-			revision: args.revision,
-			path: args.path,
-			limit: args.limit,
-			cursor: args.cursor,
-		};
-
-		const result = await atlassianRepositoriesController.getCommitHistory(
-			identifier, // Pass identifier object
-			options, // Pass options object
-		);
+		// Pass all parameters directly to controller
+		const result =
+			await atlassianRepositoriesController.getCommitHistory(args);
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',

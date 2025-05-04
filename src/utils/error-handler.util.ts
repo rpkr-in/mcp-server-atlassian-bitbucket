@@ -48,7 +48,7 @@ export interface ErrorContext {
  * @param context Context information for better error detection
  * @returns Object containing the error code and status code
  */
-export function detectErrorType(
+function detectErrorType(
 	error: unknown,
 	context: ErrorContext = {},
 ): { code: ErrorCode; statusCode: number } {
@@ -123,7 +123,7 @@ export function detectErrorType(
  * @param originalMessage The original error message
  * @returns User-friendly error message
  */
-export function createUserFriendlyErrorMessage(
+function createUserFriendlyErrorMessage(
 	code: ErrorCode,
 	context: ErrorContext = {},
 	originalMessage?: string,
@@ -193,6 +193,34 @@ export function createUserFriendlyErrorMessage(
 }
 
 /**
+ * Handle CLI errors consistently
+ * @param error The error to handle
+ * @returns Never returns, always ends the process
+ */
+export function handleCliError(error: unknown): never {
+	const methodLogger = Logger.forContext(
+		'utils/error-handler.util.ts',
+		'handleCliError',
+	);
+
+	// Extract error details
+	const errorMessage = error instanceof Error ? error.message : String(error);
+	const statusCode =
+		error instanceof Error && 'statusCode' in error
+			? (error as { statusCode: number }).statusCode
+			: undefined;
+
+	// Log error with source information if available
+	methodLogger.error(`CLI error: ${errorMessage}`, error);
+
+	// Display user-friendly error message to stderr
+	console.error(`Error: ${errorMessage}`);
+
+	// Exit with appropriate status code
+	process.exit(statusCode || 1);
+}
+
+/**
  * Handle controller errors consistently
  * @param error The error to handle
  * @param context Context information for better error messages
@@ -250,3 +278,6 @@ export function handleControllerError(
 	// Throw an appropriate API error with the user-friendly message
 	throw createApiError(message, finalStatusCode, error);
 }
+
+// Export utility functions for use elsewhere
+export { detectErrorType, createUserFriendlyErrorMessage };

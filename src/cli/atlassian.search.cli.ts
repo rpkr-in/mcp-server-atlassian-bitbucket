@@ -20,76 +20,122 @@ function register(program: Command) {
 	program
 		.command('search')
 		.description(
-			'Search for Bitbucket content across various scopes within a workspace.',
+			'Search for content across Bitbucket repositories, pull requests, commits, and code.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the content to search. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug to search in. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.option(
 			'-r, --repo-slug <slug>',
-			'Repository slug to search within. Required for pull requests search. Optional for code search (limits search to the specified repo). Example: "backend-api"',
+			'Optional repository slug to limit the search scope. If omitted, searches across all repositories in the workspace.',
 		)
-		.option(
-			'-q, --query <query>',
-			'Search query to filter results by name, description, or code content. Required for code search. Use this to find specific content matching certain terms.',
+		.requiredOption(
+			'-q, --query <string>',
+			'Search query text. Will match against content based on the selected search scope.',
 		)
 		.option(
 			'-s, --scope <scope>',
-			'Scope of the search. Options include: "repositories" (search only repositories), "pullrequests" (search only pull requests), "commits" (search only commits), "code" (search file content), or "all" (search both repositories and pull requests). Defaults to "all" if not specified.',
+			'Search scope: "repositories", "pullrequests", "commits", "code", or "all" (default).',
+			'all',
 		)
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return (1-100). Use this to control the response size. Useful for pagination or when you only need a few results.',
+			'Maximum number of items to return (1-100). Defaults to 25 if omitted.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results. For repositories and pull requests, this is a cursor string. For code search, this is a page number. Use this to navigate through large result sets.',
+			'Pagination cursor for retrieving the next set of results.',
+		)
+		.option(
+			'-p, --page <number>',
+			'Page number for code search results (alternative to cursor).',
 		)
 		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.search.cli.ts',
+				'search',
+			);
 			try {
-				const actionLogger = cliLogger.forMethod('search');
-				actionLogger.debug(
-					'Executing search command with options:',
-					options,
-				);
+				actionLogger.debug('Processing command options:', options);
 
-				// Parse limit as number if provided
+				// Validate options
 				if (options.limit) {
-					options.limit = parseInt(options.limit, 10);
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
 				}
 
-				// For code search, cursor is actually a page number
-				if (options.scope === 'code' && options.cursor) {
-					options.page = parseInt(options.cursor, 10);
+				if (options.page) {
+					const page = parseInt(options.page, 10);
+					if (isNaN(page) || page <= 0) {
+						throw new Error(
+							'Invalid --page value: Must be a positive integer.',
+						);
+					}
 				}
 
-				// Map CLI options to controller options
-				const controllerOptions = {
+				// Validate scope
+				const validScopes = [
+					'repositories',
+					'pullrequests',
+					'commits',
+					'code',
+					'all',
+				];
+				if (options.scope && !validScopes.includes(options.scope)) {
+					throw new Error(
+						`Invalid scope: "${options.scope}". Must be one of: ${validScopes.join(', ')}`,
+					);
+				}
+
+				// Some scopes require a repository
+				if (
+					(options.scope === 'pullrequests' ||
+						options.scope === 'commits') &&
+					!options.repoSlug
+				) {
+					throw new Error(
+						`The "${options.scope}" scope requires specifying a repository with --repo-slug`,
+					);
+				}
+
+				// Map CLI options to controller params
+				const searchOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					query: options.query,
 					scope: options.scope,
-					limit: options.limit,
+					limit: options.limit
+						? parseInt(options.limit, 10)
+						: undefined,
 					cursor: options.cursor,
-					page: options.page,
+					page: options.page ? parseInt(options.page, 10) : undefined,
 				};
 
+				actionLogger.debug('Searching with options:', searchOptions);
 				const result =
-					await atlassianSearchController.search(controllerOptions);
+					await atlassianSearchController.search(searchOptions);
+				actionLogger.debug('Search completed successfully');
 
 				console.log(result.content);
 
+				// Display pagination information if available
 				if (result.pagination) {
 					console.log(
-						formatPagination(
-							result.pagination.count || 0,
-							result.pagination.hasMore,
-							result.pagination.nextCursor,
-						),
+						'\n' +
+							formatPagination(
+								result.pagination.count ?? 0,
+								result.pagination.hasMore,
+								result.pagination.nextCursor,
+							),
 					);
 				}
 			} catch (error) {
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

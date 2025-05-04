@@ -1,19 +1,11 @@
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
-import { createApiError } from '../utils/error.util.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
 import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
 import { ControllerResponse } from '../types/common.types.js';
-import {
-	ListPullRequestsOptions,
-	ListPullRequestCommentsOptions,
-	CreatePullRequestCommentOptions,
-	CreatePullRequestOptions,
-	GetPullRequestOptions,
-} from './atlassian.pullrequests.types.js';
 import {
 	formatPullRequestsList,
 	formatPullRequestDetails,
@@ -22,17 +14,23 @@ import {
 import {
 	ListPullRequestsParams,
 	GetPullRequestParams,
-	GetPullRequestCommentsParams,
+	GetPullRequestCommentsParams as ListCommentsParams,
 	CreatePullRequestCommentParams,
 	CreatePullRequestParams,
-	DiffstatResponse,
 } from '../services/vendor.atlassian.pullrequests.types.js';
+import {
+	ListPullRequestsToolArgsType,
+	GetPullRequestToolArgsType,
+	ListPullRequestCommentsToolArgsType,
+	CreatePullRequestCommentToolArgsType,
+	CreatePullRequestToolArgsType,
+} from '../tools/atlassian.pullrequests.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
- * Provides functionality for listing pull requests and retrieving pull request details.
+ * Provides functionality for listing, retrieving, and creating pull requests and comments.
  */
 
 // Create a contextualized logger for this file
@@ -44,76 +42,62 @@ const controllerLogger = Logger.forContext(
 controllerLogger.debug('Bitbucket pull requests controller initialized');
 
 /**
- * List Bitbucket pull requests with optional filtering
- * @param options - Options for listing pull requests
- * @param options.workspaceSlug - The workspace slug containing the repository
- * @param options.repoSlug - The repository slug to list pull requests from
- * @param options.state - Pull request state filter
- * @param options.limit - Maximum number of pull requests to return
- * @param options.cursor - Pagination cursor for retrieving the next set of results
- * @returns Promise with formatted pull request list content and pagination information
+ * List Bitbucket pull requests with optional filtering options
+ * @param options - Options for listing pull requests including workspace slug and repo slug
+ * @returns Promise with formatted pull requests list content and pagination information
  */
 async function list(
-	options: ListPullRequestsOptions,
+	options: ListPullRequestsToolArgsType,
 ): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'list',
 	);
-	methodLogger.debug('Listing Bitbucket pull requests...', options);
+
+	methodLogger.debug(
+		`Listing pull requests for ${workspaceSlug}/${repoSlug}...`,
+		options,
+	);
 
 	try {
-		if (!options.workspaceSlug || !options.repoSlug) {
-			throw createApiError(
-				'Both workspaceSlug and repoSlug parameters are required',
-			);
-		}
-
 		// Create defaults object with proper typing
-		const defaults: Partial<ListPullRequestsOptions> = {
+		const defaults: Partial<ListPullRequestsToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
 
 		// Apply defaults
-		const mergedOptions = applyDefaults<ListPullRequestsOptions>(
+		const mergedOptions = applyDefaults<ListPullRequestsToolArgsType>(
 			options,
 			defaults,
 		);
 
-		// Process the query parameter
-		let queryParam: string | undefined;
+		// Format the query for Bitbucket API if provided (using lower-level formatBitbucketQuery)
+		const formattedQuery = mergedOptions.query
+			? formatBitbucketQuery(mergedOptions.query)
+			: undefined;
 
-		// State filter takes precedence over free-text query
-		if (mergedOptions.state) {
-			queryParam = `state="${mergedOptions.state}"`;
-		} else if (mergedOptions.query) {
-			// Format the free-text query using the utility function
-			queryParam = formatBitbucketQuery(mergedOptions.query, 'title');
-		}
-
-		// Map controller filters to service params
+		// Map controller options to service parameters
 		const serviceParams: ListPullRequestsParams = {
-			// Required parameters
-			workspace: mergedOptions.workspaceSlug,
-			repo_slug: mergedOptions.repoSlug,
-
-			// Optional parameters
-			...(queryParam && { q: queryParam }),
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
 			pagelen: mergedOptions.limit,
 			page: mergedOptions.cursor
 				? parseInt(mergedOptions.cursor, 10)
 				: undefined,
+			state: mergedOptions.state,
+			sort: '-updated_on', // Sort by most recently updated first
+			...(formattedQuery && { q: formattedQuery }),
 		};
 
-		methodLogger.debug('Using filters:', serviceParams);
+		methodLogger.debug('Using service parameters:', serviceParams);
 
-		// Call the service to get the pull requests data
 		const pullRequestsData =
 			await atlassianPullRequestsService.list(serviceParams);
 
-		// Log the count of pull requests retrieved
-		const count = pullRequestsData.values?.length || 0;
-		methodLogger.debug(`Retrieved ${count} pull requests`);
+		methodLogger.debug(
+			`Retrieved ${pullRequestsData.values?.length || 0} pull requests`,
+		);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
@@ -130,31 +114,22 @@ async function list(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Pull Requests',
 			operation: 'listing',
 			source: 'controllers/atlassian.pullrequests.controller.ts@list',
-			additionalInfo: {
-				options,
-				workspaceSlug: options.workspaceSlug,
-				repoSlug: options.repoSlug,
-			},
+			additionalInfo: { options },
 		});
 	}
 }
 
 /**
- * Get details of a specific Bitbucket pull request, including code changes
- * @param options - Options for retrieving the pull request
- * @param options.workspaceSlug - The workspace slug containing the repository
- * @param options.repoSlug - The repository slug containing the pull request
- * @param options.prId - The pull request ID
- * @param options.fullDiff - Optional flag to retrieve the full diff
- * @returns Promise with formatted pull request details content, including code changes
- * @throws Error if pull request retrieval fails
+ * Gets detailed information about a specific pull request
+ * @param options - Options containing workspace slug, repo slug, and PR ID
+ * @returns Promise with formatted pull request details content
  */
 async function get(
-	options: GetPullRequestOptions,
+	options: GetPullRequestToolArgsType,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug, repoSlug, prId, fullDiff } = options;
 	const methodLogger = Logger.forContext(
@@ -163,53 +138,57 @@ async function get(
 	);
 
 	methodLogger.debug(
-		`Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
-		options,
+		`Getting pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
+		{ fullDiff },
 	);
 
 	try {
-		// Set up parameters for API calls
-		const params: GetPullRequestParams = {
+		// Map controller options to service parameters
+		const serviceParams: GetPullRequestParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
 			pull_request_id: parseInt(prId, 10),
 		};
 
-		// Fetch PR details first
-		const pullRequestData = await atlassianPullRequestsService.get(params);
+		// First, fetch the basic pull request data
+		const pullRequestData =
+			await atlassianPullRequestsService.get(serviceParams);
 
-		// Conditionally fetch diffstat or full diff
-		let diffstatData: DiffstatResponse | null = null;
-		let rawDiff: string | null = null;
+		methodLogger.debug(
+			`Retrieved pull request: ${pullRequestData.title} (${pullRequestData.id})`,
+		);
 
-		if (fullDiff) {
-			try {
-				rawDiff = await atlassianPullRequestsService.getRawDiff(params);
-				methodLogger.debug('Retrieved full raw diff.');
-			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : String(error);
-				methodLogger.warn(`Failed to retrieve raw diff: ${message}`);
+		// Check if we need to expand the diff details
+		let diffStats = null;
+		let diffContent = null;
+
+		try {
+			// Get the diff statistics
+			diffStats =
+				await atlassianPullRequestsService.getDiffstat(serviceParams);
+			methodLogger.debug('Retrieved diff statistics');
+
+			// If full diff is requested, get the complete diff content
+			if (fullDiff) {
+				diffContent =
+					await atlassianPullRequestsService.getRawDiff(
+						serviceParams,
+					);
+				methodLogger.debug('Retrieved full diff content');
 			}
-		} else {
-			try {
-				diffstatData =
-					await atlassianPullRequestsService.getDiffstat(params);
-				methodLogger.debug('Retrieved diffstat.');
-			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : String(error);
-				methodLogger.warn(`Failed to retrieve diffstat: ${message}`);
-			}
+		} catch (diffError) {
+			methodLogger.warn(
+				'Failed to retrieve diff information:',
+				diffError,
+			);
+			// Continue even if diff retrieval fails
 		}
 
-		methodLogger.debug(`Retrieved pull request: ${pullRequestData.id}`);
-
-		// Format the pull request data with diff information
+		// Format the pull request data for display
 		const formattedPullRequest = formatPullRequestDetails(
 			pullRequestData,
-			diffstatData,
-			rawDiff,
+			diffStats,
+			diffContent,
 		);
 
 		return {
@@ -217,86 +196,67 @@ async function get(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Pull Request',
-			entityId: prId,
 			operation: 'retrieving',
 			source: 'controllers/atlassian.pullrequests.controller.ts@get',
-			additionalInfo: {
-				workspaceSlug,
-				repoSlug,
-				prId,
-				fullDiff: !!fullDiff,
-			},
+			additionalInfo: { workspaceSlug, repoSlug, prId },
 		});
 	}
 }
 
 /**
- * List comments on a specific Bitbucket pull request
- * @param options - Options for listing pull request comments
- * @param options.workspaceSlug - The workspace slug containing the repository
- * @param options.repoSlug - The repository slug containing the pull request
- * @param options.prId - The pull request ID
- * @param options.limit - Maximum number of comments to return
- * @param options.cursor - Pagination cursor for retrieving the next set of results
- * @returns Promise with formatted pull request comments content and pagination information
+ * Lists comments for a specific pull request
+ * @param options - Options containing workspace slug, repo slug, and PR ID
+ * @returns Promise with formatted pull request comments list content and pagination information
  */
 async function listComments(
-	options: ListPullRequestCommentsOptions,
+	options: ListPullRequestCommentsToolArgsType,
 ): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug, prId } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'listComments',
 	);
-	methodLogger.debug('Listing Bitbucket pull request comments...', options);
+
+	methodLogger.debug(
+		`Listing comments for pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
+		options,
+	);
 
 	try {
-		if (!options.workspaceSlug || !options.repoSlug || !options.prId) {
-			throw createApiError(
-				'workspaceSlug, repoSlug, and prId parameters are all required',
-			);
-		}
-
-		// Validate pull request ID
-		const prId = parseInt(options.prId, 10);
-		if (isNaN(prId) || prId <= 0) {
-			throw createApiError('Pull request ID must be a positive integer');
-		}
-
 		// Create defaults object with proper typing
-		const defaults: Partial<ListPullRequestCommentsOptions> = {
+		const defaults: Partial<ListPullRequestCommentsToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
-			sort: '-updated_on',
 		};
 
 		// Apply defaults
-		const mergedOptions = applyDefaults<ListPullRequestCommentsOptions>(
-			options,
-			defaults,
-		);
+		const mergedOptions =
+			applyDefaults<ListPullRequestCommentsToolArgsType>(
+				options,
+				defaults,
+			);
 
-		// Map controller options to service params
-		const serviceParams: GetPullRequestCommentsParams = {
-			workspace: mergedOptions.workspaceSlug,
-			repo_slug: mergedOptions.repoSlug,
-			pull_request_id: prId,
+		// Map controller options to service parameters
+		const serviceParams: ListCommentsParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			pull_request_id: parseInt(prId, 10),
 			pagelen: mergedOptions.limit,
 			page: mergedOptions.cursor
 				? parseInt(mergedOptions.cursor, 10)
 				: undefined,
-			sort: mergedOptions.sort,
 		};
 
 		methodLogger.debug('Using service parameters:', serviceParams);
 
-		// Call the service to get the pull request comments
+		// Get both primary comments and inline comments
 		const commentsData =
 			await atlassianPullRequestsService.getComments(serviceParams);
 
-		// Log the count of comments retrieved
-		const count = commentsData.values?.length || 0;
-		methodLogger.debug(`Retrieved ${count} pull request comments`);
+		methodLogger.debug(
+			`Retrieved ${commentsData.values?.length || 0} comments`,
+		);
 
 		// Extract pagination information using the utility
 		const pagination = extractPaginationInfo(
@@ -313,190 +273,176 @@ async function listComments(
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Pull Request Comments',
 			operation: 'listing',
 			source: 'controllers/atlassian.pullrequests.controller.ts@listComments',
-			additionalInfo: {
-				options,
-				workspaceSlug: options.workspaceSlug,
-				repoSlug: options.repoSlug,
-				prId: options.prId,
-			},
+			additionalInfo: { options },
 		});
 	}
 }
 
 /**
- * Create a comment on a specific Bitbucket pull request
- * @param options - Options for creating a comment on a pull request
- * @param options.workspaceSlug - The workspace slug containing the repository
- * @param options.repoSlug - The repository slug containing the pull request
- * @param options.prId - The pull request ID
- * @param options.content - The content of the comment
- * @param options.inline - Optional inline comment location
- * @returns Promise with the result of adding the comment
+ * Creates a new comment on a pull request
+ * @param options - Options containing workspace slug, repo slug, PR ID, and comment content
+ * @returns Promise with confirmation message content
  */
 async function createComment(
-	options: CreatePullRequestCommentOptions,
+	options: CreatePullRequestCommentToolArgsType,
 ): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug, prId, content, inline } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'createComment',
 	);
+
 	methodLogger.debug(
-		'Creating comment on Bitbucket pull request...',
-		options,
+		`Creating comment on pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
+		{ inline: !!inline },
 	);
 
 	try {
-		if (!options.workspaceSlug || !options.repoSlug || !options.prId) {
-			throw createApiError(
-				'workspaceSlug, repoSlug, and prId parameters are all required',
-			);
-		}
+		// Map controller options to service parameters
+		let inlineParam: { path: string; to?: number } | undefined = undefined;
 
-		if (!options.content) {
-			throw createApiError('Comment content is required');
-		}
-
-		// Validate pull request ID
-		const prId = parseInt(options.prId, 10);
-		if (isNaN(prId) || prId <= 0) {
-			throw createApiError('Pull request ID must be a positive integer');
-		}
-
-		// Map controller options to service params using the renamed type
-		const serviceParams: CreatePullRequestCommentParams = {
-			workspace: options.workspaceSlug,
-			repo_slug: options.repoSlug,
-			pull_request_id: prId,
-			content: {
-				raw: options.content,
-			},
-		};
-
-		// Add inline comment parameters if provided
-		if (options.inline && options.inline.path) {
-			serviceParams['inline'] = {
-				path: options.inline.path,
-				to: options.inline.line,
+		if (inline) {
+			inlineParam = {
+				path: inline.path,
+				to: inline.line,
 			};
 		}
 
-		methodLogger.debug('Using service parameters:', serviceParams);
+		const serviceParams: CreatePullRequestCommentParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			pull_request_id: parseInt(prId, 10),
+			content: {
+				raw: content,
+			},
+			inline: inlineParam,
+		};
 
-		// Call the renamed service function
+		methodLogger.debug('Using service parameters:', {
+			...serviceParams,
+			content: '(content)',
+		});
+
 		const commentData =
 			await atlassianPullRequestsService.createComment(serviceParams);
 
-		methodLogger.debug(`Successfully created comment: ${commentData.id}`);
+		methodLogger.debug('Comment created successfully', {
+			id: commentData.id,
+			created_on: commentData.created_on,
+		});
+
+		// Create a simple confirmation message
+		const confirmationMessage = `Comment #${commentData.id} created successfully on pull request #${prId}.`;
 
 		return {
-			content: `Comment created successfully for pull request #${options.prId}.`,
+			content: confirmationMessage,
 		};
 	} catch (error) {
 		// Use the standardized error handler
-		handleControllerError(error, {
+		throw handleControllerError(error, {
 			entityType: 'Pull Request Comment',
 			operation: 'creating',
 			source: 'controllers/atlassian.pullrequests.controller.ts@createComment',
 			additionalInfo: {
-				options,
-				workspaceSlug: options.workspaceSlug,
-				repoSlug: options.repoSlug,
-				prId: options.prId,
+				workspaceSlug,
+				repoSlug,
+				prId,
+				hasInline: !!inline,
 			},
 		});
 	}
 }
 
 /**
- * Create a new pull request
- * @param options - Options for creating a new pull request
- * @param options.workspaceSlug - Workspace slug containing the repository
- * @param options.repoSlug - Repository slug to create the pull request in
- * @param options.title - Title of the pull request
- * @param options.sourceBranch - Source branch name
- * @param options.destinationBranch - Destination branch name (defaults to the repository's main branch)
- * @param options.description - Optional description for the pull request
- * @param options.closeSourceBranch - Whether to close the source branch after merge
- * @returns Promise with formatted pull request details content
+ * Creates a new pull request in a repository
+ * @param options - Options containing repository and pull request details
+ * @returns Promise with confirmation message content and PR details
  */
 async function create(
-	options: CreatePullRequestOptions,
+	options: CreatePullRequestToolArgsType,
 ): Promise<ControllerResponse> {
+	const {
+		workspaceSlug,
+		repoSlug,
+		title,
+		sourceBranch,
+		destinationBranch,
+		description,
+		closeSourceBranch,
+	} = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'create',
 	);
-	methodLogger.debug('Creating new pull request...', options);
+
+	methodLogger.debug(
+		`Creating pull request in ${workspaceSlug}/${repoSlug}...`,
+		{
+			title,
+			sourceBranch,
+			destinationBranch,
+			hasDescription: !!description,
+			closeSourceBranch,
+		},
+	);
 
 	try {
-		if (!options.workspaceSlug || !options.repoSlug) {
-			throw createApiError(
-				'workspaceSlug and repoSlug parameters are required',
-			);
-		}
-
-		if (!options.title) {
-			throw createApiError('Pull request title is required');
-		}
-
-		if (!options.sourceBranch) {
-			throw createApiError('Source branch is required');
-		}
-
-		// The API requires a destination branch, use default if not provided
-		const destinationBranch = options.destinationBranch || 'main';
-
-		// Map controller options to service params
+		// Map controller options to service parameters
 		const serviceParams: CreatePullRequestParams = {
-			workspace: options.workspaceSlug,
-			repo_slug: options.repoSlug,
-			title: options.title,
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			title: title,
 			source: {
 				branch: {
-					name: options.sourceBranch,
+					name: sourceBranch,
 				},
 			},
 			destination: {
 				branch: {
-					name: destinationBranch,
+					name: destinationBranch || 'main', // Default to 'main' if not specified
 				},
 			},
+			description: description || '',
+			close_source_branch: closeSourceBranch || false,
 		};
 
-		// Add optional parameters if provided
-		if (options.description) {
-			serviceParams.description = options.description;
-		}
+		methodLogger.debug('Using service parameters:', {
+			...serviceParams,
+			description: description ? '(provided)' : '(empty)',
+		});
 
-		if (options.closeSourceBranch !== undefined) {
-			serviceParams.close_source_branch = options.closeSourceBranch;
-		}
-
-		// Call the service to create the pull request
-		const pullRequest =
+		const pullRequestData =
 			await atlassianPullRequestsService.create(serviceParams);
 
-		// Format the created pull request details for response
+		methodLogger.debug('Pull request created successfully', {
+			id: pullRequestData.id,
+			title: pullRequestData.title,
+		});
+
+		// Format pull request details using the existing formatter
+		const formattedPullRequest = formatPullRequestDetails(pullRequestData);
+
 		return {
-			content: formatPullRequestDetails(pullRequest),
+			content: `Pull request #${pullRequestData.id} created successfully.\n\n${formattedPullRequest}`,
 		};
 	} catch (error) {
+		// Use the standardized error handler
 		throw handleControllerError(error, {
 			entityType: 'Pull Request',
-			operation: 'create',
-			source: 'controllers/atlassian.pullrequests.controller.ts',
+			operation: 'creating',
+			source: 'controllers/atlassian.pullrequests.controller.ts@create',
+			additionalInfo: {
+				workspaceSlug,
+				repoSlug,
+				sourceBranch,
+				destinationBranch,
+			},
 		});
 	}
 }
 
-export default {
-	list,
-	get,
-	listComments,
-	createComment,
-	create,
-};
+export default { list, get, listComments, createComment, create };

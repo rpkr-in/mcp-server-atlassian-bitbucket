@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
-import { ListWorkspacesOptions } from '../controllers/atlassian.workspaces.types.js';
 import { formatPagination } from '../utils/formatter.util.js';
 
 /**
@@ -73,18 +72,13 @@ function registerListWorkspacesCommand(program: Command): void {
 					}
 				}
 
-				// Bitbucket API's /2.0/user/permissions/workspaces endpoint does not support sorting
-				// so we don't include sort in the filterOptions even if provided in the CLI args
-				const filterOptions: ListWorkspacesOptions = {};
-
-				// Apply pagination options if provided
-				if (options.limit) {
-					filterOptions.limit = parseInt(options.limit, 10);
-				}
-
-				if (options.cursor) {
-					filterOptions.cursor = options.cursor;
-				}
+				// Map CLI options to controller params
+				const filterOptions = {
+					limit: options.limit
+						? parseInt(options.limit, 10)
+						: undefined,
+					cursor: options.cursor,
+				};
 
 				actionLogger.debug(
 					'Fetching workspaces with filters:',

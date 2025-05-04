@@ -243,8 +243,9 @@ describe('Atlassian Search Controller', () => {
 			await expect(
 				atlassianSearchController.search({
 					scope: 'repositories',
+					workspaceSlug: '', // Add empty string to trigger validation error
 				}),
-			).rejects.toThrow(/workspaceSlug is required/i);
+			).rejects.toThrow(/workspaceSlug.*required/i);
 		}, 10000);
 
 		it('should work without a repoSlug when scope=repositories', async () => {
@@ -332,6 +333,7 @@ describe('Atlassian Search Controller', () => {
 				atlassianSearchController.search({
 					workspaceSlug: invalidWorkspace,
 					scope: 'repositories',
+					query: 'test-query', // Add a query to avoid the query validation error
 				}),
 			).rejects.toThrow();
 		}, 30000);

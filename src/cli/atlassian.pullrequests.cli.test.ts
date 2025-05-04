@@ -497,23 +497,23 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 	describe('create-pr-comment command', () => {
 		it('should display help information', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr-comment',
+				'add-pr-comment',
 				'--help',
 			]);
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain(
-				'Create a comment on a specific Bitbucket pull request',
+				'Add a comment to a specific Bitbucket pull request.',
 			);
 			expect(result.stdout).toContain('--workspace-slug');
 			expect(result.stdout).toContain('--repo-slug');
 			expect(result.stdout).toContain('--pr-id');
 			expect(result.stdout).toContain('--content');
-			expect(result.stdout).toContain('--file');
+			expect(result.stdout).toContain('--path');
 			expect(result.stdout).toContain('--line');
 		});
 
 		it('should require workspace-slug parameter', async () => {
-			const result = await CliTestUtil.runCommand(['create-pr-comment']);
+			const result = await CliTestUtil.runCommand(['add-pr-comment']);
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain('required option');
 			expect(result.stderr).toContain('workspace-slug');
@@ -521,7 +521,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require repo-slug parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr-comment',
+				'add-pr-comment',
 				'--workspace-slug',
 				'codapayments',
 			]);
@@ -532,7 +532,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require pr-id parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr-comment',
+				'add-pr-comment',
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -545,7 +545,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require content parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr-comment',
+				'add-pr-comment',
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -560,7 +560,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should detect incomplete inline comment parameters', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr-comment',
+				'add-pr-comment',
 				'--workspace-slug',
 				'codapayments',
 				'--repo-slug',
@@ -569,12 +569,12 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				'1',
 				'--content',
 				'Test',
-				'--file',
+				'--path',
 				'README.md',
 			]);
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain(
-				'Both --file and --line must be provided',
+				'Both --path and --line are required for inline comments',
 			);
 		});
 
