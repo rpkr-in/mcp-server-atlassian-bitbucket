@@ -1,3 +1,10 @@
+## [1.20.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.3...v1.20.4) (2025-05-04)
+
+
+### Bug Fixes
+
+* update pagination handling in search formatter ([ec8f6ce](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ec8f6ce21660c4e338bc16278fee393c131bc7eb))
+
 ## [1.20.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.2...v1.20.3) (2025-05-04)
 
 
