@@ -125,12 +125,3 @@ if (require.main === module) {
 		process.exit(1);
 	});
 }
-
-// Export key utilities for library users
-export { Logger, config };
-
-// Export only the needed error utilities instead of using re-export
-export { createUnexpectedError } from './utils/error.util.js';
-
-// Only export the constants that are actually used
-export { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
