@@ -1,3 +1,11 @@
+## [1.20.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.1...v1.20.2) (2025-05-04)
+
+
+### Bug Fixes
+
+* Clean up unused exports and types in Bitbucket server ([3d469fc](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3d469fcc2752f8a7eb817d60b04e164901665e3b))
+* Remove re-exports from index.ts ([5ab1bf6](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5ab1bf60d5f8c7e9b572edb093d7e071972fd222))
+
 ## [1.20.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.20.0...v1.20.1) (2025-05-02)
 
 
