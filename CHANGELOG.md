@@ -1,3 +1,10 @@
+## [1.21.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.1...v1.21.2) (2025-05-04)
+
+
+### Bug Fixes
+
+* **search:** Correct query formatting for ls-prs and search scopes ([31d6def](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/31d6def83c27bc1da3d98cbbf94ff16f41161d69))
+
 ## [1.21.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.0...v1.21.1) (2025-05-04)
 
 
