@@ -227,12 +227,14 @@ async function handleCodeSearch(
 			PaginationType.PAGE,
 		);
 
-		// Format the search results for display
-		// Use the current context directly without additional options
-		const formattedResults = formatCodeSearchResults(searchResponse);
+		// Format the code search results
+		const formattedCode = formatCodeSearchResults(
+			searchResponse,
+			pagination,
+		);
 
 		return {
-			content: formattedResults,
+			content: formattedCode,
 			pagination,
 		};
 	} catch (searchError) {
@@ -292,13 +294,12 @@ async function handlePullRequestSearch(
 		);
 
 		// Extract pagination information
-		const pagination = extractPaginationInfo(prData, PaginationType.PAGE);
+		const pagination = extractPaginationInfo(prData, PaginationType.CURSOR);
 
 		// Format the search results
-		const formattedResults = formatPullRequestsList(prData);
-
+		const formattedPrs = formatPullRequestsList(prData, pagination);
 		return {
-			content: `# Pull Request Search Results\n\n${formattedResults}`,
+			content: `# Pull Request Search Results\n\n${formattedPrs}`,
 			pagination,
 		};
 	} catch (error) {
@@ -381,10 +382,10 @@ async function handleRepositorySearch(
 		);
 
 		// Format the search results
-		const formattedResults = formatRepositoriesList(searchData);
+		const formattedRepos = formatRepositoriesList(searchData, pagination);
 
 		return {
-			content: `# Repository Search Results\n\n${formattedResults}`,
+			content: `# Repository Search Results\n\n${formattedRepos}`,
 			pagination,
 		};
 	} catch (searchError) {
@@ -457,6 +458,7 @@ async function handleCommitSearch(
 			searchResponse,
 			repoSlug,
 			workspaceSlug,
+			pagination,
 		);
 
 		return {

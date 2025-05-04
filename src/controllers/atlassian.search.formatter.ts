@@ -1,5 +1,4 @@
 import {
-	CodeSearchResponse,
 	CodeSearchResult,
 	CommitsResponse,
 	CommitResult,
@@ -11,6 +10,7 @@ import {
 	formatSeparator,
 } from '../utils/formatter.util.js';
 import path from 'path';
+import { ResponsePagination } from '../types/common.types.js';
 
 /**
  * Try to guess the language from the file path
@@ -112,20 +112,51 @@ function formatCodeSearchResult(result: CodeSearchResult): string {
  * Format code search results into markdown
  *
  * @param response The code search response from the API
+ * @param pagination Optional pagination info for footer hints
  * @returns Markdown formatted string of code search results
  */
-export function formatCodeSearchResults(response: CodeSearchResponse): string {
-	if (!response.values || response.values.length === 0) {
+export function formatCodeSearchResults(
+	searchResponse: {
+		values?: CodeSearchResult[];
+		size: number;
+	},
+	pagination?: ResponsePagination,
+): string {
+	const results = searchResponse.values || [];
+
+	if (!results || results.length === 0) {
 		return '**No code matches found.**\n\n';
 	}
 
 	// Start with a summary
-	let markdown = `## Code Search Results\n\nFound ${response.size} matches for the code search query.\n\n`;
+	let markdown = `## Code Search Results\n\nFound ${searchResponse.size} matches for the code search query.\n\n`;
 
 	// Format each result
-	response.values.forEach((result) => {
+	results.forEach((result: CodeSearchResult) => {
 		markdown += formatCodeSearchResult(result);
 	});
+
+	// --- Footer ---
+	const footerLines: string[] = [];
+	footerLines.push('---');
+
+	const displayedCount = pagination?.count ?? results.length;
+	// Bitbucket code search uses page-based pagination
+	if (pagination?.hasMore) {
+		footerLines.push(
+			`*Showing ${displayedCount} results. More results are available.*`,
+		);
+		const nextPage = (pagination?.page ?? 1) + 1;
+		footerLines.push(`*Use --page ${nextPage} to view more.*`);
+	} else {
+		footerLines.push(`*Showing ${displayedCount} results.*`);
+	}
+
+	footerLines.push(
+		`*Information retrieved at: ${new Date().toLocaleString()}*`,
+	);
+
+	markdown += '\n' + footerLines.join('\n');
 
 	return markdown;
 }
@@ -172,12 +203,14 @@ function formatCommitResult(commit: CommitResult): string {
  * @param response The commits response from the API
  * @param repoSlug The repository slug (if applicable)
  * @param workspaceSlug The workspace slug (if applicable)
+ * @param pagination Optional pagination info for footer hints
  * @returns Markdown formatted string of commits search results
  */
 export function formatCommitsResults(
 	response: CommitsResponse,
 	repoSlug?: string,
 	workspaceSlug?: string,
+	pagination?: ResponsePagination,
 ): string {
 	if (!response.values || response.values.length === 0) {
 		return '**No commits found matching your query.**\n\n';
@@ -201,6 +234,26 @@ export function formatCommitsResults(
 			markdown += '\n' + formatSeparator() + '\n\n'; // Ensure single separator and spacing
 		}
 	});
+
+	// Add footer with pagination info if provided
+	if (pagination) {
+		markdown += '\n---\n';
+
+		const displayedCount = pagination.count ?? response.values.length;
+		if (pagination.hasMore) {
+			markdown += `*Showing ${displayedCount} results. More results are available.*\n`;
+			if (pagination.page !== undefined) {
+				const nextPage = pagination.page + 1;
+				markdown += `*Use --page ${nextPage} to view more.*\n`;
+			} else if (pagination.nextCursor) {
+				markdown += `*Use --cursor ${pagination.nextCursor} to view more.*\n`;
+			}
+		} else {
+			markdown += `*Showing ${displayedCount} results.*\n`;
+		}
+
+		markdown += `*Information retrieved at: ${new Date().toLocaleString()}*\n`;
+	}
 
 	return markdown;
 }

@@ -78,10 +78,10 @@ describe('Atlassian Repositories Controller', () => {
 			expect(result.pagination).toBeDefined();
 			expect(result.pagination).toHaveProperty('hasMore');
 			expect(typeof result.pagination?.hasMore).toBe('boolean');
-			// nextCursor might be undefined if hasMore is false
+			// For page-based pagination, we should check for 'page' property
 			if (result.pagination?.hasMore) {
-				expect(result.pagination).toHaveProperty('nextCursor');
-				expect(typeof result.pagination?.nextCursor).toBe('string');
+				expect(result.pagination).toHaveProperty('page');
+				expect(typeof result.pagination?.page).toBe('number');
 			}
 		}, 30000); // Increased timeout
 
@@ -103,11 +103,12 @@ describe('Atlassian Repositories Controller', () => {
 			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
 
 			// If there's a next page, fetch it
-			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+			if (result1.pagination?.hasMore && result1.pagination.page) {
+				const nextPage = (result1.pagination.page + 1).toString();
 				const result2 = await atlassianRepositoriesController.list({
 					workspaceSlug,
 					limit: 1,
-					cursor: result1.pagination.nextCursor,
+					cursor: nextPage,
 				});
 				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
 

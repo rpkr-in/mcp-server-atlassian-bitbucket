@@ -32,6 +32,16 @@ export interface ResponsePagination {
 	 * Note: Not all APIs provide this. Check the specific API/tool documentation.
 	 */
 	total?: number;
+
+	/**
+	 * Page number for page-based pagination.
+	 */
+	page?: number;
+
+	/**
+	 * Page size for page-based pagination.
+	 */
+	size?: number;
 }
 
 /**
@@ -82,4 +92,9 @@ export interface ControllerResponse {
 	 * If present, indicates that more results are available.
 	 */
 	pagination?: ResponsePagination;
+
+	/**
+	 * Additional metadata associated with the response.
+	 */
+	metadata?: Record<string, unknown>;
 }

@@ -11,16 +11,18 @@ import {
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
-	formatDate,
 } from '../utils/formatter.util.js';
+import { ResponsePagination } from '../types/common.types.js';
 
 /**
  * Format a list of repositories for display
  * @param repositoriesData - Raw repositories data from the API
+ * @param pagination - Pagination info for footer hints
  * @returns Formatted string with repositories information in markdown format
  */
 export function formatRepositoriesList(
 	repositoriesData: RepositoriesResponse,
+	pagination?: ResponsePagination,
 ): string {
 	const repositories = repositoriesData.values || [];
 
@@ -45,10 +47,10 @@ export function formatRepositoriesList(
 			'Project Key': repo.project?.key || 'N/A',
 			Private: repo.is_private ? 'Yes' : 'No',
 			Created: repo.created_on
-				? formatDate(new Date(repo.created_on))
+				? new Date(repo.created_on).toLocaleString()
 				: 'N/A',
 			Updated: repo.updated_on
-				? formatDate(new Date(repo.updated_on))
+				? new Date(repo.updated_on).toLocaleString()
 				: 'N/A',
 			URL: repo.links?.html?.href
 				? formatUrl(repo.links.html.href, repo.full_name)
@@ -63,11 +65,27 @@ export function formatRepositoriesList(
 
 	lines.push(formattedList);
 
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(
-		`*Repository information retrieved at ${formatDate(new Date())}*`,
+	// --- Footer ---
+	const footerLines: string[] = [];
+	footerLines.push('--');
+
+	const displayedCount = pagination?.count ?? repositories.length;
+	// Bitbucket uses page-based pagination here
+	if (pagination?.hasMore) {
+		footerLines.push(
+			`*Showing ${displayedCount} repositories. More results are available.*`,
+		);
+		const nextPage = (pagination.page ?? 1) + 1;
+		footerLines.push(`*Use --page ${nextPage} to view more.*`);
+	} else {
+		footerLines.push(`*Showing ${displayedCount} repositories.*`);
+	}
+
+	footerLines.push(
+		`*Information retrieved at: ${new Date().toLocaleString()}*`,
 	);
+
+	lines.push(...footerLines);
 
 	return lines.join('\n');
 }
@@ -105,10 +123,10 @@ export function formatRepositoryDetails(
 			? `${(repositoryData.size / 1024).toFixed(2)} KB`
 			: 'Unknown',
 		'Created On': repositoryData.created_on
-			? formatDate(new Date(repositoryData.created_on))
+			? new Date(repositoryData.created_on).toLocaleString()
 			: 'N/A',
 		'Updated On': repositoryData.updated_on
-			? formatDate(new Date(repositoryData.updated_on))
+			? new Date(repositoryData.updated_on).toLocaleString()
 			: 'N/A',
 	};
 
@@ -149,7 +167,7 @@ export function formatRepositoryDetails(
 
 		const prList = pullRequestsData.values.slice(0, 25); // Ensure max 25
 		const formattedPrList = formatNumberedList(prList, (pr) => {
-			return `**#${pr.id}**: [${pr.title}](${pr.links.html?.href || '#'}) - ${pr.state} by ${pr.author.display_name || 'Unknown'} (${formatDate(new Date(pr.updated_on))})`;
+			return `**#${pr.id}**: [${pr.title}](${pr.links.html?.href || '#'}) - ${pr.state} by ${pr.author.display_name || 'Unknown'} (${new Date(pr.updated_on).toLocaleString()})`;
 		});
 
 		lines.push(formattedPrList);
@@ -167,7 +185,7 @@ export function formatRepositoryDetails(
 	lines.push('');
 	lines.push(formatSeparator());
 	lines.push(
-		`*Repository information retrieved at ${formatDate(new Date())}*`,
+		`*Repository information retrieved at ${new Date().toLocaleString()}*`,
 	);
 	lines.push(`*To view this repository in Bitbucket, visit: ${repoUrl}*`);
 
@@ -177,11 +195,13 @@ export function formatRepositoryDetails(
 /**
  * Format commit history for display.
  * @param commitsData - Raw paginated commits data from the API.
+ * @param pagination - Pagination info for footer hints
  * @param options - Filtering options used to retrieve the history.
  * @returns Formatted string with commit history in markdown format.
  */
 export function formatCommitHistory(
 	commitsData: PaginatedCommits,
+	pagination?: ResponsePagination,
 	options: { revision?: string; path?: string } = {},
 ): string {
 	const commits = commitsData.values || [];
@@ -211,7 +231,7 @@ export function formatCommitHistory(
 
 		// Header: Hash (linked) - Date
 		commitLines.push(
-			`**${commitUrl ? formatUrl(commitUrl, shortHash) : shortHash}** - ${formatDate(commit.date)}`,
+			`**${commitUrl ? formatUrl(commitUrl, shortHash) : shortHash}** - ${new Date(commit.date).toLocaleString()}`,
 		);
 
 		// Author
@@ -226,6 +246,28 @@ export function formatCommitHistory(
 	});
 
 	lines.push(formattedList);
+
+	// --- Footer ---
+	const footerLines: string[] = [];
+	footerLines.push('--');
+
+	const displayedCount = pagination?.count ?? commits.length;
+	// Bitbucket uses page-based pagination here
+	if (pagination?.hasMore) {
+		footerLines.push(
+			`*Showing ${displayedCount} commits. More results are available.*`,
+		);
+		const nextPage = (pagination?.page ?? 1) + 1;
+		footerLines.push(`*Use --page ${nextPage} to view more.*`);
+	} else {
+		footerLines.push(`*Showing ${displayedCount} commits.*`);
+	}
+
+	footerLines.push(
+		`*Information retrieved at: ${new Date().toLocaleString()}*`,
+	);
+
+	lines.push(...footerLines);
 
 	return lines.join('\n');
 }

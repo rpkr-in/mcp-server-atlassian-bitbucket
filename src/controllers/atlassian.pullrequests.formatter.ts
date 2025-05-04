@@ -10,17 +10,19 @@ import {
 	formatUrl,
 	formatSeparator,
 	formatNumberedList,
-	formatDate,
 	formatDiff,
 } from '../utils/formatter.util.js';
+import { ResponsePagination } from '../types/common.types.js';
 
 /**
  * Format a list of pull requests for display
  * @param pullRequestsData - Raw pull requests data from the API
+ * @param pagination - Pagination info for footer hints
  * @returns Formatted string with pull requests information in markdown format
  */
 export function formatPullRequestsList(
 	pullRequestsData: PullRequestsResponse,
+	pagination?: ResponsePagination,
 ): string {
 	const pullRequests = pullRequestsData.values || [];
 
@@ -31,7 +33,7 @@ export function formatPullRequestsList(
 	const lines: string[] = [formatHeading('Bitbucket Pull Requests', 1), ''];
 
 	// Format each pull request with its details
-	const formattedList = formatNumberedList(pullRequests, (pr, index) => {
+	const formattedList = formatNumberedList(pullRequests, (pr, _index) => {
 		const itemLines: string[] = [];
 		itemLines.push(formatHeading(`#${pr.id}: ${pr.title}`, 2));
 
@@ -56,8 +58,8 @@ export function formatPullRequestsList(
 			ID: pr.id,
 			State: pr.state,
 			Author: pr.author?.display_name || pr.author?.nickname || 'Unknown',
-			Created: formatDate(new Date(pr.created_on)),
-			Updated: formatDate(new Date(pr.updated_on)),
+			Created: new Date(pr.created_on).toLocaleString(),
+			Updated: new Date(pr.updated_on).toLocaleString(),
 			'Source Branch': pr.source?.branch?.name || 'Unknown',
 			'Destination Branch': pr.destination?.branch?.name || 'Unknown',
 			Description: description,
@@ -69,22 +71,35 @@ export function formatPullRequestsList(
 		// Format as a bullet list
 		itemLines.push(formatBulletList(properties, (key) => key));
 
-		// Add separator between pull requests except for the last one
-		if (index < pullRequests.length - 1) {
-			itemLines.push('');
-			itemLines.push(formatSeparator());
-		}
-
 		return itemLines.join('\n');
 	});
 
 	lines.push(formattedList);
 
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(
-		`*Pull request information retrieved at ${formatDate(new Date())}*`,
+	// --- Footer ---
+	const footerLines: string[] = [];
+	footerLines.push('---\n');
+
+	const displayedCount = pagination?.count ?? pullRequests.length;
+	// Use cursor for PRs
+	if (pagination?.hasMore) {
+		footerLines.push(
+			`*Showing ${displayedCount} pull requests. More results are available.*`,
+		);
+		if (pagination?.nextCursor) {
+			footerLines.push(
+				`*Use --cursor "${pagination.nextCursor}" to view more.*`,
+			);
+		}
+	} else {
+		footerLines.push(`*Showing ${displayedCount} pull requests.*`);
+	}
+
+	footerLines.push(
+		`*Information retrieved at: ${new Date().toLocaleString()}*`,
 	);
+
+	lines.push(...footerLines);
 
 	return lines.join('\n');
 }
@@ -117,8 +132,8 @@ export function formatPullRequestDetails(
 		Source: pullRequest.source.branch.name,
 		Destination: pullRequest.destination.branch.name,
 		Author: pullRequest.author?.display_name,
-		Created: new Date(pullRequest.created_on),
-		Updated: new Date(pullRequest.updated_on),
+		Created: new Date(pullRequest.created_on).toLocaleString(),
+		Updated: new Date(pullRequest.updated_on).toLocaleString(),
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
@@ -220,7 +235,9 @@ export function formatPullRequestDetails(
 
 	lines.push(links.join('\n'));
 
-	return lines.join('\n');
+	// --- Footer ---
+	const footer = `\n\n---\n*Information retrieved at: ${new Date().toLocaleString()}*`;
+	return lines.join('\n') + footer;
 }
 
 /**
@@ -277,7 +294,7 @@ export function formatPullRequestComments(
 			replies.forEach((reply) => {
 				lines.push('');
 				lines.push(
-					`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(new Date(reply.created_on))})`,
+					`> **${reply.user.display_name || 'Unknown User'}** (${new Date(reply.created_on).toLocaleString()})`,
 				);
 				lines.push(`> ${reply.content.raw.replace(/\n/g, '\n> ')}`);
 			});
@@ -287,11 +304,9 @@ export function formatPullRequestComments(
 		lines.push(formatSeparator());
 	});
 
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(`*Comment information retrieved at ${formatDate(new Date())}*`);
-
-	return lines.join('\n');
+	// --- Footer ---
+	const footer = `\n\n---\n*Information retrieved at: ${new Date().toLocaleString()}*`;
+	return lines.join('\n') + footer;
 }
 
 /**
@@ -309,10 +324,12 @@ function formatComment(
 			3,
 		),
 	);
-	lines.push(`*Posted on ${formatDate(new Date(comment.created_on))}*`);
+	lines.push(`*Posted on ${new Date(comment.created_on).toLocaleString()}*`);
 
 	if (comment.updated_on && comment.updated_on !== comment.created_on) {
-		lines.push(`*Updated on ${formatDate(new Date(comment.updated_on))}*`);
+		lines.push(
+			`*Updated on ${new Date(comment.updated_on).toLocaleString()}*`,
+		);
 	}
 
 	// If it's an inline comment, show file and line information

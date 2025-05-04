@@ -108,7 +108,10 @@ async function list(
 		);
 
 		// Format the repositories data for display using the formatter
-		const formattedRepositories = formatRepositoriesList(repositoriesData);
+		const formattedRepositories = formatRepositoriesList(
+			repositoriesData,
+			pagination,
+		);
 
 		return {
 			content: formattedRepositories,
@@ -258,7 +261,7 @@ async function getCommitHistory(
 			PaginationType.PAGE,
 		);
 
-		const formattedHistory = formatCommitHistory(commitsData, {
+		const formattedHistory = formatCommitHistory(commitsData, pagination, {
 			revision: mergedOptions.revision,
 			path: mergedOptions.path,
 		});
