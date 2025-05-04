@@ -19,7 +19,6 @@ import {
 	getAtlassianCredentials,
 } from '../utils/transport.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
-import { formatBitbucketQuery } from '../utils/query.util.js';
 import { ListPullRequestsParams } from '../services/vendor.atlassian.pullrequests.types.js';
 import { RepositoriesResponse } from '../services/vendor.atlassian.repositories.types.js';
 
@@ -265,7 +264,7 @@ async function handlePullRequestSearch(
 
 	try {
 		// Format query for the Bitbucket API - specifically target title/description
-		const formattedQuery = formatBitbucketQuery(query, 'title,description');
+		const formattedQuery = `(title ~ "${query}" OR description ~ "${query}")`;
 
 		// Create the parameters for the PR service
 		const params: ListPullRequestsParams = {
@@ -340,7 +339,7 @@ async function handleRepositorySearch(
 		const queryParams = new URLSearchParams();
 
 		// Format the query - Bitbucket's repository API allows filtering by name/description
-		const formattedQuery = formatBitbucketQuery(query, 'name,description');
+		const formattedQuery = `(name ~ "${query}" OR description ~ "${query}")`;
 		queryParams.set('q', formattedQuery);
 
 		// Add pagination parameters

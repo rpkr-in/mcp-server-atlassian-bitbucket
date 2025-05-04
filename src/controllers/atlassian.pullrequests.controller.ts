@@ -25,7 +25,6 @@ import {
 	CreatePullRequestCommentToolArgsType,
 	CreatePullRequestToolArgsType,
 } from '../tools/atlassian.pullrequests.types.js';
-import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 
 /**
@@ -72,9 +71,9 @@ async function list(
 			defaults,
 		);
 
-		// Format the query for Bitbucket API if provided (using lower-level formatBitbucketQuery)
+		// Format the query for Bitbucket API if provided - specifically target title/description
 		const formattedQuery = mergedOptions.query
-			? formatBitbucketQuery(mergedOptions.query)
+			? `(title ~ "${mergedOptions.query}" OR description ~ "${mergedOptions.query}")` // Construct specific query for PRs
 			: undefined;
 
 		// Map controller options to service parameters
