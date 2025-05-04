@@ -17,7 +17,7 @@ const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
  * Returns a formatted markdown response with search results.
  *
  * @param {SearchToolArgsType} args - Tool arguments for the search query
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted search results
+ * @returns {Promise<{ content: Array<{ type: 'text', text: string }>, metadata: { pagination: { count: number, hasMore: boolean } } }>} MCP response with formatted search results
  * @throws Will return error message if search fails
  */
 async function search(args: SearchToolArgsType) {
@@ -32,27 +32,28 @@ async function search(args: SearchToolArgsType) {
 			query: args.query,
 			scope: args.scope || 'all',
 			limit: args.limit,
-			cursor: args.cursor,
-			// For code search pagination
-			page:
-				args.scope === 'code' && args.cursor
-					? parseInt(args.cursor, 10)
-					: undefined,
+			cursor: args.cursor, // Controller handles mapping cursor to page if needed
 		};
 
 		// Call the controller search method
 		const result =
 			await atlassianSearchController.search(controllerOptions);
 
-		methodLogger.debug('Search completed successfully');
+		methodLogger.debug('Search completed successfully', {
+			count: result.pagination?.count,
+			hasMore: result.pagination?.hasMore,
+		});
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			metadata: {
+				pagination: result.pagination, // Pass pagination object
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to search Bitbucket', error);

@@ -118,14 +118,7 @@ function registerListPullRequestsCommand(program: Command): void {
 
 				// Display pagination information if available
 				if (result.pagination) {
-					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
-					);
+					console.log('\n' + formatPagination(result.pagination));
 				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
@@ -183,6 +176,8 @@ function registerGetPullRequestCommand(program: Command): void {
 				actionLogger.debug('Successfully retrieved pull request');
 
 				console.log(result.content);
+
+				// No pagination footer needed for 'get' commands
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
@@ -260,14 +255,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 
 				// Display pagination information if available
 				if (result.pagination) {
-					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
-					);
+					console.log('\n' + formatPagination(result.pagination));
 				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);

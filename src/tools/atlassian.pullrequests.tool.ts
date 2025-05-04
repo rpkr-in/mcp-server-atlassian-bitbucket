@@ -41,7 +41,7 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 
 	try {
 		// Pass the filter options to the controller
-		const message = await atlassianPullRequestsController.list({
+		const result = await atlassianPullRequestsController.list({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			state: args.state,
@@ -52,16 +52,22 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved pull requests from controller',
-			message,
+			{
+				count: result.pagination?.count,
+				hasMore: result.pagination?.hasMore,
+			},
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			metadata: {
+				pagination: result.pagination, // Pass pagination object
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list pull requests', error);
@@ -91,7 +97,7 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.get({
+		const result = await atlassianPullRequestsController.get({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
@@ -100,16 +106,16 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved pull request details from controller',
-			message,
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			// No pagination metadata needed for 'get'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get pull request details', error);
@@ -141,7 +147,7 @@ async function listPullRequestComments(
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.listComments({
+		const result = await atlassianPullRequestsController.listComments({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
@@ -151,16 +157,22 @@ async function listPullRequestComments(
 
 		methodLogger.debug(
 			'Successfully retrieved pull request comments from controller',
-			message,
+			{
+				count: result.pagination?.count,
+				hasMore: result.pagination?.hasMore,
+			},
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			metadata: {
+				pagination: result.pagination, // Pass pagination object
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get pull request comments', error);
@@ -192,7 +204,7 @@ async function createPullRequestComment(
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.createComment({
+		const result = await atlassianPullRequestsController.createComment({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
@@ -200,15 +212,16 @@ async function createPullRequestComment(
 			inline: args.inline,
 		});
 
-		methodLogger.debug('Successfully added pull request comment', message);
+		methodLogger.debug('Successfully added pull request comment');
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Simple confirmation message
 				},
 			],
+			// No pagination metadata needed for 'create'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to add pull request comment', error);
@@ -237,7 +250,7 @@ async function createPullRequest(args: CreatePullRequestToolArgsType) {
 	);
 
 	try {
-		const message = await atlassianPullRequestsController.create({
+		const result = await atlassianPullRequestsController.create({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			title: args.title,
@@ -247,15 +260,16 @@ async function createPullRequest(args: CreatePullRequestToolArgsType) {
 			closeSourceBranch: args.closeSourceBranch,
 		});
 
-		methodLogger.debug('Successfully created pull request', message);
+		methodLogger.debug('Successfully created pull request');
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			// No pagination metadata needed for 'create'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to create pull request', error);

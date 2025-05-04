@@ -11,18 +11,16 @@ import {
 	formatSeparator,
 	formatNumberedList,
 	formatDiff,
+	formatDate,
 } from '../utils/formatter.util.js';
-import { ResponsePagination } from '../types/common.types.js';
 
 /**
  * Format a list of pull requests for display
  * @param pullRequestsData - Raw pull requests data from the API
- * @param pagination - Pagination info for footer hints
  * @returns Formatted string with pull requests information in markdown format
  */
 export function formatPullRequestsList(
 	pullRequestsData: PullRequestsResponse,
-	pagination?: ResponsePagination,
 ): string {
 	const pullRequests = pullRequestsData.values || [];
 
@@ -58,8 +56,8 @@ export function formatPullRequestsList(
 			ID: pr.id,
 			State: pr.state,
 			Author: pr.author?.display_name || pr.author?.nickname || 'Unknown',
-			Created: new Date(pr.created_on).toLocaleString(),
-			Updated: new Date(pr.updated_on).toLocaleString(),
+			Created: formatDate(pr.created_on),
+			Updated: formatDate(pr.updated_on),
 			'Source Branch': pr.source?.branch?.name || 'Unknown',
 			'Destination Branch': pr.destination?.branch?.name || 'Unknown',
 			Description: description,
@@ -76,30 +74,9 @@ export function formatPullRequestsList(
 
 	lines.push(formattedList);
 
-	// --- Footer ---
-	const footerLines: string[] = [];
-	footerLines.push('---\n');
-
-	const displayedCount = pagination?.count ?? pullRequests.length;
-	// Use cursor for PRs
-	if (pagination?.hasMore) {
-		footerLines.push(
-			`*Showing ${displayedCount} pull requests. More results are available.*`,
-		);
-		if (pagination?.nextCursor) {
-			footerLines.push(
-				`*Use --cursor "${pagination.nextCursor}" to view more.*`,
-			);
-		}
-	} else {
-		footerLines.push(`*Showing ${displayedCount} pull requests.*`);
-	}
-
-	footerLines.push(
-		`*Information retrieved at: ${new Date().toLocaleString()}*`,
-	);
-
-	lines.push(...footerLines);
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
 }
@@ -132,8 +109,8 @@ export function formatPullRequestDetails(
 		Source: pullRequest.source.branch.name,
 		Destination: pullRequest.destination.branch.name,
 		Author: pullRequest.author?.display_name,
-		Created: new Date(pullRequest.created_on).toLocaleString(),
-		Updated: new Date(pullRequest.updated_on).toLocaleString(),
+		Created: formatDate(pullRequest.created_on),
+		Updated: formatDate(pullRequest.updated_on),
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
@@ -235,9 +212,11 @@ export function formatPullRequestDetails(
 
 	lines.push(links.join('\n'));
 
-	// --- Footer ---
-	const footer = `\n\n---\n*Information retrieved at: ${new Date().toLocaleString()}*`;
-	return lines.join('\n') + footer;
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
+
+	return lines.join('\n');
 }
 
 /**
@@ -257,6 +236,9 @@ export function formatPullRequestComments(
 
 	if (!commentsData.values || commentsData.values.length === 0) {
 		lines.push('*No comments found on this pull request.*');
+		// Add standard footer even for empty state
+		lines.push('\n\n' + formatSeparator());
+		lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 		return lines.join('\n');
 	}
 
@@ -282,7 +264,7 @@ export function formatPullRequestComments(
 	});
 
 	// Format each top-level comment and its replies
-	topLevelComments.forEach((comment) => {
+	topLevelComments.forEach((comment, index) => {
 		formatComment(comment, lines);
 
 		// Add replies if any exist
@@ -294,19 +276,24 @@ export function formatPullRequestComments(
 			replies.forEach((reply) => {
 				lines.push('');
 				lines.push(
-					`> **${reply.user.display_name || 'Unknown User'}** (${new Date(reply.created_on).toLocaleString()})`,
+					`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(reply.created_on)})`,
 				);
 				lines.push(`> ${reply.content.raw.replace(/\n/g, '\n> ')}`);
 			});
 		}
 
-		lines.push('');
-		lines.push(formatSeparator());
+		// Add separator only between comments
+		if (index < topLevelComments.length - 1) {
+			lines.push('');
+			lines.push(formatSeparator());
+		}
 	});
 
-	// --- Footer ---
-	const footer = `\n\n---\n*Information retrieved at: ${new Date().toLocaleString()}*`;
-	return lines.join('\n') + footer;
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
+
+	return lines.join('\n');
 }
 
 /**
@@ -324,12 +311,10 @@ function formatComment(
 			3,
 		),
 	);
-	lines.push(`*Posted on ${new Date(comment.created_on).toLocaleString()}*`);
+	lines.push(`*Posted on ${formatDate(comment.created_on)}*`);
 
 	if (comment.updated_on && comment.updated_on !== comment.created_on) {
-		lines.push(
-			`*Updated on ${new Date(comment.updated_on).toLocaleString()}*`,
-		);
+		lines.push(`*Updated on ${formatDate(comment.updated_on)}*`);
 	}
 
 	// If it's an inline comment, show file and line information

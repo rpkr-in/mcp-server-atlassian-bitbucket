@@ -74,11 +74,9 @@ export function formatWorkspacesList(
 
 	lines.push(formattedList);
 
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(
-		`*Workspace information retrieved at ${formatDate(new Date())}*`,
-	);
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
 }
@@ -104,7 +102,9 @@ export function formatWorkspaceDetails(
 		UUID: workspace.uuid,
 		Slug: workspace.slug,
 		Type: workspace.type || 'Not specified',
-		'Created On': workspace.created_on,
+		'Created On': workspace.created_on
+			? formatDate(workspace.created_on)
+			: 'N/A',
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
@@ -116,8 +116,12 @@ export function formatWorkspaceDetails(
 
 		const membershipProperties: Record<string, unknown> = {
 			Permission: membership.permission,
-			'Last Accessed': membership.last_accessed,
-			'Added On': membership.added_on,
+			'Last Accessed': membership.last_accessed
+				? formatDate(membership.last_accessed)
+				: 'N/A',
+			'Added On': membership.added_on
+				? formatDate(membership.added_on)
+				: 'N/A',
 		};
 
 		lines.push(formatBulletList(membershipProperties, (key) => key));
@@ -147,6 +151,10 @@ export function formatWorkspaceDetails(
 	}
 
 	lines.push(links.join('\n'));
+
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
 }

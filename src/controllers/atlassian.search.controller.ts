@@ -228,10 +228,7 @@ async function handleCodeSearch(
 		);
 
 		// Format the code search results
-		const formattedCode = formatCodeSearchResults(
-			searchResponse,
-			pagination,
-		);
+		const formattedCode = formatCodeSearchResults(searchResponse);
 
 		return {
 			content: formattedCode,
@@ -294,10 +291,10 @@ async function handlePullRequestSearch(
 		);
 
 		// Extract pagination information
-		const pagination = extractPaginationInfo(prData, PaginationType.CURSOR);
+		const pagination = extractPaginationInfo(prData, PaginationType.PAGE);
 
 		// Format the search results
-		const formattedPrs = formatPullRequestsList(prData, pagination);
+		const formattedPrs = formatPullRequestsList(prData);
 		return {
 			content: `# Pull Request Search Results\n\n${formattedPrs}`,
 			pagination,
@@ -382,7 +379,7 @@ async function handleRepositorySearch(
 		);
 
 		// Format the search results
-		const formattedRepos = formatRepositoriesList(searchData, pagination);
+		const formattedRepos = formatRepositoriesList(searchData);
 
 		return {
 			content: `# Repository Search Results\n\n${formattedRepos}`,
@@ -458,7 +455,6 @@ async function handleCommitSearch(
 			searchResponse,
 			repoSlug,
 			workspaceSlug,
-			pagination,
 		);
 
 		return {

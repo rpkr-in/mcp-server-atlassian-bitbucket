@@ -125,14 +125,7 @@ function register(program: Command) {
 
 				// Display pagination information if available
 				if (result.pagination) {
-					console.log(
-						'\n' +
-							formatPagination(
-								result.pagination.count ?? 0,
-								result.pagination.hasMore,
-								result.pagination.nextCursor,
-							),
-					);
+					console.log('\n' + formatPagination(result.pagination));
 				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);

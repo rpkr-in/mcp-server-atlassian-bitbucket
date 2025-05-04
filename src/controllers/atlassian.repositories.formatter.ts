@@ -11,18 +11,16 @@ import {
 	formatBulletList,
 	formatSeparator,
 	formatNumberedList,
+	formatDate,
 } from '../utils/formatter.util.js';
-import { ResponsePagination } from '../types/common.types.js';
 
 /**
  * Format a list of repositories for display
  * @param repositoriesData - Raw repositories data from the API
- * @param pagination - Pagination info for footer hints
  * @returns Formatted string with repositories information in markdown format
  */
 export function formatRepositoriesList(
 	repositoriesData: RepositoriesResponse,
-	pagination?: ResponsePagination,
 ): string {
 	const repositories = repositoriesData.values || [];
 
@@ -46,12 +44,8 @@ export function formatRepositoriesList(
 			Description: repo.description || 'No description provided',
 			'Project Key': repo.project?.key || 'N/A',
 			Private: repo.is_private ? 'Yes' : 'No',
-			Created: repo.created_on
-				? new Date(repo.created_on).toLocaleString()
-				: 'N/A',
-			Updated: repo.updated_on
-				? new Date(repo.updated_on).toLocaleString()
-				: 'N/A',
+			Created: repo.created_on ? formatDate(repo.created_on) : 'N/A',
+			Updated: repo.updated_on ? formatDate(repo.updated_on) : 'N/A',
 			URL: repo.links?.html?.href
 				? formatUrl(repo.links.html.href, repo.full_name)
 				: 'N/A',
@@ -65,27 +59,9 @@ export function formatRepositoriesList(
 
 	lines.push(formattedList);
 
-	// --- Footer ---
-	const footerLines: string[] = [];
-	footerLines.push('--');
-
-	const displayedCount = pagination?.count ?? repositories.length;
-	// Bitbucket uses page-based pagination here
-	if (pagination?.hasMore) {
-		footerLines.push(
-			`*Showing ${displayedCount} repositories. More results are available.*`,
-		);
-		const nextPage = (pagination.page ?? 1) + 1;
-		footerLines.push(`*Use --page ${nextPage} to view more.*`);
-	} else {
-		footerLines.push(`*Showing ${displayedCount} repositories.*`);
-	}
-
-	footerLines.push(
-		`*Information retrieved at: ${new Date().toLocaleString()}*`,
-	);
-
-	lines.push(...footerLines);
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
 }
@@ -123,10 +99,10 @@ export function formatRepositoryDetails(
 			? `${(repositoryData.size / 1024).toFixed(2)} KB`
 			: 'Unknown',
 		'Created On': repositoryData.created_on
-			? new Date(repositoryData.created_on).toLocaleString()
+			? formatDate(repositoryData.created_on)
 			: 'N/A',
 		'Updated On': repositoryData.updated_on
-			? new Date(repositoryData.updated_on).toLocaleString()
+			? formatDate(repositoryData.updated_on)
 			: 'N/A',
 	};
 
@@ -167,12 +143,10 @@ export function formatRepositoryDetails(
 
 		const prList = pullRequestsData.values.slice(0, 25); // Ensure max 25
 		const formattedPrList = formatNumberedList(prList, (pr) => {
-			return `**#${pr.id}**: [${pr.title}](${pr.links.html?.href || '#'}) - ${pr.state} by ${pr.author.display_name || 'Unknown'} (${new Date(pr.updated_on).toLocaleString()})`;
+			return `**#${pr.id}**: [${pr.title}](${pr.links.html?.href || '#'}) - ${pr.state} by ${pr.author.display_name || 'Unknown'} (${formatDate(pr.updated_on)})`;
 		});
 
 		lines.push(formattedPrList);
-		lines.push('');
-		lines.push(`*Showing ${prList.length} recent pull requests.*`);
 
 		if (repoUrl) {
 			lines.push(
@@ -181,13 +155,14 @@ export function formatRepositoryDetails(
 		}
 	}
 
-	// Add timestamp for when this information was retrieved
-	lines.push('');
-	lines.push(formatSeparator());
-	lines.push(
-		`*Repository information retrieved at ${new Date().toLocaleString()}*`,
-	);
-	lines.push(`*To view this repository in Bitbucket, visit: ${repoUrl}*`);
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
+
+	// Optionally keep the direct link
+	if (repoUrl) {
+		lines.push(`*View this repository in Bitbucket: ${repoUrl}*`);
+	}
 
 	return lines.join('\n');
 }
@@ -195,13 +170,11 @@ export function formatRepositoryDetails(
 /**
  * Format commit history for display.
  * @param commitsData - Raw paginated commits data from the API.
- * @param pagination - Pagination info for footer hints
  * @param options - Filtering options used to retrieve the history.
  * @returns Formatted string with commit history in markdown format.
  */
 export function formatCommitHistory(
 	commitsData: PaginatedCommits,
-	pagination?: ResponsePagination,
 	options: { revision?: string; path?: string } = {},
 ): string {
 	const commits = commitsData.values || [];
@@ -231,14 +204,14 @@ export function formatCommitHistory(
 
 		// Header: Hash (linked) - Date
 		commitLines.push(
-			`**${commitUrl ? formatUrl(commitUrl, shortHash) : shortHash}** - ${new Date(commit.date).toLocaleString()}`,
+			`**${commitUrl ? formatUrl(commitUrl, shortHash) : shortHash}** - ${formatDate(commit.date)}`,
 		);
 
 		// Author
 		commitLines.push(` Author: ${author}`);
 
 		// Message (indented blockquote)
-		const message = commit.message.trim().replace(/n/g, 'n > ');
+		const message = commit.message.trim().replace(/\n/g, '\n > ');
 		commitLines.push(' >');
 		commitLines.push(` > ${message}`);
 
@@ -247,27 +220,9 @@ export function formatCommitHistory(
 
 	lines.push(formattedList);
 
-	// --- Footer ---
-	const footerLines: string[] = [];
-	footerLines.push('--');
-
-	const displayedCount = pagination?.count ?? commits.length;
-	// Bitbucket uses page-based pagination here
-	if (pagination?.hasMore) {
-		footerLines.push(
-			`*Showing ${displayedCount} commits. More results are available.*`,
-		);
-		const nextPage = (pagination?.page ?? 1) + 1;
-		footerLines.push(`*Use --page ${nextPage} to view more.*`);
-	} else {
-		footerLines.push(`*Showing ${displayedCount} commits.*`);
-	}
-
-	footerLines.push(
-		`*Information retrieved at: ${new Date().toLocaleString()}*`,
-	);
-
-	lines.push(...footerLines);
+	// Add standard footer with timestamp
+	lines.push('\n\n' + formatSeparator());
+	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
 }

@@ -54,12 +54,30 @@ export function extractPaginationInfo<T extends Partial<PaginationData>>(
 			// Bitbucket page-based pagination (page, pagelen, size, next)
 			if (data.page !== undefined && data.pagelen !== undefined) {
 				const hasMore = !!data.next;
+				let nextCursorValue: string | undefined = undefined;
+				if (hasMore && data.next) {
+					try {
+						// Attempt to parse the full URL
+						const nextUrl = new URL(data.next);
+						nextCursorValue =
+							nextUrl.searchParams.get('page') || undefined;
+					} catch (e) {
+						// Handle potential errors if data.next is not a full valid URL
+						// Or if URL parsing fails for other reasons
+						Logger.forContext(
+							'utils/pagination.util.ts',
+							'extractPaginationInfo',
+						).warn(`Failed to parse next URL: ${data.next}`, e);
+					}
+				}
+
 				pagination = {
 					hasMore,
 					count: data.values?.length ?? 0,
 					page: data.page,
 					size: data.pagelen,
 					total: data.size,
+					nextCursor: nextCursorValue, // Store next page number as cursor
 				};
 			}
 			break;

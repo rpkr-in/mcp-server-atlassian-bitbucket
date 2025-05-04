@@ -35,23 +35,30 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 
 	try {
 		// Pass the filter options to the controller
-		const message = await atlassianWorkspacesController.list({
+		const result = await atlassianWorkspacesController.list({
 			limit: args.limit,
 			cursor: args.cursor,
 		});
 
 		methodLogger.debug(
 			'Successfully retrieved workspaces from controller',
-			message,
+			// Log count and hasMore for context
+			{
+				count: result.pagination?.count,
+				hasMore: result.pagination?.hasMore,
+			},
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			metadata: {
+				pagination: result.pagination, // Pass pagination object
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list workspaces', error);
@@ -81,21 +88,21 @@ async function getWorkspace(args: GetWorkspaceToolArgsType) {
 	);
 
 	try {
-		const message = await atlassianWorkspacesController.get({
+		const result = await atlassianWorkspacesController.get({
 			workspaceSlug: args.workspaceSlug,
 		});
 		methodLogger.debug(
 			'Successfully retrieved workspace details from controller',
-			message,
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content, // Contains timestamp footer
 				},
 			],
+			// No pagination metadata needed for 'get'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get workspace details', error);

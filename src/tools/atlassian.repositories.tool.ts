@@ -37,7 +37,7 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 
 	try {
 		// Pass the options to the controller
-		const message = await atlassianRepositoriesController.list({
+		const result = await atlassianRepositoriesController.list({
 			workspaceSlug: args.workspaceSlug,
 			query: args.query,
 			role: args.role,
@@ -48,16 +48,22 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved repositories from controller',
-			message,
+			{
+				count: result.pagination?.count,
+				hasMore: result.pagination?.hasMore,
+			},
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content,
 				},
 			],
+			metadata: {
+				pagination: result.pagination,
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list repositories', error);
@@ -87,21 +93,20 @@ async function getRepository(args: GetRepositoryToolArgsType) {
 	);
 
 	try {
-		const message = await atlassianRepositoriesController.get({
+		const result = await atlassianRepositoriesController.get({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 		});
 
 		methodLogger.debug(
 			'Successfully retrieved repository details from controller',
-			message,
 		);
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: message.content,
+					text: result.content,
 				},
 			],
 		};
@@ -134,10 +139,17 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',
+			{
+				count: result.pagination?.count,
+				hasMore: result.pagination?.hasMore,
+			},
 		);
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
+			metadata: {
+				pagination: result.pagination,
+			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get commit history', error);

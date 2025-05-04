@@ -4,8 +4,9 @@
  */
 
 import { Logger } from './logger.util.js'; // Ensure logger is imported
+import { ResponsePagination } from '../types/common.types.js';
 
-const formatterLogger = Logger.forContext('utils/formatter.util.ts'); // Define logger instance
+// const formatterLogger = Logger.forContext('utils/formatter.util.ts'); // Define logger instance - Removed as unused
 
 /**
  * Format a date in a standardized way: YYYY-MM-DD HH:MM:SS UTC
@@ -47,32 +48,25 @@ export function formatUrl(url?: string, title?: string): string {
 }
 
 /**
- * Format pagination information in a standardized way
- * @param count - Number of items in the current result set
- * @param hasMore - Whether there are more results available
- * @param nextCursor - Cursor for the next page of results
- * @param total - Total number of items (optional)
- * @returns Formatted pagination information
+ * Format pagination information in a standardized way for CLI output.
+ * Includes separator, item counts, availability message, next page instructions, and timestamp.
+ * @param pagination - The ResponsePagination object containing pagination details.
+ * @returns Formatted pagination footer string for CLI.
  */
-export function formatPagination(
-	count: number,
-	hasMore: boolean,
-	nextCursor?: string,
-	total?: number, // Add optional total parameter
-): string {
-	const methodLogger = formatterLogger.forMethod('formatPagination');
-	const parts: string[] = [];
+export function formatPagination(pagination: ResponsePagination): string {
+	const methodLogger = Logger.forContext(
+		'utils/formatter.util.ts',
+		'formatPagination',
+	);
+	const parts: string[] = [formatSeparator()]; // Start with separator
+
+	const { count = 0, hasMore, nextCursor, total, page } = pagination;
 
 	// Showing count and potentially total
-	if (total !== undefined && total > 0) {
+	if (total !== undefined && total >= 0) {
 		parts.push(`*Showing ${count} of ${total} total items.*`);
-	} else if (count > 0) {
+	} else if (count >= 0) {
 		parts.push(`*Showing ${count} item${count !== 1 ? 's' : ''}.*`);
-	} else if (total === 0) {
-		parts.push('*Showing 0 of 0 total items.*'); // Handle zero total case
-	} else {
-		// If count is 0 and total is undefined, perhaps don't show count message
-		// parts.push('*Showing 0 items.*');
 	}
 
 	// More results availability
@@ -80,13 +74,20 @@ export function formatPagination(
 		parts.push('More results are available.');
 	}
 
-	// Prompt for next cursor
+	// Prompt for the next action (using page number for Bitbucket)
 	if (hasMore && nextCursor) {
-		parts.push(`\nTo see more results, use --cursor "${nextCursor}"`);
+		// Assuming nextCursor holds the next page number for PaginationType.PAGE
+		parts.push(`*Use --page ${nextCursor} to view more.*`);
+	} else if (hasMore && page !== undefined) {
+		// Fallback if nextCursor wasn't parsed but page exists
+		parts.push(`*Use --page ${page + 1} to view more.*`);
 	}
 
-	const result = parts.join(' ').trim(); // Join with space, trim ends
-	methodLogger.debug(`Formatted pagination: ${result}`);
+	// Add standard timestamp
+	parts.push(`*Information retrieved at: ${formatDate(new Date())}*`);
+
+	const result = parts.join('\n').trim(); // Join with newline
+	methodLogger.debug(`Formatted pagination footer: ${result}`);
 	return result;
 }
 
