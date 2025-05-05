@@ -56,6 +56,10 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Filter repositories by this query string. Searches repository name and description.',
 		)
 		.option(
+			'-k, --project-key <key>',
+			'Filter repositories belonging to the specified project key. Example: "PROJ"',
+		)
+		.option(
 			'-r, --role <string>',
 			'Filter repositories where the authenticated user has the specified role or higher. Valid roles: `owner`, `admin`, `contributor`, `member`. Note: `member` typically includes all accessible repositories.',
 		)
@@ -93,6 +97,7 @@ function registerListRepositoriesCommand(program: Command): void {
 				const filterOptions = {
 					workspaceSlug: options.workspaceSlug,
 					query: options.query,
+					projectKey: options.projectKey,
 					role: options.role,
 					sort: options.sort,
 					limit: options.limit

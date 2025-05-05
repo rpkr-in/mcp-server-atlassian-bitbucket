@@ -67,6 +67,14 @@ export const ListRepositoriesToolArgs = z.object({
 		),
 
 	/**
+	 * Optional project key filter
+	 */
+	projectKey: z
+		.string()
+		.optional()
+		.describe('Filter repositories by project key. Example: "project-api"'),
+
+	/**
 	 * Maximum number of repositories to return (default: 25)
 	 */
 	...PaginationArgs,

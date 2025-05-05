@@ -71,9 +71,16 @@ async function list(
 		);
 
 		// Format the query for Bitbucket API if provided
-		const formattedQuery = mergedOptions.query
-			? formatBitbucketQuery(mergedOptions.query)
-			: undefined;
+		// Combine query and projectKey if both are present
+		const queryParts: string[] = [];
+		if (mergedOptions.query) {
+			// Assuming formatBitbucketQuery handles basic name/description search
+			queryParts.push(formatBitbucketQuery(mergedOptions.query));
+		}
+		if (mergedOptions.projectKey) {
+			queryParts.push(`project.key = "${mergedOptions.projectKey}"`);
+		}
+		const combinedQuery = queryParts.join(' AND '); // Combine with AND
 
 		// Map controller options to service parameters
 		const serviceParams: ListRepositoriesParams = {
@@ -88,7 +95,7 @@ async function list(
 			// Set default sort to updated_on descending if not specified
 			sort: mergedOptions.sort,
 			// Optional filter parameters
-			...(formattedQuery && { q: formattedQuery }),
+			...(combinedQuery && { q: combinedQuery }), // <-- Use combined query
 			...(mergedOptions.role && { role: mergedOptions.role }),
 		};
 
