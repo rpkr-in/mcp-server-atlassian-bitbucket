@@ -1,3 +1,15 @@
+## [1.21.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.5...v1.21.6) (2025-05-05)
+
+
+### Bug Fixes
+
+* Include PR ID in ls-pr-comments title ([f73c9da](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f73c9dacc50ee2a9450b4ca1bb73a79f29ca3f5c))
+
+
+### Performance Improvements
+
+* Update dependencies ([7166012](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/7166012b406d435eea7dec7a0d80d7ed5a17727b))
+
 ## [1.21.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.4...v1.21.5) (2025-05-05)
 
 
