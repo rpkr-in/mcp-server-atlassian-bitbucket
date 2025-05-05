@@ -1,3 +1,10 @@
+## [1.21.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.6...v1.21.7) (2025-05-05)
+
+
+### Bug Fixes
+
+* Indicate deleted PR comments in output ([f6069c7](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f6069c79c38b8eb1e69b4c6531d5c3eb78c1bdfb))
+
 ## [1.21.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.5...v1.21.6) (2025-05-05)
 
 
