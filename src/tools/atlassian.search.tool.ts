@@ -76,7 +76,7 @@ function registerTools(server: McpServer) {
 	// Register the search tool
 	server.tool(
 		'bb_search',
-		`Searches Bitbucket content within a workspace identified by \`workspaceSlug\` using a required text \`query\`. Allows filtering by \`scope\` (repositories, pullrequests, commits, code, or all) and can be restricted to a specific repository with \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (use page number for code searches). Returns formatted Markdown results including relevant metadata and links based on the search scope. Note: pullrequests and commits scopes require specifying a repository. Requires Bitbucket credentials to be configured.`,
+		`Searches Bitbucket content within a specified \`workspaceSlug\`. Requires a \`query\` string. Optionally scope the search using \`scope\` ('repositories', 'pullrequests', 'commits', 'code', or 'all' - default). The \`code\` scope supports filtering by \`language\` or \`extension\`. The 'pullrequests' and 'commits' scopes require \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope). Returns formatted Markdown results. The 'all' scope automatically tries different scopes and prefixes the output indicating which scope returned results. Requires Bitbucket credentials.`,
 		SearchToolArgs.shape,
 		search,
 	);

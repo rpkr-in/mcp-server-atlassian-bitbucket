@@ -159,25 +159,19 @@ Get full details for a specific workspace.
 
 ## `bb_ls_repos`
 
-List repositories in a workspace.
+Lists repositories in a workspace. Filters by `role`, `projectKey`, `query` (name/description). Supports sorting and pagination.
 
 ```json
-{ "workspaceSlug": "acme-corp" }
+{ "workspaceSlug": "acme-corp", "projectKey": "PROJ" }
 ```
 
-_or:_
-
-```json
-{ "workspaceSlug": "acme-corp", "query": "api" }
-```
-
-> "List repositories in 'acme-corp'."
+> "List repositories in 'acme-corp' for project PROJ."
 
 ---
 
 ## `bb_get_repo`
 
-Get details of a specific repository.
+Get details of a specific repository, including owner, main branch name, comment/task counts, and recent PRs.
 
 ```json
 { "workspaceSlug": "acme-corp", "repoSlug": "backend-api" }
@@ -189,43 +183,20 @@ Get details of a specific repository.
 
 ## `bb_search`
 
-Search Bitbucket content.
+Search Bitbucket content. Scope with `scope` ('repositories', 'pullrequests', 'commits', 'code', 'all'). Code scope supports `language` and `extension` filters. The 'all' scope includes a header indicating which scope returned results.
 
-**Repositories:**
-
-```json
-{ "workspaceSlug": "acme-corp", "query": "api", "scope": "repositories" }
-```
-
-**Pull Requests:**
+**Code (filtered):**
 
 ```json
 {
 	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api",
-	"query": "fix",
-	"scope": "pullrequests"
+	"query": "Logger",
+	"scope": "code",
+	"language": "typescript"
 }
 ```
 
-**Commits:**
-
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api",
-	"query": "update",
-	"scope": "commits"
-}
-```
-
-**Code:**
-
-```json
-{ "workspaceSlug": "acme-corp", "query": "function getUser", "scope": "code" }
-```
-
-> "Search for 'function getUser' in the 'acme-corp' workspace."
+> "Search for 'Logger' in TypeScript files within the 'acme-corp' workspace."
 
 ---
 
@@ -243,7 +214,7 @@ List pull requests in a repository.
 
 ## `bb_get_pr`
 
-Get full details of a pull request, including code diffs and file changes.
+Get full details of a pull request, including code diffs, file changes, comment/task counts.
 
 ```json
 { "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
@@ -255,13 +226,13 @@ Get full details of a pull request, including code diffs and file changes.
 
 ## `bb_ls_pr_comments`
 
-List comments on a specific pull request.
+List comments on a specific pull request. Inline comments include code snippets.
 
 ```json
 { "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
 ```
 
-> "Show me all comments on PR #42."
+> "Show me all comments on PR #42, including code context for inline comments."
 
 ---
 
@@ -310,6 +281,23 @@ Create a new pull request.
 ```
 
 > "Create a PR from 'feature/login' to 'main'."
+
+---
+
+## `bb_create_branch`
+
+Create a new branch from a source branch or commit.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app",
+	"newBranchName": "feature/new-feature",
+	"sourceBranchOrCommit": "main"
+}
+```
+
+> "Create branch 'feature/new-feature' from 'main' in 'frontend-app'."
 
 ---
 
@@ -401,6 +389,7 @@ mcp-atlassian-bitbucket create-pr-comment --help
 mcp-atlassian-bitbucket create-pr --help
 mcp-atlassian-bitbucket search --help
 mcp-atlassian-bitbucket get-commit-history --help
+mcp-atlassian-bitbucket create-branch --help
 ```
 
 ---

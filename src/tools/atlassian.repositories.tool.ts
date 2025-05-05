@@ -193,7 +193,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace identified by \`workspaceSlug\`. Filters repositories where the authenticated user has the specified \`role\` (or higher). Valid roles: 'owner', 'admin', 'contributor', 'member'. Note: 'member' typically includes all accessible repositories. Supports filtering by name/description using \`query\` and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs. Requires Bitbucket credentials to be configured.`,
+		`Lists repositories within a workspace identified by \`workspaceSlug\`. Filters repositories by the user\`s \`role\`, project key \`projectKey\`, or a \`query\` string (searches name/description). Supports sorting via \`sort\` and pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list. Requires Bitbucket credentials.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -201,7 +201,7 @@ function registerTools(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'bb_get_repo',
-		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including UUID, owner information, description, primary language, size, creation date, last updated time, recent pull requests, and relevant links. Use this after discovering a repository's slug to get its complete details. Requires Bitbucket credentials to be configured.`,
+		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including owner, main branch, comment/task counts, recent pull requests, and relevant links. Requires Bitbucket credentials.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);
