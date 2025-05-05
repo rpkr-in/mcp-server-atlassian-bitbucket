@@ -14,7 +14,7 @@ const LinkSchema = z.object({
  * Repository SCM type
  */
 export const RepositorySCMSchema = z.enum(['git', 'hg']);
-export type RepositorySCM = z.infer<typeof RepositorySCMSchema>;
+// export type RepositorySCM = z.infer<typeof RepositorySCMSchema>;
 
 /**
  * Repository fork policy
@@ -24,7 +24,7 @@ export const RepositoryForkPolicySchema = z.enum([
 	'no_public_forks',
 	'no_forks',
 ]);
-export type RepositoryForkPolicy = z.infer<typeof RepositoryForkPolicySchema>;
+// export type RepositoryForkPolicy = z.infer<typeof RepositoryForkPolicySchema>;
 
 /**
  * Repository links object
@@ -42,7 +42,7 @@ export const RepositoryLinksSchema = z.object({
 	hooks: LinkSchema.optional(),
 	issues: LinkSchema.optional(),
 });
-export type RepositoryLinks = z.infer<typeof RepositoryLinksSchema>;
+// export type RepositoryLinks = z.infer<typeof RepositoryLinksSchema>;
 
 /**
  * Repository owner links schema
@@ -63,7 +63,7 @@ export const RepositoryOwnerSchema = z.object({
 	uuid: z.string().optional(),
 	links: OwnerLinksSchema.optional(),
 });
-export type RepositoryOwner = z.infer<typeof RepositoryOwnerSchema>;
+// export type RepositoryOwner = z.infer<typeof RepositoryOwnerSchema>;
 
 /**
  * Repository branch object
@@ -72,7 +72,7 @@ export const RepositoryBranchSchema = z.object({
 	type: z.literal('branch'),
 	name: z.string(),
 });
-export type RepositoryBranch = z.infer<typeof RepositoryBranchSchema>;
+// export type RepositoryBranch = z.infer<typeof RepositoryBranchSchema>;
 
 /**
  * Repository project links schema
@@ -92,7 +92,7 @@ export const RepositoryProjectSchema = z.object({
 	name: z.string(),
 	links: ProjectLinksSchema.optional(),
 });
-export type RepositoryProject = z.infer<typeof RepositoryProjectSchema>;
+// export type RepositoryProject = z.infer<typeof RepositoryProjectSchema>;
 
 /**
  * Repository object returned from the API
@@ -207,7 +207,7 @@ export const CommitAuthorSchema = z.object({
 	type: z.string(), // Usually 'author'
 	user: CommitAuthorUserSchema.optional(),
 });
-export type CommitAuthor = z.infer<typeof CommitAuthorSchema>;
+// export type CommitAuthor = z.infer<typeof CommitAuthorSchema>;
 
 /**
  * Commit links schema
