@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.7...v1.22.0) (2025-05-05)
+
+
+### Features
+
+* Display code snippets for inline PR comments ([5a8024b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5a8024b3cd259fa6ff9804a717149d3933244cc2))
+
 ## [1.21.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.6...v1.21.7) (2025-05-05)
 
 
