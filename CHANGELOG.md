@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.2...v1.23.3) (2025-05-05)
+
+
+### Bug Fixes
+
+* improve signal handling for npx support ([a4a361c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a4a361ca3fd2983446880eacabb5fa979f1336d1))
+
 ## [1.23.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.1...v1.23.2) (2025-05-05)
 
 
