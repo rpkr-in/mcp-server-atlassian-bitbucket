@@ -116,6 +116,8 @@ export function formatPullRequestDetails(
 		Author: pullRequest.author?.display_name,
 		Created: formatDate(pullRequest.created_on),
 		Updated: formatDate(pullRequest.updated_on),
+		'Comment Count': pullRequest.comment_count ?? 0,
+		'Task Count': pullRequest.task_count ?? 0,
 	};
 
 	lines.push(formatBulletList(basicProperties, (key) => key));
