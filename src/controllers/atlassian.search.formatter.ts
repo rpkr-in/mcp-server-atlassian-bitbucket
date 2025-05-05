@@ -88,7 +88,7 @@ function formatCodeSearchResult(result: CodeSearchResult): string {
 				line.segments.forEach((segment) => {
 					// Use standard bold markdown for highlighting
 					markdown += segment.match
-						? `**${segment.text}**` // <-- Changed highlighting
+						? `\\\`${segment.text}\\\`` // <-- Changed highlighting to backticks
 						: segment.text;
 				});
 			}

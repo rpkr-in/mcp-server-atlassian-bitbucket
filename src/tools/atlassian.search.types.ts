@@ -73,9 +73,26 @@ export const SearchToolArgs = z
 		scope: z
 			.enum(['repositories', 'pullrequests', 'commits', 'code', 'all'])
 			.optional()
+			.default('all')
 			.describe(
 				'Search scope: "repositories", "pullrequests", "commits", "code", or "all". Default: "all"',
 			),
+
+		/**
+		 * Filter code search by language.
+		 */
+		language: z
+			.string()
+			.optional()
+			.describe('Filter code search by language.'),
+
+		/**
+		 * Filter code search by file extension.
+		 */
+		extension: z
+			.string()
+			.optional()
+			.describe('Filter code search by file extension.'),
 	})
 	.merge(PaginationArgs);
 

@@ -43,6 +43,7 @@ controllerLogger.debug('Bitbucket search controller initialized');
 async function search(
 	options: SearchToolArgsType,
 ): Promise<ControllerResponse> {
+	// Remove language and extension from here, they are handled via mergedOptions
 	const { workspaceSlug, repoSlug, query, scope = 'all' } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.search.controller.ts',
@@ -88,6 +89,8 @@ async function search(
 					mergedOptions.query,
 					mergedOptions.limit,
 					mergedOptions.cursor,
+					mergedOptions.language, // Pass from mergedOptions
+					mergedOptions.extension, // Pass from mergedOptions
 				);
 				break;
 
@@ -127,12 +130,15 @@ async function search(
 			case 'all':
 			default:
 				// Default search performs repository and PR search and combines results
+				// Note: Language/extension filters only apply if it falls back to code search
 				result = await handleDefaultSearch(
 					mergedOptions.workspaceSlug,
 					mergedOptions.repoSlug,
 					mergedOptions.query,
 					mergedOptions.limit,
 					mergedOptions.cursor,
+					mergedOptions.language, // Pass from mergedOptions
+					mergedOptions.extension, // Pass from mergedOptions
 				);
 				break;
 		}
@@ -158,6 +164,8 @@ async function handleCodeSearch(
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
 	cursor?: string,
+	language?: string,
+	extension?: string,
 ): Promise<ControllerResponse> {
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.search.controller.ts',
@@ -197,6 +205,8 @@ async function handleCodeSearch(
 			repoSlug: repoSlug,
 			page: page,
 			pageLen: limit,
+			language: language,
+			extension: extension,
 		});
 
 		methodLogger.debug(
@@ -469,6 +479,8 @@ async function handleDefaultSearch(
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
 	cursor?: string,
+	language?: string,
+	extension?: string,
 ): Promise<ControllerResponse> {
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.search.controller.ts',
@@ -501,12 +513,15 @@ async function handleDefaultSearch(
 				cursor,
 			);
 
-			// If we found pull requests, return them
+			// If we found pull requests, return them with scope indication
 			if (
 				prResults.content &&
 				!prResults.content.includes('No pull requests found')
 			) {
-				return prResults;
+				return {
+					...prResults,
+					content: `## Search Results (Scope: Pull Requests)\n\n${prResults.content}`,
+				};
 			}
 
 			// If no pull requests, try commits
@@ -518,22 +533,31 @@ async function handleDefaultSearch(
 				cursor,
 			);
 
-			// If we found commits, return them
+			// If we found commits, return them with scope indication
 			if (
 				commitResults.content &&
 				!commitResults.content.includes('No commits found')
 			) {
-				return commitResults;
+				return {
+					...commitResults,
+					content: `## Search Results (Scope: Commits)\n\n${commitResults.content}`,
+				};
 			}
 
 			// Finally, try code search
-			return handleCodeSearch(
+			const codeResults = await handleCodeSearch(
 				workspaceSlug,
 				repoSlug,
 				query,
 				limit,
 				cursor,
+				language,
+				extension,
 			);
+			return {
+				...codeResults,
+				content: `## Search Results (Scope: Code)\n\n${codeResults.content}`,
+			};
 		} catch (searchError) {
 			methodLogger.warn(
 				'Error in PR/commit search, falling back to code search',
@@ -545,6 +569,8 @@ async function handleDefaultSearch(
 				query,
 				limit,
 				cursor,
+				language,
+				extension,
 			);
 		}
 	} else {
@@ -558,22 +584,31 @@ async function handleDefaultSearch(
 				cursor,
 			);
 
-			// If we found repositories, return them
+			// If we found repositories, return them with scope indication
 			if (
 				repoResults.content &&
 				!repoResults.content.includes('No repositories found')
 			) {
-				return repoResults;
+				return {
+					...repoResults,
+					content: `## Search Results (Scope: Repositories)\n\n${repoResults.content}`,
+				};
 			}
 
 			// If no repositories found, try code search
-			return handleCodeSearch(
+			const codeResults = await handleCodeSearch(
 				workspaceSlug,
 				undefined,
 				query,
 				limit,
 				cursor,
+				language,
+				extension,
 			);
+			return {
+				...codeResults,
+				content: `## Search Results (Scope: Code)\n\n${codeResults.content}`,
+			};
 		} catch (repoSearchError) {
 			methodLogger.warn(
 				'Error in repository search, falling back to code search',
@@ -585,6 +620,8 @@ async function handleDefaultSearch(
 				query,
 				limit,
 				cursor,
+				language,
+				extension,
 			);
 		}
 	}

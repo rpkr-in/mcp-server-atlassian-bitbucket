@@ -15,6 +15,8 @@ export interface SearchCodeParams {
 	pageLen?: number;
 	repoSlug?: string;
 	fields?: string;
+	language?: string;
+	extension?: string;
 }
 
 /**
@@ -198,9 +200,18 @@ export async function searchCode(
 		? `${params.searchQuery} repo:${params.repoSlug}`
 		: params.searchQuery;
 
+	// Append language and extension filters if provided
+	let finalSearchQuery = searchQuery;
+	if (params.language) {
+		finalSearchQuery += ` lang:${params.language}`;
+	}
+	if (params.extension) {
+		finalSearchQuery += ` ext:${params.extension}`;
+	}
+
 	// Build the query parameters
 	const queryParams = new URLSearchParams({
-		search_query: searchQuery,
+		search_query: finalSearchQuery,
 	});
 
 	// Add optional pagination parameters
@@ -231,7 +242,7 @@ export async function searchCode(
 
 	// Track searching code in workspace
 	logger.debug(`Searching code in workspace: ${params.workspaceSlug}`, {
-		searchQuery,
+		searchQuery: finalSearchQuery,
 		path,
 	});
 

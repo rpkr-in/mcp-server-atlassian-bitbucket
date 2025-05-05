@@ -40,6 +40,14 @@ function register(program: Command) {
 			'all',
 		)
 		.option(
+			'--language <lang>',
+			'Filter code search results by programming language (e.g., "typescript", "python").',
+		)
+		.option(
+			'--extension <ext>',
+			'Filter code search results by file extension (e.g., "ts", "py", "java").',
+		)
+		.option(
 			'-l, --limit <number>',
 			'Maximum number of items to return (1-100). Defaults to 25 if omitted.',
 		)
@@ -109,6 +117,8 @@ function register(program: Command) {
 					repoSlug: options.repoSlug,
 					query: options.query,
 					scope: options.scope,
+					language: options.language,
+					extension: options.extension,
 					limit: options.limit
 						? parseInt(options.limit, 10)
 						: undefined,
