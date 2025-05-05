@@ -1,3 +1,10 @@
+## [1.23.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.3...v1.23.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* revert to working server version that stays running ([a80eef9](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a80eef963c9a4de38110112261a772e1fb33385b))
+
 ## [1.23.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.2...v1.23.3) (2025-05-05)
 
 
