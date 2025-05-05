@@ -32,6 +32,7 @@ function register(program: Command): void {
 	registerListRepositoriesCommand(program);
 	registerGetRepositoryCommand(program);
 	registerGetCommitHistoryCommand(program);
+	registerCreateBranchCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -250,6 +251,65 @@ function registerGetCommitHistoryCommand(program: Command): void {
 				if (result.pagination) {
 					console.log('\n' + formatPagination(result.pagination));
 				}
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for creating a new Bitbucket branch
+ *
+ * @param program - The Commander program instance
+ */
+function registerCreateBranchCommand(program: Command): void {
+	program
+		.command('create-branch')
+		.description('Create a new branch in a Bitbucket repository.')
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository.',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug where the branch will be created.',
+		)
+		.requiredOption(
+			'-n, --new-branch-name <name>',
+			'The name for the new branch.',
+		)
+		.requiredOption(
+			'-s, --source-branch-or-commit <target>',
+			'The name of the existing branch or a full commit hash to branch from.',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'create-branch',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Map CLI options to controller params
+				const requestOptions = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					newBranchName: options.newBranchName,
+					sourceBranchOrCommit: options.sourceBranchOrCommit,
+				};
+
+				actionLogger.debug(
+					'Creating branch with options:',
+					requestOptions,
+				);
+				const result =
+					await atlassianRepositoriesController.createBranch(
+						requestOptions,
+					);
+				actionLogger.debug('Successfully created branch');
+
+				console.log(result.content);
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

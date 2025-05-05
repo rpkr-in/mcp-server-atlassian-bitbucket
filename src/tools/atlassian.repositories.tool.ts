@@ -8,6 +8,8 @@ import {
 	GetRepositoryToolArgsType,
 	GetCommitHistoryToolArgs,
 	GetCommitHistoryToolArgsType,
+	CreateBranchToolArgsSchema,
+	CreateBranchToolArgsType,
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
@@ -158,19 +160,35 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 }
 
 /**
- * Register Atlassian Repositories MCP Tools
- *
- * Registers the repositories-related tools with the MCP server.
- * Each tool is registered with its schema, description, and handler function.
- *
- * @param server - The MCP server instance to register tools with
+ * Handler for creating a new branch.
+ */
+async function handleCreateBranch(args: CreateBranchToolArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'handleCreateBranch',
+	);
+	try {
+		methodLogger.debug('Tool bb_create_branch called', args);
+		const result = await atlassianRepositoriesController.createBranch(args);
+		return {
+			content: [{ type: 'text' as const, text: result.content }],
+			// No specific metadata or pagination for create operations typically
+		};
+	} catch (error) {
+		methodLogger.error('Tool bb_create_branch failed', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
+ * Register all Bitbucket repository tools with the MCP server.
  */
 function registerTools(server: McpServer) {
-	const methodLogger = Logger.forContext(
+	const registerLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
 		'registerTools',
 	);
-	methodLogger.debug('Registering Atlassian Repositories tools...');
+	registerLogger.debug('Registering Repository tools...');
 
 	// Register the list repositories tool
 	server.tool(
@@ -196,7 +214,15 @@ function registerTools(server: McpServer) {
 		handleGetCommitHistory,
 	);
 
-	methodLogger.debug('Successfully registered Atlassian Repositories tools');
+	// Add the new create_branch tool
+	server.tool(
+		'bb_create_branch',
+		`Creates a new branch in a specified Bitbucket repository. Requires the workspace slug (\`workspaceSlug\`), repository slug (\`repoSlug\`), the desired new branch name (\`newBranchName\`), and the source branch or commit hash (\`sourceBranchOrCommit\`) to branch from. Requires repository write permissions. Returns a success message.`,
+		CreateBranchToolArgsSchema.shape,
+		handleCreateBranch,
+	);
+
+	registerLogger.debug('Successfully registered Repository tools');
 }
 
 export default { registerTools };

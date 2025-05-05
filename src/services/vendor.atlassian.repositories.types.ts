@@ -251,3 +251,30 @@ export const PaginatedCommitsSchema = z.object({
 	values: z.array(CommitSchema),
 });
 export type PaginatedCommits = z.infer<typeof PaginatedCommitsSchema>;
+
+/**
+ * Parameters for creating a branch.
+ */
+export const CreateBranchParamsSchema = z.object({
+	workspace: z.string(),
+	repo_slug: z.string(),
+	name: z.string(), // New branch name
+	target: z.object({
+		hash: z.string(), // Source branch name or commit hash
+	}),
+});
+export type CreateBranchParams = z.infer<typeof CreateBranchParamsSchema>;
+
+/**
+ * Response object when creating a branch.
+ * Contains details about the newly created branch reference.
+ */
+export const BranchRefSchema = z.object({
+	type: z.literal('branch'),
+	name: z.string(),
+	target: z.object({
+		hash: z.string(),
+		type: z.string(), // e.g., 'commit'
+	}),
+});
+export type BranchRef = z.infer<typeof BranchRefSchema>;

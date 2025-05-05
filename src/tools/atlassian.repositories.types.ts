@@ -145,3 +145,29 @@ export const GetCommitHistoryToolArgs = z.object({
 export type GetCommitHistoryToolArgsType = z.infer<
 	typeof GetCommitHistoryToolArgs
 >;
+
+/**
+ * Schema for create-branch tool arguments.
+ */
+export const CreateBranchToolArgsSchema = z.object({
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe('Workspace slug containing the repository.'),
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe('Repository slug where the branch will be created.'),
+	newBranchName: z
+		.string()
+		.min(1, 'New branch name is required')
+		.describe('The name for the new branch.'),
+	sourceBranchOrCommit: z
+		.string()
+		.min(1, 'Source branch or commit is required')
+		.describe('The name of the branch or the commit hash to branch from.'),
+});
+
+export type CreateBranchToolArgsType = z.infer<
+	typeof CreateBranchToolArgsSchema
+>;

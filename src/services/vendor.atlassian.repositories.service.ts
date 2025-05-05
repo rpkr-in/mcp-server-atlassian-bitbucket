@@ -16,10 +16,14 @@ import {
 	RepositoriesResponseSchema,
 	RepositorySchema,
 	PaginatedCommitsSchema,
+	CreateBranchParamsSchema,
+	BranchRefSchema,
 	type ListRepositoriesParams,
 	type GetRepositoryParams,
 	type ListCommitsParams,
 	type Repository,
+	type CreateBranchParams,
+	type BranchRef,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -342,4 +346,89 @@ async function listCommits(
 	}
 }
 
-export default { list, get, listCommits };
+/**
+ * Creates a new branch in the specified repository.
+ *
+ * @param params Parameters including workspace, repo slug, new branch name, and source target.
+ * @returns Promise resolving to details about the newly created branch reference.
+ * @throws {Error} If required parameters are missing or API request fails.
+ */
+async function createBranch(params: CreateBranchParams): Promise<BranchRef> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'createBranch',
+	);
+	methodLogger.debug(
+		`Creating branch '${params.name}' from target '${params.target.hash}' in ${params.workspace}/${params.repo_slug}`,
+	);
+
+	// Validate params with Zod
+	try {
+		CreateBranchParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error('Invalid parameters provided:', error.format());
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/refs/branches`;
+
+	const requestBody = {
+		name: params.name,
+		target: {
+			hash: params.target.hash,
+		},
+	};
+
+	methodLogger.debug(`Sending POST request to: ${path}`);
+	try {
+		const rawData = await fetchAtlassian<BranchRef>(credentials, path, {
+			method: 'POST',
+			body: requestBody,
+		});
+
+		// Validate response with Zod schema
+		try {
+			const validatedData = BranchRefSchema.parse(rawData);
+			methodLogger.debug('Branch created successfully:', validatedData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to create branch: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
+}
+
+export default { list, get, listCommits, createBranch };

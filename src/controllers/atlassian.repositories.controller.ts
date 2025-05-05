@@ -11,6 +11,7 @@ import {
 	ListRepositoriesToolArgsType,
 	GetRepositoryToolArgsType,
 	GetCommitHistoryToolArgsType,
+	CreateBranchToolArgsType,
 } from '../tools/atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
@@ -21,6 +22,8 @@ import {
 	ListRepositoriesParams,
 	GetRepositoryParams,
 	ListCommitsParams,
+	BranchRef,
+	CreateBranchParams,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
@@ -278,4 +281,56 @@ async function getCommitHistory(
 	}
 }
 
-export default { list, get, getCommitHistory };
+/**
+ * Creates a new branch in a repository.
+ * @param options Options including workspace, repo, new branch name, and source target.
+ * @returns Confirmation message.
+ */
+async function createBranch(
+	options: CreateBranchToolArgsType,
+): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug, newBranchName, sourceBranchOrCommit } =
+		options;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'createBranch',
+	);
+
+	methodLogger.debug(
+		`Attempting to create branch '${newBranchName}' from '${sourceBranchOrCommit}' in ${workspaceSlug}/${repoSlug}`,
+	);
+
+	try {
+		const serviceParams: CreateBranchParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			name: newBranchName,
+			target: {
+				hash: sourceBranchOrCommit,
+			},
+		};
+
+		methodLogger.debug('Calling service to create branch:', serviceParams);
+
+		const createdBranchRef: BranchRef =
+			await atlassianRepositoriesService.createBranch(serviceParams);
+
+		methodLogger.debug('Branch created successfully:', createdBranchRef);
+
+		// Format a simple success message
+		const successMessage = `Successfully created branch \`${createdBranchRef.name}\` from target \`${sourceBranchOrCommit}\` (commit: ${createdBranchRef.target.hash.substring(0, 7)}).`;
+
+		return {
+			content: successMessage,
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'Branch',
+			operation: 'creating',
+			source: 'controllers/atlassian.repositories.controller.ts@createBranch',
+			additionalInfo: { options },
+		});
+	}
+}
+
+export default { list, get, getCommitHistory, createBranch };
