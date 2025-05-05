@@ -222,15 +222,16 @@ export function formatPullRequestDetails(
 /**
  * Format pull request comments for display
  * @param commentsData - Raw pull request comments data from the API
+ * @param prId - The ID of the pull request to include in the title
  * @returns Formatted string with pull request comments in markdown format
  */
 export function formatPullRequestComments(
 	commentsData: PullRequestCommentsResponse,
+	prId: string,
 ): string {
 	const lines: string[] = [];
 
-	// Main heading
-	const prId = commentsData.pullrequest?.id || '';
+	// Main heading - use the passed prId directly
 	lines.push(formatHeading(`Comments on Pull Request #${prId}`, 1));
 	lines.push('');
 

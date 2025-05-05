@@ -264,7 +264,7 @@ async function listComments(
 		);
 
 		// Format the comments data for display using the formatter
-		const formattedComments = formatPullRequestComments(commentsData);
+		const formattedComments = formatPullRequestComments(commentsData, prId);
 
 		return {
 			content: formattedComments,
