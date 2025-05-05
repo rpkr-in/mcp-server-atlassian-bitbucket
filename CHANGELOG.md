@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.1...v1.23.2) (2025-05-05)
+
+
+### Bug Fixes
+
+* Remove explicit exit after CLI execution in index.ts ([9b0bed0](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/9b0bed07040cb54516fff6e9f0c8cc667ccd5786))
+
 ## [1.23.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.0...v1.23.1) (2025-05-05)
 
 
