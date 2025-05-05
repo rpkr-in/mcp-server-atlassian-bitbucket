@@ -306,12 +306,12 @@ function formatComment(
 	comment: PullRequestCommentsResponse['values'][0],
 	lines: string[],
 ): void {
-	lines.push(
-		formatHeading(
-			`Comment by ${comment.user.display_name || 'Unknown User'}`,
-			3,
-		),
-	);
+	const author = comment.user.display_name || 'Unknown User';
+	const headerText = comment.deleted
+		? `[DELETED] Comment by ${author}`
+		: `Comment by ${author}`;
+
+	lines.push(formatHeading(headerText, 3));
 	lines.push(`*Posted on ${formatDate(comment.created_on)}*`);
 
 	if (comment.updated_on && comment.updated_on !== comment.created_on) {
@@ -336,7 +336,12 @@ function formatComment(
 	}
 
 	lines.push('');
-	lines.push(comment.content.raw || 'No content');
+	// Show specific message for deleted comments, otherwise show raw content
+	lines.push(
+		comment.deleted
+			? '*This comment has been deleted.*'
+			: comment.content.raw || 'No content',
+	);
 
 	// Add link to view in browser if available
 	if (comment.links?.html?.href) {
