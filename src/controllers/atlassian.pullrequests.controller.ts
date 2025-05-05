@@ -17,6 +17,7 @@ import {
 	GetPullRequestCommentsParams as ListCommentsParams,
 	CreatePullRequestCommentParams,
 	CreatePullRequestParams,
+	PullRequestComment,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	ListPullRequestsToolArgsType,
@@ -26,6 +27,7 @@ import {
 	CreatePullRequestToolArgsType,
 } from '../tools/atlassian.pullrequests.types.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
+import { extractDiffSnippet } from '../utils/diff.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -39,6 +41,12 @@ const controllerLogger = Logger.forContext(
 
 // Log controller initialization
 controllerLogger.debug('Bitbucket pull requests controller initialized');
+
+// Define an extended type for internal use within the controller/formatter
+// to include the code snippet.
+interface PullRequestCommentWithSnippet extends PullRequestComment {
+	codeSnippet?: string;
+}
 
 /**
  * List Bitbucket pull requests with optional filtering options
@@ -205,7 +213,7 @@ async function get(
 }
 
 /**
- * Lists comments for a specific pull request
+ * Lists comments for a specific pull request, including code snippets for inline comments.
  * @param options - Options containing workspace slug, repo slug, and PR ID
  * @returns Promise with formatted pull request comments list content and pagination information
  */
@@ -224,19 +232,15 @@ async function listComments(
 	);
 
 	try {
-		// Create defaults object with proper typing
 		const defaults: Partial<ListPullRequestCommentsToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
-
-		// Apply defaults
 		const mergedOptions =
 			applyDefaults<ListPullRequestCommentsToolArgsType>(
 				options,
 				defaults,
 			);
 
-		// Map controller options to service parameters
 		const serviceParams: ListCommentsParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
@@ -249,29 +253,64 @@ async function listComments(
 
 		methodLogger.debug('Using service parameters:', serviceParams);
 
-		// Get both primary comments and inline comments
 		const commentsData =
 			await atlassianPullRequestsService.getComments(serviceParams);
 
 		methodLogger.debug(
-			`Retrieved ${commentsData.values?.length || 0} comments`,
+			`Retrieved ${commentsData.values?.length || 0} comments. Fetching snippets...`,
 		);
 
-		// Extract pagination information using the utility
+		// Enhance comments with snippets where applicable
+		const commentsWithSnippets: PullRequestCommentWithSnippet[] = [];
+		for (const comment of commentsData.values) {
+			let snippet = undefined;
+			if (
+				comment.inline &&
+				comment.links?.code?.href &&
+				comment.inline.to !== undefined
+			) {
+				try {
+					methodLogger.debug(
+						`Fetching diff for inline comment ${comment.id} from ${comment.links.code.href}`,
+					);
+					const diffContent =
+						await atlassianPullRequestsService.getDiffForUrl(
+							comment.links.code.href,
+						);
+					snippet = extractDiffSnippet(
+						diffContent,
+						comment.inline.to,
+					);
+					methodLogger.debug(
+						`Extracted snippet for comment ${comment.id} (length: ${snippet?.length})`,
+					);
+				} catch (snippetError) {
+					methodLogger.warn(
+						`Failed to fetch or parse snippet for comment ${comment.id}:`,
+						snippetError,
+					);
+					// Continue without snippet if fetching/parsing fails
+				}
+			}
+			commentsWithSnippets.push({ ...comment, codeSnippet: snippet });
+		}
+
 		const pagination = extractPaginationInfo(
-			commentsData,
+			commentsData, // Use original data for pagination info
 			PaginationType.PAGE,
 		);
 
-		// Format the comments data for display using the formatter
-		const formattedComments = formatPullRequestComments(commentsData, prId);
+		// Pass the enhanced comments (with snippets) to the formatter
+		const formattedComments = formatPullRequestComments(
+			commentsWithSnippets, // Use the enhanced array
+			prId,
+		);
 
 		return {
 			content: formattedComments,
 			pagination,
 		};
 	} catch (error) {
-		// Use the standardized error handler
 		throw handleControllerError(error, {
 			entityType: 'Pull Request Comments',
 			operation: 'listing',

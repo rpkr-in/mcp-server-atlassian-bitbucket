@@ -517,6 +517,53 @@ async function getDiffstat(
 	return fetchAtlassian<DiffstatResponse>(credentials, path);
 }
 
+/**
+ * Fetches the raw diff content from a specific Bitbucket API URL.
+ * Used primarily for fetching file-specific diffs linked from inline comments.
+ *
+ * @async
+ * @param {string} url - The exact Bitbucket API URL to fetch the diff from.
+ * @returns {Promise<string>} Promise containing the raw diff content as a string.
+ * @throws {Error} If Atlassian credentials are missing or the API request fails.
+ */
+async function getDiffForUrl(url: string): Promise<string> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'getDiffForUrl',
+	);
+	methodLogger.debug(`Getting raw diff from URL: ${url}`);
+
+	if (!url) {
+		throw new Error('URL parameter is required');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	// Parse the provided URL to extract the path and query string
+	let urlPath = '';
+	try {
+		const parsedUrl = new URL(url);
+		urlPath = parsedUrl.pathname + parsedUrl.search;
+		methodLogger.debug(`Parsed path and query from URL: ${urlPath}`);
+	} catch (parseError) {
+		methodLogger.error(`Failed to parse URL: ${url}`, parseError);
+		throw new Error(`Invalid URL provided for diff fetching: ${url}`);
+	}
+
+	// Pass only the path part to fetchAtlassian
+	// Ensure the Accept header requests plain text for the raw diff.
+	return fetchAtlassian<string>(credentials, urlPath, {
+		headers: {
+			Accept: 'text/plain',
+		},
+	});
+}
+
 export default {
 	list,
 	get,
@@ -525,4 +572,5 @@ export default {
 	create,
 	getRawDiff,
 	getDiffstat,
+	getDiffForUrl,
 };

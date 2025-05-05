@@ -1,8 +1,8 @@
 import {
 	PullRequest,
 	PullRequestsResponse,
-	PullRequestCommentsResponse,
 	DiffstatResponse,
+	PullRequestComment,
 } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
 	formatHeading,
@@ -13,6 +13,11 @@ import {
 	formatDiff,
 	formatDate,
 } from '../utils/formatter.util.js';
+
+// Define the extended type here as well for clarity
+interface PullRequestCommentWithSnippet extends PullRequestComment {
+	codeSnippet?: string;
+}
 
 /**
  * Format a list of pull requests for display
@@ -220,53 +225,49 @@ export function formatPullRequestDetails(
 }
 
 /**
- * Format pull request comments for display
- * @param commentsData - Raw pull request comments data from the API
- * @param prId - The ID of the pull request to include in the title
- * @returns Formatted string with pull request comments in markdown format
+ * Format pull request comments for display, including code snippets for inline comments.
+ * @param comments - Array of comment objects, potentially enhanced with code snippets.
+ * @param prId - The ID of the pull request to include in the title.
+ * @returns Formatted string with pull request comments in markdown format.
  */
 export function formatPullRequestComments(
-	commentsData: PullRequestCommentsResponse,
+	comments: PullRequestCommentWithSnippet[], // Accept the array of enhanced comments directly
 	prId: string,
 ): string {
 	const lines: string[] = [];
 
-	// Main heading - use the passed prId directly
 	lines.push(formatHeading(`Comments on Pull Request #${prId}`, 1));
 	lines.push('');
 
-	if (!commentsData.values || commentsData.values.length === 0) {
+	if (!comments || comments.length === 0) {
 		lines.push('*No comments found on this pull request.*');
-		// Add standard footer even for empty state
 		lines.push('\n\n' + formatSeparator());
 		lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 		return lines.join('\n');
 	}
 
 	// Group comments by parent (to handle threads)
-	const topLevelComments: PullRequestCommentsResponse['values'] = [];
+	const topLevelComments: PullRequestCommentWithSnippet[] = [];
 	const childComments: {
-		[parentId: number]: PullRequestCommentsResponse['values'];
+		[parentId: number]: PullRequestCommentWithSnippet[]; // Use enhanced type here too
 	} = {};
 
 	// First pass: organize comments by parent
-	commentsData.values.forEach((comment) => {
+	comments.forEach((comment) => {
 		if (comment.parent) {
-			// This is a reply to another comment
 			const parentId = comment.parent.id;
 			if (!childComments[parentId]) {
 				childComments[parentId] = [];
 			}
 			childComments[parentId].push(comment);
 		} else {
-			// This is a top-level comment
 			topLevelComments.push(comment);
 		}
 	});
 
 	// Format each top-level comment and its replies
 	topLevelComments.forEach((comment, index) => {
-		formatComment(comment, lines);
+		formatComment(comment, lines); // Pass the enhanced comment object
 
 		// Add replies if any exist
 		const replies = childComments[comment.id] || [];
@@ -279,18 +280,17 @@ export function formatPullRequestComments(
 				lines.push(
 					`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(reply.created_on)})`,
 				);
+				// Replies typically don't have snippets, but use raw content
 				lines.push(`> ${reply.content.raw.replace(/\n/g, '\n> ')}`);
 			});
 		}
 
-		// Add separator only between comments
 		if (index < topLevelComments.length - 1) {
 			lines.push('');
 			lines.push(formatSeparator());
 		}
 	});
 
-	// Add standard footer with timestamp
 	lines.push('\n\n' + formatSeparator());
 	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
@@ -298,12 +298,12 @@ export function formatPullRequestComments(
 }
 
 /**
- * Helper function to format a single comment
- * @param comment - The comment to format
- * @param lines - Array of string lines to append to
+ * Helper function to format a single comment, including code snippet if available.
+ * @param comment - The comment object (potentially with codeSnippet).
+ * @param lines - Array of string lines to append to.
  */
 function formatComment(
-	comment: PullRequestCommentsResponse['values'][0],
+	comment: PullRequestCommentWithSnippet, // Use the enhanced type
 	lines: string[],
 ): void {
 	const author = comment.user.display_name || 'Unknown User';
@@ -318,7 +318,7 @@ function formatComment(
 		lines.push(`*Updated on ${formatDate(comment.updated_on)}*`);
 	}
 
-	// If it's an inline comment, show file and line information
+	// If it's an inline comment, show file, line info, and snippet
 	if (comment.inline) {
 		const fileInfo = `File: \`${comment.inline.path}\``;
 		let lineInfo = '';
@@ -327,12 +327,25 @@ function formatComment(
 			comment.inline.from !== undefined &&
 			comment.inline.to !== undefined
 		) {
-			lineInfo = `(changed from line ${comment.inline.from} to line ${comment.inline.to})`;
+			lineInfo = `(changed line ${comment.inline.from} -> ${comment.inline.to})`; // Slightly clearer wording
 		} else if (comment.inline.to !== undefined) {
 			lineInfo = `(line ${comment.inline.to})`;
 		}
 
-		lines.push(`**${fileInfo}** ${lineInfo}`);
+		lines.push(`**Inline Comment: ${fileInfo}** ${lineInfo}`);
+
+		// Add the code snippet if it exists
+		if (comment.codeSnippet) {
+			lines.push('');
+			lines.push('```diff'); // Use diff language for syntax highlighting
+			lines.push(comment.codeSnippet);
+			lines.push('```');
+		} else if (comment.links?.code?.href) {
+			// Fallback link if snippet fetch failed or wasn't applicable
+			lines.push(
+				`[View code context in browser](${comment.links.code.href})`,
+			);
+		}
 	}
 
 	lines.push('');
@@ -340,12 +353,14 @@ function formatComment(
 	lines.push(
 		comment.deleted
 			? '*This comment has been deleted.*'
-			: comment.content.raw || 'No content',
+			: comment.content.raw || '*No content provided.*', // Slightly clearer fallback
 	);
 
-	// Add link to view in browser if available
+	// Add link to view the comment itself in browser if available
 	if (comment.links?.html?.href) {
 		lines.push('');
-		lines.push(`[View comment in browser](${comment.links.html.href})`);
+		lines.push(
+			`[View full comment thread in browser](${comment.links.html.href})`,
+		); // Clarify link purpose
 	}
 }
