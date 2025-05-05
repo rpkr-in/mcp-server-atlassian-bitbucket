@@ -94,6 +94,7 @@ export function formatRepositoryDetails(
 		UUID: repositoryData.uuid,
 		Description: repositoryData.description || 'No description provided',
 		Language: repositoryData.language || 'Not specified',
+		'Main Branch': repositoryData.mainbranch?.name || 'N/A',
 		Private: repositoryData.is_private ? 'Yes' : 'No',
 		Size: repositoryData.size
 			? `${(repositoryData.size / 1024).toFixed(2)} KB`
