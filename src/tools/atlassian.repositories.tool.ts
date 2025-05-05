@@ -175,7 +175,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace identified by \`workspaceSlug\`. Supports filtering by name using \`query\`, user access level with \`role\`, and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs needed for other repository operations. Requires Bitbucket credentials to be configured.`,
+		`Lists repositories within a workspace identified by \`workspaceSlug\`. Filters repositories where the authenticated user has the specified \`role\` (or higher). Valid roles: 'owner', 'admin', 'contributor', 'member'. Note: 'member' typically includes all accessible repositories. Supports filtering by name/description using \`query\` and custom sorting with \`sort\`. Includes pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of repositories with their slugs, names, descriptions, privacy status, and URLs. Requires Bitbucket credentials to be configured.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);

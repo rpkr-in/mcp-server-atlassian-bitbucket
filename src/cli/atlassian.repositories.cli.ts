@@ -57,7 +57,7 @@ function registerListRepositoriesCommand(program: Command): void {
 		)
 		.option(
 			'-r, --role <string>',
-			'Filter repositories by user role. Examples: "owner", "admin", "contributor", "member".',
+			'Filter repositories where the authenticated user has the specified role or higher. Valid roles: `owner`, `admin`, `contributor`, `member`. Note: `member` typically includes all accessible repositories.',
 		)
 		.option(
 			'-s, --sort <string>',

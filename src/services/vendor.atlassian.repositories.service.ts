@@ -106,6 +106,9 @@ async function list(
 	if (params.sort) {
 		queryParams.set('sort', params.sort);
 	}
+	if (params.role) {
+		queryParams.set('role', params.role);
+	}
 	if (params.pagelen) {
 		queryParams.set('pagelen', params.pagelen.toString());
 	}
