@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.0...v1.23.1) (2025-05-05)
+
+
+### Bug Fixes
+
+* Apply cross-platform compatibility improvements from boilerplate ([3426b97](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3426b97d62cfef5076436600be3126c7a0cf4382))
+
 # [1.23.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.22.0...v1.23.0) (2025-05-05)
 
 
