@@ -19,6 +19,7 @@ const indexLogger = Logger.forContext('index.ts');
 
 // Log initialization at debug level
 indexLogger.debug('Bitbucket MCP server module loaded');
+indexLogger.info(`Initializing ${PACKAGE_NAME} v${VERSION}`);
 
 let serverInstance: McpServer | null = null;
 let transportInstance: SSEServerTransport | StdioServerTransport | null = null;
@@ -98,28 +99,37 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
  * Determines whether to run in CLI or server mode based on command-line arguments
  */
 async function main() {
-	// Create method-level logger with more specific context
 	const mainLogger = Logger.forContext('index.ts', 'main');
-
-	// Load configuration
 	config.load();
 
-	// Check if arguments are provided (CLI mode)
+	// --- Start: Add Graceful Shutdown ---
+	const shutdown = async (signal: string) => {
+		mainLogger.info(`Received ${signal}. Shutting down gracefully...`);
+		process.exit(0);
+	};
+
+	process.on('SIGINT', () => shutdown('SIGINT')); // Ctrl+C
+	process.on('SIGTERM', () => shutdown('SIGTERM')); // kill command
+	// --- End: Add Graceful Shutdown ---
+
 	if (process.argv.length > 2) {
-		// CLI mode: Pass arguments to CLI runner
 		mainLogger.info('Starting in CLI mode');
 		await runCli(process.argv.slice(2));
 		mainLogger.info('CLI execution completed');
+		// Explicitly exit after CLI runs to ensure process termination
+		process.exit(0);
 	} else {
-		// MCP Server mode: Start server with default STDIO
 		mainLogger.info('Starting in server mode');
 		await startServer();
 		mainLogger.info('Server is now running');
+		// Server mode keeps running until signaled
 	}
 }
 
 // If this file is being executed directly (not imported), run the main function
-if (require.main === module) {
+// Use a check suitable for both CommonJS and ESM contexts
+const isMainModule = process.argv[1] && process.argv[1].endsWith('index.js');
+if (isMainModule) {
 	main().catch((err) => {
 		indexLogger.error('Unhandled error in main process', err);
 		process.exit(1);
