@@ -1,3 +1,14 @@
+# [1.23.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.22.0...v1.23.0) (2025-05-05)
+
+
+### Features
+
+* Add --project-key filter to ls-repos command ([f07c044](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f07c0441a4757da5cdd659602ef3e72d6fc38776))
+* Add create-branch command ([4cc5bdb](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4cc5bdb921e9d1e12c7b7689e3719d4f1c429821))
+* Display comment and task counts in get-pr output ([a1513ef](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a1513efefd0992510a0e8e08e75db487ce87bf60))
+* Display main branch name in get-repo output ([12cc91e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/12cc91ea89a241002ddfef4523633ddb90f79c2e))
+* Improve search command usability ([c5d1550](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c5d155053a4ea6889f86e6861925b25c7b979727))
+
 # [1.22.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.7...v1.22.0) (2025-05-05)
 
 
