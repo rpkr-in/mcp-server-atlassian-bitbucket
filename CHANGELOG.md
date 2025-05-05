@@ -1,3 +1,10 @@
+## [1.21.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.3...v1.21.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* apply role filter in list repositories API call ([6ca7e4b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/6ca7e4b29015aa689fd86d681ff28b0eabf52a09))
+
 ## [1.21.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.21.2...v1.21.3) (2025-05-04)
 
 
