@@ -193,34 +193,6 @@ function createUserFriendlyErrorMessage(
 }
 
 /**
- * Handle CLI errors consistently
- * @param error The error to handle
- * @returns Never returns, always ends the process
- */
-export function handleCliError(error: unknown): never {
-	const methodLogger = Logger.forContext(
-		'utils/error-handler.util.ts',
-		'handleCliError',
-	);
-
-	// Extract error details
-	const errorMessage = error instanceof Error ? error.message : String(error);
-	const statusCode =
-		error instanceof Error && 'statusCode' in error
-			? (error as { statusCode: number }).statusCode
-			: undefined;
-
-	// Log error with source information if available
-	methodLogger.error(`CLI error: ${errorMessage}`, error);
-
-	// Display user-friendly error message to stderr
-	console.error(`Error: ${errorMessage}`);
-
-	// Exit with appropriate status code
-	process.exit(statusCode || 1);
-}
-
-/**
  * Handle controller errors consistently
  * @param error The error to handle
  * @param context Context information for better error messages

@@ -14,11 +14,12 @@ import {
 	GetRepositoryParamsSchema,
 	ListCommitsParamsSchema,
 	RepositoriesResponseSchema,
-	RepositoryDetailedSchema,
+	RepositorySchema,
 	PaginatedCommitsSchema,
 	type ListRepositoriesParams,
 	type GetRepositoryParams,
 	type ListCommitsParams,
+	type Repository,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -164,7 +165,7 @@ async function list(
  * @param {GetRepositoryParams} params - Parameters for the request
  * @param {string} params.workspace - The workspace slug
  * @param {string} params.repo_slug - The repository slug
- * @returns {Promise<RepositoryDetailed>} Promise containing the detailed repository information
+ * @returns {Promise<Repository>} Promise containing the detailed repository information
  * @throws {Error} If Atlassian credentials are missing or API request fails
  * @example
  * // Get repository details
@@ -173,9 +174,7 @@ async function list(
  *   repo_slug: 'my-repo'
  * });
  */
-async function get(
-	params: GetRepositoryParams,
-): Promise<z.infer<typeof RepositoryDetailedSchema>> {
+async function get(params: GetRepositoryParams): Promise<Repository> {
 	const methodLogger = Logger.forContext(
 		'services/vendor.atlassian.repositories.service.ts',
 		'get',
@@ -216,7 +215,7 @@ async function get(
 		const rawData = await fetchAtlassian(credentials, path);
 		// Validate response with Zod schema
 		try {
-			const validatedData = RepositoryDetailedSchema.parse(rawData);
+			const validatedData = RepositorySchema.parse(rawData);
 			return validatedData;
 		} catch (error) {
 			if (error instanceof z.ZodError) {

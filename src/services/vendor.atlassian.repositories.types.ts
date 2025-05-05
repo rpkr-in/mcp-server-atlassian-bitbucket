@@ -120,13 +120,6 @@ export const RepositorySchema = z.object({
 export type Repository = z.infer<typeof RepositorySchema>;
 
 /**
- * Extended repository object with optional fields
- * @remarks Currently identical to Repository, but allows for future extension
- */
-export const RepositoryDetailedSchema = RepositorySchema;
-export type RepositoryDetailed = z.infer<typeof RepositoryDetailedSchema>;
-
-/**
  * Parameters for listing repositories
  */
 export const ListRepositoriesParamsSchema = z.object({

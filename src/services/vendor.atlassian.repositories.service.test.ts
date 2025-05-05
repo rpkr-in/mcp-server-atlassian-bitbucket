@@ -3,6 +3,13 @@ import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
 import atlassianWorkspacesService from './vendor.atlassian.workspaces.service.js';
+import { Repository } from './vendor.atlassian.repositories.types.js';
+import { Logger } from '../utils/logger.util.js';
+
+// Instantiate logger for the test file
+const logger = Logger.forContext(
+	'services/vendor.atlassian.repositories.service.test.ts',
+);
 
 describe('Vendor Atlassian Repositories Service', () => {
 	// Load configuration and check for credentials before all tests
@@ -52,6 +59,7 @@ describe('Vendor Atlassian Repositories Service', () => {
 			const result = await atlassianRepositoriesService.list({
 				workspace: workspaceSlug,
 			});
+			logger.debug('List repositories result:', result);
 
 			// Verify the response structure based on RepositoriesResponse
 			expect(result).toHaveProperty('values');
@@ -61,14 +69,8 @@ describe('Vendor Atlassian Repositories Service', () => {
 			expect(result).toHaveProperty('size');
 
 			if (result.values.length > 0) {
-				const repo = result.values[0];
-				expect(repo).toHaveProperty('type', 'repository');
-				expect(repo).toHaveProperty('uuid');
-				expect(repo).toHaveProperty('name');
-				expect(repo).toHaveProperty('full_name');
-				expect(repo).toHaveProperty('is_private');
-				expect(repo).toHaveProperty('links');
-				expect(repo).toHaveProperty('owner');
+				// Verify the structure of the first repository in the list
+				verifyRepositoryStructure(result.values[0]);
 			}
 		}, 30000); // Increased timeout
 
@@ -384,3 +386,14 @@ describe('Vendor Atlassian Repositories Service', () => {
 		}, 30000);
 	});
 });
+
+// Helper function to verify the Repository structure
+function verifyRepositoryStructure(repo: Repository) {
+	expect(repo).toHaveProperty('uuid');
+	expect(repo).toHaveProperty('name');
+	expect(repo).toHaveProperty('full_name');
+	expect(repo).toHaveProperty('is_private');
+	expect(repo).toHaveProperty('links');
+	expect(repo).toHaveProperty('owner');
+	expect(repo).toHaveProperty('type', 'repository');
+}
