@@ -19,7 +19,6 @@ export const WorkspaceUserSchema = z.object({
 	nickname: z.string(),
 	display_name: z.string(),
 });
-// export type WorkspaceUser = z.infer<typeof WorkspaceUserSchema>;
 
 /**
  * Workspace permission type
@@ -29,7 +28,6 @@ export const WorkspacePermissionSchema = z.enum([
 	'collaborator',
 	'member',
 ]);
-// export type WorkspacePermission = z.infer<typeof WorkspacePermissionSchema>;
 
 /**
  * Workspace links object
@@ -87,7 +85,6 @@ export const WorkspaceSchema: z.ZodType<{
 	updated_on: z.string().optional(),
 	links: WorkspaceLinksSchema,
 });
-// export type Workspace = z.infer<typeof WorkspaceSchema>;
 
 /**
  * Workspace membership object
