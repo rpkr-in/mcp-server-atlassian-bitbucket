@@ -1,3 +1,10 @@
+## [1.23.8](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.7...v1.23.8) (2025-05-06)
+
+
+### Performance Improvements
+
+* Update dependencies ([41ffc7b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/41ffc7b92f2cf135d2f67a80a5cf65de565633fa))
+
 ## [1.23.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.6...v1.23.7) (2025-05-06)
 
 
