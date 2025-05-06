@@ -494,7 +494,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		}, 45000); // Increased timeout for multiple API calls
 	});
 
-	describe('create-pr-comment command', () => {
+	describe('add-pr-comment command', () => {
 		it('should display help information', async () => {
 			const result = await CliTestUtil.runCommand([
 				'add-pr-comment',
@@ -502,7 +502,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			]);
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain(
-				'Add a comment to a specific Bitbucket pull request.',
+				'Add a comment to a Bitbucket pull request.',
 			);
 			expect(result.stdout).toContain('--workspace-slug');
 			expect(result.stdout).toContain('--repo-slug');
@@ -581,15 +581,12 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		// Note: API call test has been removed to avoid creating comments on real PRs during tests
 	});
 
-	describe('create-pr command', () => {
+	describe('add-pr command', () => {
 		it('should display help information', async () => {
-			const result = await CliTestUtil.runCommand([
-				'create-pr',
-				'--help',
-			]);
+			const result = await CliTestUtil.runCommand(['add-pr', '--help']);
 			expect(result.exitCode).toBe(0);
 			expect(result.stdout).toContain(
-				'Create a new pull request in a Bitbucket repository',
+				'Add a new pull request in a Bitbucket repository.',
 			);
 			expect(result.stdout).toContain('--workspace-slug');
 			expect(result.stdout).toContain('--repo-slug');
@@ -601,7 +598,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 		});
 
 		it('should require workspace-slug parameter', async () => {
-			const result = await CliTestUtil.runCommand(['create-pr']);
+			const result = await CliTestUtil.runCommand(['add-pr']);
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain('required option');
 			expect(result.stderr).toContain('workspace-slug');
@@ -609,7 +606,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require repo-slug parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr',
+				'add-pr',
 				'--workspace-slug',
 				'test-ws',
 			]);
@@ -620,7 +617,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require title parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr',
+				'add-pr',
 				'--workspace-slug',
 				'test-ws',
 				'--repo-slug',
@@ -633,7 +630,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 
 		it('should require source-branch parameter', async () => {
 			const result = await CliTestUtil.runCommand([
-				'create-pr',
+				'add-pr',
 				'--workspace-slug',
 				'test-ws',
 				'--repo-slug',

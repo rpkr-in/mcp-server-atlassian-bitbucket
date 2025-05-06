@@ -300,7 +300,7 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'create-pr-comment',
+				'add-pr-comment',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);
@@ -337,7 +337,7 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 					content: '(content length: ' + options.content.length + ')',
 				});
 				const result =
-					await atlassianPullRequestsController.createComment(params);
+					await atlassianPullRequestsController.addComment(params);
 				actionLogger.debug('Successfully created pull request comment');
 
 				console.log(result.content);
@@ -411,7 +411,7 @@ function registerAddPullRequestCommand(program: Command): void {
 						: '(no description)',
 				});
 				const result =
-					await atlassianPullRequestsController.create(params);
+					await atlassianPullRequestsController.add(params);
 				actionLogger.debug('Successfully created pull request');
 
 				console.log(result.content);

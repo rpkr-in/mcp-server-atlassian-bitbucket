@@ -325,13 +325,13 @@ async function listComments(
  * @param options - Options containing workspace slug, repo slug, PR ID, and comment content
  * @returns Promise with confirmation message content
  */
-async function createComment(
+async function addComment(
 	options: CreatePullRequestCommentToolArgsType,
 ): Promise<ControllerResponse> {
 	const { workspaceSlug, repoSlug, prId, content, inline } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
-		'createComment',
+		'addComment',
 	);
 
 	methodLogger.debug(
@@ -384,7 +384,7 @@ async function createComment(
 		throw handleControllerError(error, {
 			entityType: 'Pull Request Comment',
 			operation: 'creating',
-			source: 'controllers/atlassian.pullrequests.controller.ts@createComment',
+			source: 'controllers/atlassian.pullrequests.controller.ts@addComment',
 			additionalInfo: {
 				workspaceSlug,
 				repoSlug,
@@ -400,7 +400,7 @@ async function createComment(
  * @param options - Options containing repository and pull request details
  * @returns Promise with confirmation message content and PR details
  */
-async function create(
+async function add(
 	options: CreatePullRequestToolArgsType,
 ): Promise<ControllerResponse> {
 	const {
@@ -414,7 +414,7 @@ async function create(
 	} = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
-		'create',
+		'add',
 	);
 
 	methodLogger.debug(
@@ -472,7 +472,7 @@ async function create(
 		throw handleControllerError(error, {
 			entityType: 'Pull Request',
 			operation: 'creating',
-			source: 'controllers/atlassian.pullrequests.controller.ts@create',
+			source: 'controllers/atlassian.pullrequests.controller.ts@add',
 			additionalInfo: {
 				workspaceSlug,
 				repoSlug,
@@ -483,4 +483,4 @@ async function create(
 	}
 }
 
-export default { list, get, listComments, createComment, create };
+export default { list, get, listComments, addComment, add };
