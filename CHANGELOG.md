@@ -1,3 +1,12 @@
+## [1.23.9](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.8...v1.23.9) (2025-05-06)
+
+
+### Bug Fixes
+
+* Standardize terminology from create to add across operations ([37b7735](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/37b7735727483756a3d530ad6a651a8f623feaa7))
+* Update controller method names to match add pattern and fix test cases ([a10317c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a10317c2b1713a7aea91cfb2d73c100f7c7055e6))
+* Update controller method references in tools file ([2682de8](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/2682de83a2caa4aa18f94b884d8d473454d9844d))
+
 ## [1.23.8](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.7...v1.23.8) (2025-05-06)
 
 
