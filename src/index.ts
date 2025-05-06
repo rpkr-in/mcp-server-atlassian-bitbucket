@@ -119,7 +119,12 @@ async function main() {
 }
 
 // If this file is being executed directly (not imported), run the main function
-if (require.main === module) {
+// Use a check suitable for both CommonJS and ESM contexts
+const isMainModule =
+	require.main === module ||
+	(process.argv[1] && process.argv[1].endsWith('index.js')) ||
+	(process.argv[1] && process.argv[1].endsWith('mcp-atlassian-bitbucket'));
+if (isMainModule) {
 	main().catch((err) => {
 		indexLogger.error('Unhandled error in main process', err);
 		process.exit(1);
