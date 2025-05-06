@@ -301,6 +301,24 @@ Create a new branch from a source branch or commit.
 
 ---
 
+## `bb_clone_repo`
+
+Clones a Bitbucket repository to a specified parent directory. The repository will be cloned into a subdirectory named after the repository slug under this `targetPath`.
+
+**IMPORTANT (Tool Usage):** When using this tool via an MCP client, `targetPath` **MUST be an absolute path** (e.g., `/Users/me/clones/bitbucket`). If a relative path is provided to the tool, it will be resolved against the server's temporary working directory, which is likely not the user's intended location.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api",
+	"targetPath": "/Users/me/clones/bitbucket"
+}
+```
+
+> "Clone the 'backend-api' repo into '/Users/me/clones/bitbucket'."
+
+---
+
 ## `bb_get_commit_history`
 
 Retrieve the commit history for a repository.
@@ -352,6 +370,15 @@ npx -y @aashari/mcp-server-atlassian-bitbucket get-commit-history \
   --workspace-slug acme-corp \
   --repo-slug backend-api \
   --revision develop
+npx -y @aashari/mcp-server-atlassian-bitbucket create-branch \
+  --workspace-slug acme-corp \
+  --repo-slug frontend-app \
+  --new-branch-name feature/new-stuff \
+  --source-branch-or-commit main
+npx -y @aashari/mcp-server-atlassian-bitbucket clone \
+  --workspace-slug acme-corp \
+  --repo-slug backend-api \
+  --target-path ./cloned-projects
 ```
 
 ## Install Globally
@@ -390,6 +417,7 @@ mcp-atlassian-bitbucket create-pr --help
 mcp-atlassian-bitbucket search --help
 mcp-atlassian-bitbucket get-commit-history --help
 mcp-atlassian-bitbucket create-branch --help
+mcp-atlassian-bitbucket clone --help
 ```
 
 ---
