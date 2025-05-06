@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.24.0...v1.25.0) (2025-05-06)
+
+
+### Features
+
+* Add repository clone functionality via CLI and Tool ([648392f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/648392f1fdd2e0faa3ce94882a550dca363e861c))
+
 # [1.24.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.10...v1.24.0) (2025-05-06)
 
 
