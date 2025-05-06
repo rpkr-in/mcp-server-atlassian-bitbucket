@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.10...v1.24.0) (2025-05-06)
+
+
+### Features
+
+* sync ADF utility enhancements from Jira project ([9f0c4be](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/9f0c4bed91262790e71c38201722f6bf76b9ff91))
+
 ## [1.23.10](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.9...v1.23.10) (2025-05-06)
 
 
