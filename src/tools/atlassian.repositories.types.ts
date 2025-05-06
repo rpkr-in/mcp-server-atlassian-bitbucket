@@ -171,3 +171,29 @@ export const CreateBranchToolArgsSchema = z.object({
 export type CreateBranchToolArgsType = z.infer<
 	typeof CreateBranchToolArgsSchema
 >;
+
+/**
+ * Schema for clone-repository tool arguments.
+ */
+export const CloneRepositoryToolArgs = z.object({
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe(
+			'Workspace slug containing the repository. Example: "myteam"',
+		),
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe('Repository slug to clone. Example: "project-api"'),
+	targetPath: z
+		.string()
+		.min(1, 'Target path is required')
+		.describe(
+			'Directory path where the repository should be cloned. Can be relative or absolute. Example: "./cloned-repo" or "/tmp/my-clones"',
+		),
+});
+
+export type CloneRepositoryToolArgsType = z.infer<
+	typeof CloneRepositoryToolArgs
+>;

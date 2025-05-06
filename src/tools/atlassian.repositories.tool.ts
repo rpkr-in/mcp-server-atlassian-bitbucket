@@ -10,6 +10,8 @@ import {
 	GetCommitHistoryToolArgsType,
 	CreateBranchToolArgsSchema,
 	CreateBranchToolArgsType,
+	CloneRepositoryToolArgs,
+	CloneRepositoryToolArgsType,
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
@@ -181,6 +183,28 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 }
 
 /**
+ * Handler for cloning a repository.
+ */
+async function handleCloneRepository(args: CloneRepositoryToolArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'handleCloneRepository',
+	);
+	try {
+		methodLogger.debug('Tool bb_clone_repo called', args);
+		const result =
+			await atlassianRepositoriesController.cloneRepository(args);
+		return {
+			content: [{ type: 'text' as const, text: result.content }],
+			// No metadata or pagination for clone operations
+		};
+	} catch (error) {
+		methodLogger.error('Tool bb_clone_repo failed', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register all Bitbucket repository tools with the MCP server.
  */
 function registerTools(server: McpServer) {
@@ -220,6 +244,14 @@ function registerTools(server: McpServer) {
 		`Creates a new branch in a specified Bitbucket repository. Requires the workspace slug (\`workspaceSlug\`), repository slug (\`repoSlug\`), the desired new branch name (\`newBranchName\`), and the source branch or commit hash (\`sourceBranchOrCommit\`) to branch from. Requires repository write permissions. Returns a success message.`,
 		CreateBranchToolArgsSchema.shape,
 		handleAddBranch,
+	);
+
+	// Register the clone repository tool
+	server.tool(
+		'bb_clone_repo',
+		`Clones a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\` to the specified \`targetPath\`. The \`targetPath\` can be a relative or absolute directory path. Requires Bitbucket credentials to fetch repository clone URL. Returns a success message upon initiating the clone operation.`,
+		CloneRepositoryToolArgs.shape,
+		handleCloneRepository,
 	);
 
 	registerLogger.debug('Successfully registered Repository tools');

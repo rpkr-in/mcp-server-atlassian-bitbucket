@@ -12,6 +12,7 @@ import {
 	GetRepositoryToolArgsType,
 	GetCommitHistoryToolArgsType,
 	CreateBranchToolArgsType,
+	CloneRepositoryToolArgsType,
 } from '../tools/atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
@@ -27,6 +28,9 @@ import {
 } from '../services/vendor.atlassian.repositories.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
+import { executeShellCommand } from '../utils/shell.util.js';
+import * as path from 'path';
+import * as fs from 'fs/promises';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -333,4 +337,120 @@ async function createBranch(
 	}
 }
 
-export default { list, get, getCommitHistory, createBranch };
+/**
+ * Clones a Bitbucket repository to a specified target path.
+ * @param options Options including workspaceSlug, repoSlug, and targetPath.
+ * @returns Confirmation message.
+ */
+async function cloneRepository(
+	options: CloneRepositoryToolArgsType,
+): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug, targetPath } = options;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'cloneRepository',
+	);
+
+	methodLogger.debug(
+		`Attempting to clone repository ${workspaceSlug}/${repoSlug} to ${targetPath}`,
+		options,
+	);
+
+	try {
+		// 1. Get repository details to find the clone URL
+		const repoDetails = await atlassianRepositoriesService.get({
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+		});
+
+		// 2. Find the SSH clone URL first, then HTTPS as a fallback
+		let cloneUrl: string | undefined;
+		if (repoDetails.links?.clone) {
+			const sshLink = repoDetails.links.clone.find(
+				(link) => link.name === 'ssh',
+			);
+			if (sshLink) {
+				cloneUrl = sshLink.href;
+				methodLogger.info(`Found SSH clone URL: ${cloneUrl}`);
+			} else {
+				methodLogger.warn(
+					'SSH clone URL not found. Looking for HTTPS.',
+				);
+				const httpsLink = repoDetails.links.clone.find(
+					(link) => link.name === 'https',
+				);
+				if (httpsLink) {
+					cloneUrl = httpsLink.href;
+					methodLogger.info(
+						`Found HTTPS clone URL as fallback: ${cloneUrl}`,
+					);
+				} else if (repoDetails.links.clone.length > 0) {
+					// Fallback to the first available clone link if neither SSH nor HTTPS is explicitly named
+					cloneUrl = repoDetails.links.clone[0].href;
+					methodLogger.warn(
+						`Neither SSH nor HTTPS clone URL found by name, using first available: ${cloneUrl}`,
+					);
+				}
+			}
+		}
+
+		if (!cloneUrl) {
+			throw new Error(
+				`Could not find a clone URL for repository ${workspaceSlug}/${repoSlug}.`,
+			);
+		}
+		methodLogger.info(`Found clone URL: ${cloneUrl}`);
+
+		// 3. Construct and execute the git clone command
+		let command;
+		let operationDescSuffix;
+		let finalTargetPathForMessage = targetPath;
+
+		const repoDirName = repoSlug; // The directory name for the repo itself
+
+		if (targetPath === '.') {
+			// If targetPath is '.', clone into a new directory named after the repo in the current path.
+			// Git will create repoDirName in the current directory.
+			command = `git clone ${cloneUrl} ${repoDirName}`;
+			operationDescSuffix = `into ./${repoDirName}`;
+			finalTargetPathForMessage = `./${repoDirName}`;
+		} else {
+			// Resolve the absolute path for the directory that will contain the cloned repo
+			const parentDir = path.resolve(targetPath);
+			// Ensure the parent directory exists
+			await fs.mkdir(parentDir, { recursive: true });
+
+			// The final path where the repo will be cloned (e.g., /path/to/targetPath/repoSlug)
+			const cloneDestination = path.join(parentDir, repoDirName);
+
+			// Quote if it contains spaces, though path.resolve and path.join usually handle this well
+			// for command execution, explicit quoting is safer for the final string.
+			const safeCloneDestination = cloneDestination.includes(' ')
+				? `"${cloneDestination}"`
+				: cloneDestination;
+
+			command = `git clone ${cloneUrl} ${safeCloneDestination}`;
+			operationDescSuffix = `to ${cloneDestination}`;
+			finalTargetPathForMessage = cloneDestination;
+		}
+
+		const operationDesc = `clone repository ${workspaceSlug}/${repoSlug} ${operationDescSuffix}`;
+		const cloneOutput = await executeShellCommand(command, operationDesc);
+
+		const successMessage = `Successfully initiated cloning of repository ${workspaceSlug}/${repoSlug} to ${finalTargetPathForMessage}. Output: ${cloneOutput}`;
+		methodLogger.info(successMessage);
+
+		return {
+			content: successMessage,
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'Repository Clone',
+			operation: 'cloning',
+			source: 'controllers/atlassian.repositories.controller.ts@cloneRepository',
+			additionalInfo: { options },
+		});
+	}
+}
+
+export default { list, get, getCommitHistory, createBranch, cloneRepository };

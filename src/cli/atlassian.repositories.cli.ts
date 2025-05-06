@@ -33,6 +33,7 @@ function register(program: Command): void {
 	registerGetRepositoryCommand(program);
 	registerGetCommitHistoryCommand(program);
 	registerAddBranchCommand(program);
+	registerCloneRepositoryCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -311,6 +312,64 @@ function registerAddBranchCommand(program: Command): void {
 				console.log(result.content);
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for cloning a Bitbucket repository.
+ *
+ * @param program - The Commander program instance
+ */
+function registerCloneRepositoryCommand(program: Command): void {
+	program
+		.command('clone')
+		.description('Clone a Bitbucket repository to a specified local path.')
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository. Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug to clone. Example: "project-api"',
+		)
+		.requiredOption(
+			'-t, --target-path <path>',
+			'Local directory path where the repository should be cloned. Example: "./cloned-repo" or "/tmp/my-clones"',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'clone',
+			);
+			try {
+				actionLogger.debug(
+					'Processing clone command options:',
+					options,
+				);
+
+				// Map CLI options to controller params (already correct case)
+				const controllerOptions = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					targetPath: options.targetPath,
+				};
+
+				actionLogger.debug(
+					'Initiating repository clone with options:',
+					controllerOptions,
+				);
+				const result =
+					await atlassianRepositoriesController.cloneRepository(
+						controllerOptions,
+					);
+				actionLogger.info('Clone operation initiated successfully.');
+
+				console.log(result.content);
+				// No pagination for clone command
+			} catch (error) {
+				actionLogger.error('Clone operation failed:', error);
 				handleCliError(error);
 			}
 		});
