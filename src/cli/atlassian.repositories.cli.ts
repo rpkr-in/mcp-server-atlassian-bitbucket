@@ -32,7 +32,7 @@ function register(program: Command): void {
 	registerListRepositoriesCommand(program);
 	registerGetRepositoryCommand(program);
 	registerGetCommitHistoryCommand(program);
-	registerCreateBranchCommand(program);
+	registerAddBranchCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -259,14 +259,13 @@ function registerGetCommitHistoryCommand(program: Command): void {
 }
 
 /**
- * Register the command for creating a new Bitbucket branch
- *
+ * Register the command for adding a branch to a repository
  * @param program - The Commander program instance
  */
-function registerCreateBranchCommand(program: Command): void {
+function registerAddBranchCommand(program: Command): void {
 	program
-		.command('create-branch')
-		.description('Create a new branch in a Bitbucket repository.')
+		.command('add-branch')
+		.description('Add a new branch in a Bitbucket repository.')
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository.',
@@ -276,7 +275,7 @@ function registerCreateBranchCommand(program: Command): void {
 			'Repository slug where the branch will be created.',
 		)
 		.requiredOption(
-			'-n, --new-branch-name <name>',
+			'-n, --new-branch-name <n>',
 			'The name for the new branch.',
 		)
 		.requiredOption(
@@ -286,7 +285,7 @@ function registerCreateBranchCommand(program: Command): void {
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.repositories.cli.ts',
-				'create-branch',
+				'add-branch',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);

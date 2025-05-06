@@ -181,7 +181,7 @@ async function listPullRequestComments(
 }
 
 /**
- * MCP Tool: Create a new Comment on Bitbucket Pull Request
+ * MCP Tool: Add a new Comment on Bitbucket Pull Request
  *
  * Adds a new comment to a specific Bitbucket pull request.
  * The comment can be either a general comment or an inline code comment.
@@ -190,16 +190,16 @@ async function listPullRequestComments(
  * @returns MCP response confirming the comment was added
  * @throws Will return error message if comment addition fails
  */
-async function createPullRequestComment(
+async function addPullRequestComment(
 	args: CreatePullRequestCommentToolArgsType,
 ) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
-		'createPullRequestComment',
+		'addPullRequestComment',
 	);
 
 	methodLogger.debug(
-		`Creating comment on pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
+		`Adding comment on pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
 		args,
 	);
 
@@ -221,7 +221,7 @@ async function createPullRequestComment(
 					text: result.content, // Simple confirmation message
 				},
 			],
-			// No pagination metadata needed for 'create'
+			// No pagination metadata needed for 'add'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to add pull request comment', error);
@@ -230,7 +230,7 @@ async function createPullRequestComment(
 }
 
 /**
- * MCP Tool: Create a new Bitbucket Pull Request
+ * MCP Tool: Add a new Bitbucket Pull Request
  *
  * Creates a new pull request between two branches in a repository.
  * Returns a formatted markdown response with the created pull request details.
@@ -239,13 +239,13 @@ async function createPullRequestComment(
  * @returns MCP response with formatted pull request details
  * @throws Will return error message if pull request creation fails
  */
-async function createPullRequest(args: CreatePullRequestToolArgsType) {
+async function addPullRequest(args: CreatePullRequestToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.pullrequests.tool.ts',
-		'createPullRequest',
+		'addPullRequest',
 	);
 	methodLogger.debug(
-		`Creating pull request in ${args.workspaceSlug}/${args.repoSlug} from ${args.sourceBranch}`,
+		`Adding pull request in ${args.workspaceSlug}/${args.repoSlug} from ${args.sourceBranch}`,
 		args,
 	);
 
@@ -260,7 +260,7 @@ async function createPullRequest(args: CreatePullRequestToolArgsType) {
 			closeSourceBranch: args.closeSourceBranch,
 		});
 
-		methodLogger.debug('Successfully created pull request');
+		methodLogger.debug('Successfully added pull request');
 
 		return {
 			content: [
@@ -269,10 +269,10 @@ async function createPullRequest(args: CreatePullRequestToolArgsType) {
 					text: result.content, // Contains timestamp footer
 				},
 			],
-			// No pagination metadata needed for 'create'
+			// No pagination metadata needed for 'add'
 		};
 	} catch (error) {
-		methodLogger.error('Failed to create pull request', error);
+		methodLogger.error('Failed to add pull request', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -316,20 +316,20 @@ function registerTools(server: McpServer) {
 		listPullRequestComments,
 	);
 
-	// Register the create pull request comment tool
+	// Register the add pull request comment tool
 	server.tool(
-		'bb_create_pr_comment',
+		'bb_add_pr_comment',
 		`Creates a comment with specified \`content\` on a pull request identified by \`prId\` within a repository (\`workspaceSlug\`, \`repoSlug\`). Supports both general PR comments and inline code comments via the optional \`inline\` object with \`path\` and \`line\` properties. Returns a confirmation message as Markdown upon successful creation. Requires Bitbucket credentials to be configured.`,
 		CreatePullRequestCommentToolArgs.shape,
-		createPullRequestComment,
+		addPullRequestComment,
 	);
 
-	// Register the tool for creating pull requests
+	// Register the tool for adding pull requests
 	server.tool(
-		'bb_create_pr',
+		'bb_add_pr',
 		`Creates a new pull request in a repository (\`workspaceSlug\`, \`repoSlug\`) with a \`title\` from \`sourceBranch\` to \`destinationBranch\` (defaults to main/master). Optionally includes a \`description\` and can automatically close the source branch when merged via \`closeSourceBranch\`. Returns formatted details of the newly created pull request as Markdown. Requires Bitbucket credentials to be configured.`,
 		CreatePullRequestToolArgs.shape,
-		createPullRequest,
+		addPullRequest,
 	);
 
 	methodLogger.debug('Successfully registered Atlassian Pull Requests tools');

@@ -31,8 +31,8 @@ function register(program: Command): void {
 	registerListPullRequestsCommand(program);
 	registerGetPullRequestCommand(program);
 	registerListPullRequestCommentsCommand(program);
-	registerCreatePullRequestCommentCommand(program);
-	registerCreatePullRequestCommand(program);
+	registerAddPullRequestCommentCommand(program);
+	registerAddPullRequestCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -265,13 +265,13 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 }
 
 /**
- * Register the command for creating a comment on a Bitbucket pull request
+ * Register the command for adding a comment to a pull request
  * @param program - The Commander program instance
  */
-function registerCreatePullRequestCommentCommand(program: Command): void {
+function registerAddPullRequestCommentCommand(program: Command): void {
 	program
 		.command('add-pr-comment')
-		.description('Add a comment to a specific Bitbucket pull request.')
+		.description('Add a comment to a Bitbucket pull request.')
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
@@ -349,13 +349,13 @@ function registerCreatePullRequestCommentCommand(program: Command): void {
 }
 
 /**
- * Register the command for creating a new Bitbucket pull request
+ * Register the command for adding a new pull request
  * @param program - The Commander program instance
  */
-function registerCreatePullRequestCommand(program: Command): void {
+function registerAddPullRequestCommand(program: Command): void {
 	program
-		.command('create-pr')
-		.description('Create a new pull request in a Bitbucket repository.')
+		.command('add-pr')
+		.description('Add a new pull request in a Bitbucket repository.')
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
@@ -388,7 +388,7 @@ function registerCreatePullRequestCommand(program: Command): void {
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
-				'create-pr',
+				'add-pr',
 			);
 			try {
 				actionLogger.debug('Processing command options:', options);

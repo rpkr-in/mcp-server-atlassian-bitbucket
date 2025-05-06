@@ -160,22 +160,22 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 }
 
 /**
- * Handler for creating a new branch.
+ * Handler for adding a new branch.
  */
-async function handleCreateBranch(args: CreateBranchToolArgsType) {
+async function handleAddBranch(args: CreateBranchToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
-		'handleCreateBranch',
+		'handleAddBranch',
 	);
 	try {
-		methodLogger.debug('Tool bb_create_branch called', args);
+		methodLogger.debug('Tool bb_add_branch called', args);
 		const result = await atlassianRepositoriesController.createBranch(args);
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 			// No specific metadata or pagination for create operations typically
 		};
 	} catch (error) {
-		methodLogger.error('Tool bb_create_branch failed', error);
+		methodLogger.error('Tool bb_add_branch failed', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -214,12 +214,12 @@ function registerTools(server: McpServer) {
 		handleGetCommitHistory,
 	);
 
-	// Add the new create_branch tool
+	// Add the new branch tool
 	server.tool(
-		'bb_create_branch',
+		'bb_add_branch',
 		`Creates a new branch in a specified Bitbucket repository. Requires the workspace slug (\`workspaceSlug\`), repository slug (\`repoSlug\`), the desired new branch name (\`newBranchName\`), and the source branch or commit hash (\`sourceBranchOrCommit\`) to branch from. Requires repository write permissions. Returns a success message.`,
 		CreateBranchToolArgsSchema.shape,
-		handleCreateBranch,
+		handleAddBranch,
 	);
 
 	registerLogger.debug('Successfully registered Repository tools');
