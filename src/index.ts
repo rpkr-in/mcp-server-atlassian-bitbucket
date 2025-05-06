@@ -123,7 +123,9 @@ async function main() {
 const isMainModule =
 	require.main === module ||
 	(process.argv[1] && process.argv[1].endsWith('index.js')) ||
-	(process.argv[1] && process.argv[1].endsWith('mcp-atlassian-bitbucket'));
+	(process.argv[1] && process.argv[1].endsWith('mcp-atlassian-bitbucket')) ||
+	(process.argv[1] &&
+		process.argv[1].endsWith('mcp-server-atlassian-bitbucket'));
 if (isMainModule) {
 	main().catch((err) => {
 		indexLogger.error('Unhandled error in main process', err);
