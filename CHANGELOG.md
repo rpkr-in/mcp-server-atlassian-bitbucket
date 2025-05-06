@@ -1,3 +1,10 @@
+## [1.23.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.5...v1.23.6) (2025-05-06)
+
+
+### Bug Fixes
+
+* improve main module detection for npx compatibility ([efe5d4c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/efe5d4c0ed7c15c9729a4ad7d3c91afcb8925c31))
+
 ## [1.23.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.4...v1.23.5) (2025-05-06)
 
 
