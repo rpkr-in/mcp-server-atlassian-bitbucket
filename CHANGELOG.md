@@ -1,3 +1,10 @@
+## [1.23.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.6...v1.23.7) (2025-05-06)
+
+
+### Bug Fixes
+
+* Revert back the index.ts and package.json ([57eeb01](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/57eeb01321e7995bae7a4ffa3363feda1f8008ae))
+
 ## [1.23.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.23.5...v1.23.6) (2025-05-06)
 
 
