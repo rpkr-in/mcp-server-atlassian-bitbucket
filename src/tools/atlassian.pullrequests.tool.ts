@@ -204,7 +204,7 @@ async function addPullRequestComment(
 	);
 
 	try {
-		const result = await atlassianPullRequestsController.createComment({
+		const result = await atlassianPullRequestsController.addComment({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
@@ -250,7 +250,7 @@ async function addPullRequest(args: CreatePullRequestToolArgsType) {
 	);
 
 	try {
-		const result = await atlassianPullRequestsController.create({
+		const result = await atlassianPullRequestsController.add({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			title: args.title,
