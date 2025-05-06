@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.25.0...v1.25.1) (2025-05-06)
+
+
+### Bug Fixes
+
+* Clarify clone tool targetPath and update README ([92e4e53](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/92e4e53322a8e92324b8e7776503e767bcbcf4d1))
+
 # [1.25.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.24.0...v1.25.0) (2025-05-06)
 
 
