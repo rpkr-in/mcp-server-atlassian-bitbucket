@@ -1,3 +1,10 @@
+## [1.26.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.1...v1.26.2) (2025-05-07)
+
+
+### Bug Fixes
+
+* Simplify bb_clone_repo documentation for clarity ([97871ba](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/97871ba8b36d6aef6bb90cf5fbd646ce3e394425))
+
 ## [1.26.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.0...v1.26.1) (2025-05-07)
 
 
