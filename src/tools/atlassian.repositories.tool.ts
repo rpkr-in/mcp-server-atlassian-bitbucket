@@ -273,7 +273,7 @@ function registerTools(server: McpServer) {
 	// Register the clone repository tool
 	server.tool(
 		'bb_clone_repo',
-		`Clones a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. The \`targetPath\` argument specifies the parent directory for the clone. IMPORTANT: When using this tool, \`targetPath\` MUST be an absolute path (e.g., \`/Users/me/projects\`). If a relative path is provided, it will be resolved against the server's temporary working directory, which is likely not the user's intended location. The repository will be cloned into a subdirectory named after the repository slug under this \`targetPath\`. Requires Bitbucket credentials to fetch the repository clone URL. Returns a success message upon initiating the clone operation.`,
+		`Clones a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. The \`targetPath\` argument specifies the parent directory where the repository will be cloned. IMPORTANT: \`targetPath\` MUST be an absolute path (e.g., \`/Users/me/projects\`). The repository will be cloned into a subdirectory named after the repository slug under this \`targetPath\`. Requires Bitbucket credentials to fetch the repository clone URL. Returns a success message upon successful clone operation.`,
 		CloneRepositoryToolArgs.shape,
 		handleCloneRepository,
 	);

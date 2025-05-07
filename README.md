@@ -303,19 +303,19 @@ Create a new branch from a source branch or commit.
 
 ## `bb_clone_repo`
 
-Clones a Bitbucket repository to a specified parent directory. The repository will be cloned into a subdirectory named after the repository slug under this `targetPath`.
+Clones a Bitbucket repository identified by `workspaceSlug` and `repoSlug`. The `targetPath` argument specifies the parent directory where the repository will be cloned.
 
-**IMPORTANT (Tool Usage):** When using this tool via an MCP client, `targetPath` **MUST be an absolute path** (e.g., `/Users/me/clones/bitbucket`). If a relative path is provided to the tool, it will be resolved against the server's temporary working directory, which is likely not the user's intended location.
+**IMPORTANT:** `targetPath` **MUST be an absolute path** (e.g., `/Users/me/projects`). The repository will be cloned into a subdirectory named after the repository slug under this directory.
 
 ```json
 {
 	"workspaceSlug": "acme-corp",
 	"repoSlug": "backend-api",
-	"targetPath": "/Users/me/clones/bitbucket"
+	"targetPath": "/Users/me/projects"
 }
 ```
 
-> "Clone the 'backend-api' repo into '/Users/me/clones/bitbucket'."
+> "Clone the 'backend-api' repo into '/Users/me/projects'."
 
 ---
 
