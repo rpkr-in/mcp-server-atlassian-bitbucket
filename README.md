@@ -346,6 +346,35 @@ _or (filter by branch and path):_
 
 ---
 
+## `bb_get_file`
+
+Retrieves the content of a file from a Bitbucket repository.
+
+**Parameters:**
+
+- `workspaceSlug` (string, required): Workspace slug containing the repository.
+- `repoSlug` (string, required): Repository slug containing the file.
+- `filePath` (string, required): Path to the file within the repository (e.g., "src/app.js", "README.md").
+- `revision` (string, optional): Branch name, tag, or commit hash to retrieve the file from. If omitted, the repository's default branch is used.
+
+**Example:**
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "backend-api",
+	"filePath": "src/main/java/com/acme/service/Application.java",
+	"revision": "main"
+}
+```
+
+> "Get the content of Application.java from the main branch of backend-api in acme-corp."
+> "Show me the pom.xml from the latest commit on the develop branch in the 'coda-payments/api-gateway' repository."
+
+Requires Bitbucket credentials.
+
+---
+
 # Command-Line Interface (CLI)
 
 The CLI uses kebab-case for commands (e.g., `ls-workspaces`) and options (e.g., `--workspace-slug`).
@@ -379,6 +408,11 @@ npx -y @aashari/mcp-server-atlassian-bitbucket clone \
   --workspace-slug acme-corp \
   --repo-slug backend-api \
   --target-path ./cloned-projects
+npx -y @aashari/mcp-server-atlassian-bitbucket get-file \
+  --workspace-slug acme-corp \
+  --repo-slug backend-api \
+  --file-path "src/main/java/com/acme/service/Application.java" \
+  --revision main
 ```
 
 ## Install Globally
@@ -418,6 +452,7 @@ mcp-atlassian-bitbucket search --help
 mcp-atlassian-bitbucket get-commit-history --help
 mcp-atlassian-bitbucket create-branch --help
 mcp-atlassian-bitbucket clone --help
+mcp-atlassian-bitbucket get-file --help
 ```
 
 ---
