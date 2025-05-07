@@ -34,6 +34,7 @@ function register(program: Command): void {
 	registerGetCommitHistoryCommand(program);
 	registerAddBranchCommand(program);
 	registerCloneRepositoryCommand(program);
+	registerGetFileCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -370,6 +371,58 @@ function registerCloneRepositoryCommand(program: Command): void {
 				// No pagination for clone command
 			} catch (error) {
 				actionLogger.error('Clone operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for getting a file from a Bitbucket repository
+ *
+ * @param program - The Commander program instance
+ */
+function registerGetFileCommand(program: Command): void {
+	program
+		.command('get-file')
+		.description('Get the content of a file from a Bitbucket repository.')
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug to get the file from. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+		)
+		.requiredOption(
+			'-f, --file-path <path>',
+			'Path to the file in the repository. Example: "README.md" or "src/main.js"',
+		)
+		.option(
+			'--revision <branch-tag-or-commit>',
+			'Branch name, tag, or commit hash to retrieve the file from. If omitted, the default branch is used.',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'get-file',
+			);
+			try {
+				actionLogger.debug(
+					`Fetching file: ${options.workspaceSlug}/${options.repoSlug}/${options.filePath}`,
+					options.revision ? { revision: options.revision } : {},
+				);
+
+				const result =
+					await atlassianRepositoriesController.getFileContent({
+						workspaceSlug: options.workspaceSlug,
+						repoSlug: options.repoSlug,
+						filePath: options.filePath,
+						revision: options.revision,
+					});
+
+				console.log(result.content);
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

@@ -18,12 +18,14 @@ import {
 	PaginatedCommitsSchema,
 	CreateBranchParamsSchema,
 	BranchRefSchema,
+	GetFileContentParamsSchema,
 	type ListRepositoriesParams,
 	type GetRepositoryParams,
 	type ListCommitsParams,
 	type Repository,
 	type CreateBranchParams,
 	type BranchRef,
+	type GetFileContentParams,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -431,4 +433,93 @@ async function createBranch(params: CreateBranchParams): Promise<BranchRef> {
 	}
 }
 
-export default { list, get, listCommits, createBranch };
+/**
+ * Get the content of a file from a repository.
+ *
+ * This retrieves the raw content of a file at the specified path from a repository at a specific commit.
+ *
+ * @param {GetFileContentParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {string} params.commit - The commit, branch name, or tag to get the file from
+ * @param {string} params.path - The file path within the repository
+ * @returns {Promise<string>} Promise containing the file content as a string
+ * @throws {Error} If parameters are invalid, credentials are missing, or API request fails
+ * @example
+ * // Get README.md content from the main branch
+ * const fileContent = await getFileContent({
+ *   workspace: 'my-workspace',
+ *   repo_slug: 'my-repo',
+ *   commit: 'main',
+ *   path: 'README.md'
+ * });
+ */
+async function getFileContent(params: GetFileContentParams): Promise<string> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'getFileContent',
+	);
+	methodLogger.debug(
+		`Getting file content from ${params.workspace}/${params.repo_slug}/${params.commit}/${params.path}`,
+	);
+
+	// Validate params with Zod
+	try {
+		GetFileContentParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to get file content:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/src/${params.commit}/${params.path}`;
+
+	methodLogger.debug(`Sending request to: ${path}`);
+	try {
+		// Use fetchAtlassian to get the file content directly as string
+		// The function already detects text/plain content type and returns it appropriately
+		const fileContent = await fetchAtlassian<string>(credentials, path);
+
+		methodLogger.debug(
+			`Successfully retrieved file content (${fileContent.length} characters)`,
+		);
+		return fileContent;
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+
+		// More specific error messages for common file issues
+		if (error instanceof Error && error.message.includes('404')) {
+			throw createApiError(
+				`File not found: ${params.path} at ${params.commit}`,
+				404,
+				error,
+			);
+		}
+
+		throw createApiError(
+			`Failed to get file content: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
+}
+
+export default { list, get, listCommits, createBranch, getFileContent };

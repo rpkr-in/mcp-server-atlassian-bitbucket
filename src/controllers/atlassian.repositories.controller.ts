@@ -13,6 +13,7 @@ import {
 	GetCommitHistoryToolArgsType,
 	CreateBranchToolArgsType,
 	CloneRepositoryToolArgsType,
+	GetFileContentToolArgsType,
 } from '../tools/atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
@@ -453,4 +454,78 @@ async function cloneRepository(
 	}
 }
 
-export default { list, get, getCommitHistory, createBranch, cloneRepository };
+/**
+ * Gets the content of a file from a specific repository.
+ * If a revision is not specified, it uses the repository's default branch.
+ *
+ * @param options Parameters containing repository information and file path
+ * @returns Promise resolving to the file content as a string
+ * @throws Will throw an error if the file cannot be retrieved
+ */
+async function getFileContent(
+	options: GetFileContentToolArgsType,
+): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug, filePath, revision } = options;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'getFileContent',
+	);
+
+	methodLogger.debug(
+		`Getting file content for ${workspaceSlug}/${repoSlug}/${filePath}`,
+		{ revision },
+	);
+
+	try {
+		// If revision is not provided, we need to get the default branch name
+		let commitRef = revision;
+
+		if (!commitRef) {
+			methodLogger.debug(
+				'No revision specified, getting repository details to identify default branch',
+			);
+
+			// Get repository details to find the default branch
+			const repoDetails = await atlassianRepositoriesService.get({
+				workspace: workspaceSlug,
+				repo_slug: repoSlug,
+			});
+
+			// Get default branch name, or use 'main' as a fallback
+			commitRef = repoDetails.mainbranch?.name || 'main';
+			methodLogger.debug(
+				`Using default branch as commit reference: ${commitRef}`,
+			);
+		}
+
+		// Request the file content using the service
+		const fileContent = await atlassianRepositoriesService.getFileContent({
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			commit: commitRef,
+			path: filePath,
+		});
+
+		// For consistency with other controller responses, return in expected format
+		return {
+			content: fileContent,
+			// Not paginated, no need for pagination property
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'File Content',
+			operation: 'retrieving',
+			source: 'controllers/atlassian.repositories.controller.ts@getFileContent',
+			additionalInfo: { options },
+		});
+	}
+}
+
+export default {
+	list,
+	get,
+	getCommitHistory,
+	createBranch,
+	cloneRepository,
+	getFileContent,
+};

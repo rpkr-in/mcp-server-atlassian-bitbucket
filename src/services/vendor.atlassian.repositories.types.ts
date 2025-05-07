@@ -278,3 +278,14 @@ export const BranchRefSchema = z.object({
 	}),
 });
 export type BranchRef = z.infer<typeof BranchRefSchema>;
+
+/**
+ * Parameters for getting a file's content from a repository.
+ */
+export const GetFileContentParamsSchema = z.object({
+	workspace: z.string(),
+	repo_slug: z.string(),
+	commit: z.string(), // Branch name, tag, or commit hash
+	path: z.string(), // File path within the repository
+});
+export type GetFileContentParams = z.infer<typeof GetFileContentParamsSchema>;

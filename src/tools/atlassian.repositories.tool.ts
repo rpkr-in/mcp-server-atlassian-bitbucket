@@ -12,6 +12,8 @@ import {
 	CreateBranchToolArgsType,
 	CloneRepositoryToolArgs,
 	CloneRepositoryToolArgsType,
+	GetFileContentToolArgs,
+	GetFileContentToolArgsType,
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
@@ -205,6 +207,28 @@ async function handleCloneRepository(args: CloneRepositoryToolArgsType) {
 }
 
 /**
+ * Handler for getting file content.
+ */
+async function handleGetFileContent(args: GetFileContentToolArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'handleGetFileContent',
+	);
+	try {
+		methodLogger.debug('Tool bb_get_file called', args);
+		const result =
+			await atlassianRepositoriesController.getFileContent(args);
+		return {
+			content: [{ type: 'text' as const, text: result.content }],
+			// No specific metadata needed for file content retrieval
+		};
+	} catch (error) {
+		methodLogger.error('Tool bb_get_file failed', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register all Bitbucket repository tools with the MCP server.
  */
 function registerTools(server: McpServer) {
@@ -252,6 +276,14 @@ function registerTools(server: McpServer) {
 		`Clones a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. The \`targetPath\` argument specifies the parent directory for the clone. IMPORTANT: When using this tool, \`targetPath\` MUST be an absolute path (e.g., \`/Users/me/projects\`). If a relative path is provided, it will be resolved against the server's temporary working directory, which is likely not the user's intended location. The repository will be cloned into a subdirectory named after the repository slug under this \`targetPath\`. Requires Bitbucket credentials to fetch the repository clone URL. Returns a success message upon initiating the clone operation.`,
 		CloneRepositoryToolArgs.shape,
 		handleCloneRepository,
+	);
+
+	// Register the get file content tool
+	server.tool(
+		'bb_get_file',
+		`Retrieves the content of a file from a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. Specify the file to retrieve using the \`filePath\` parameter. Optionally, you can specify a \`revision\` (branch name, tag, or commit hash) to retrieve the file from - if omitted, the repository's default branch is used. Returns the raw content of the file as text. Requires Bitbucket credentials.`,
+		GetFileContentToolArgs.shape,
+		handleGetFileContent,
 	);
 
 	registerLogger.debug('Successfully registered Repository tools');
