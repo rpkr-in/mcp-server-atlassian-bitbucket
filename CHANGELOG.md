@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.0...v1.26.1) (2025-05-07)
+
+
+### Bug Fixes
+
+* Add documentation for get-file functionality in README ([542933e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/542933e9eb14e2bf97e39ad11ad3b70bbd3eb99a))
+
 # [1.26.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.25.1...v1.26.0) (2025-05-07)
 
 
