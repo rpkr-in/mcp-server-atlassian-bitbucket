@@ -1,3 +1,15 @@
+## [1.26.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.2...v1.26.3) (2025-05-07)
+
+
+### Bug Fixes
+
+* Improve directory validation and error handling for repository cloning ([d6c5c7f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/d6c5c7f7f7f25be9149084b0ad7e96b0d6ca7ce2))
+
+
+### Performance Improvements
+
+* Update dependencies ([858dc27](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/858dc274af5a5bda7af4baa5c5c2628ad7aa3b1c))
+
 ## [1.26.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.1...v1.26.2) (2025-05-07)
 
 
