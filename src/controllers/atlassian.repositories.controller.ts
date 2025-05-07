@@ -418,21 +418,74 @@ async function cloneRepository(
 		} else {
 			// Resolve the absolute path for the directory that will contain the cloned repo
 			const parentDir = path.resolve(targetPath);
-			// Ensure the parent directory exists
-			await fs.mkdir(parentDir, { recursive: true });
 
-			// The final path where the repo will be cloned (e.g., /path/to/targetPath/repoSlug)
-			const cloneDestination = path.join(parentDir, repoDirName);
+			try {
+				// Check if parent directory exists first
+				try {
+					await fs.access(path.dirname(parentDir));
+				} catch (accessError: unknown) {
+					// If the check fails, provide a detailed error
+					const errorMessage =
+						accessError instanceof Error
+							? accessError.message
+							: String(accessError);
 
-			// Quote if it contains spaces, though path.resolve and path.join usually handle this well
-			// for command execution, explicit quoting is safer for the final string.
-			const safeCloneDestination = cloneDestination.includes(' ')
-				? `"${cloneDestination}"`
-				: cloneDestination;
+					throw new Error(
+						`Cannot access parent directory of '${parentDir}'. Either the directory doesn't exist or you don't have permissions to access it. Error: ${errorMessage}`,
+					);
+				}
 
-			command = `git clone ${cloneUrl} ${safeCloneDestination}`;
-			operationDescSuffix = `to ${cloneDestination}`;
-			finalTargetPathForMessage = cloneDestination;
+				// Ensure the parent directory exists
+				try {
+					await fs.mkdir(parentDir, { recursive: true });
+				} catch (mkdirError: unknown) {
+					// Provide a detailed error message for directory creation failures
+					const errorMessage =
+						mkdirError instanceof Error
+							? mkdirError.message
+							: String(mkdirError);
+
+					throw new Error(
+						`Failed to create directory '${parentDir}'. This may be due to permission issues or the parent directory doesn't exist. Error: ${errorMessage}`,
+					);
+				}
+
+				// The final path where the repo will be cloned (e.g., /path/to/targetPath/repoSlug)
+				const cloneDestination = path.join(parentDir, repoDirName);
+
+				// Verify the target directory can be created
+				try {
+					// Test if we can write to the parent directory by creating and removing a temporary file
+					const testFile = path.join(
+						parentDir,
+						'.write-test-' + Date.now(),
+					);
+					await fs.writeFile(testFile, '');
+					await fs.unlink(testFile);
+				} catch (writeError: unknown) {
+					const errorMessage =
+						writeError instanceof Error
+							? writeError.message
+							: String(writeError);
+
+					throw new Error(
+						`Cannot write to directory '${parentDir}'. You may not have write permissions. Error: ${errorMessage}`,
+					);
+				}
+
+				// Quote if it contains spaces, though path.resolve and path.join usually handle this well
+				// for command execution, explicit quoting is safer for the final string.
+				const safeCloneDestination = cloneDestination.includes(' ')
+					? `"${cloneDestination}"`
+					: cloneDestination;
+
+				command = `git clone ${cloneUrl} ${safeCloneDestination}`;
+				operationDescSuffix = `to ${cloneDestination}`;
+				finalTargetPathForMessage = cloneDestination;
+			} catch (dirError) {
+				methodLogger.error('Directory setup failed:', dirError);
+				throw dirError; // Re-throw with our enhanced error message
+			}
 		}
 
 		const operationDesc = `clone repository ${workspaceSlug}/${repoSlug} ${operationDescSuffix}`;
