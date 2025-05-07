@@ -12,6 +12,7 @@ import {
 	formatNumberedList,
 	formatDiff,
 	formatDate,
+	optimizeBitbucketMarkdown,
 } from '../utils/formatter.util.js';
 
 // Define the extended type here as well for clarity
@@ -137,11 +138,15 @@ export function formatPullRequestDetails(
 	if (pullRequest.summary?.raw) {
 		lines.push('');
 		lines.push(formatHeading('Description', 2));
-		lines.push(pullRequest.summary.raw);
+		// Optimize the markdown content for better rendering
+		lines.push(optimizeBitbucketMarkdown(pullRequest.summary.raw));
 	} else if (pullRequest.rendered?.description?.raw) {
 		lines.push('');
 		lines.push(formatHeading('Description', 2));
-		lines.push(pullRequest.rendered.description.raw);
+		// Optimize the markdown content for better rendering
+		lines.push(
+			optimizeBitbucketMarkdown(pullRequest.rendered.description.raw),
+		);
 	}
 
 	// File Changes Summary from Diffstat
@@ -282,8 +287,11 @@ export function formatPullRequestComments(
 				lines.push(
 					`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(reply.created_on)})`,
 				);
-				// Replies typically don't have snippets, but use raw content
-				lines.push(`> ${reply.content.raw.replace(/\n/g, '\n> ')}`);
+				// Optimize the markdown content for replies as well
+				const optimizedReplyContent = optimizeBitbucketMarkdown(
+					reply.content.raw,
+				);
+				lines.push(`> ${optimizedReplyContent.replace(/\n/g, '\n> ')}`);
 			});
 		}
 
@@ -351,11 +359,12 @@ function formatComment(
 	}
 
 	lines.push('');
-	// Show specific message for deleted comments, otherwise show raw content
+	// Show specific message for deleted comments, otherwise show optimized raw content
 	lines.push(
 		comment.deleted
 			? '*This comment has been deleted.*'
-			: comment.content.raw || '*No content provided.*', // Slightly clearer fallback
+			: optimizeBitbucketMarkdown(comment.content.raw) ||
+					'*No content provided.*',
 	);
 
 	// Add link to view the comment itself in browser if available

@@ -28,6 +28,7 @@ import {
 } from '../tools/atlassian.pullrequests.types.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { extractDiffSnippet } from '../utils/diff.util.js';
+import { optimizeBitbucketMarkdown } from '../utils/formatter.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -350,12 +351,18 @@ async function addComment(
 			};
 		}
 
+		// Optimize the markdown content for Bitbucket rendering
+		const optimizedContent = optimizeBitbucketMarkdown(content);
+		methodLogger.debug(
+			'Content has been optimized for Bitbucket rendering',
+		);
+
 		const serviceParams: CreatePullRequestCommentParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
 			pull_request_id: parseInt(prId, 10),
 			content: {
-				raw: content,
+				raw: optimizedContent,
 			},
 			inline: inlineParam,
 		};
@@ -429,6 +436,17 @@ async function add(
 	);
 
 	try {
+		// Optimize the description markdown for Bitbucket rendering
+		const optimizedDescription = description
+			? optimizeBitbucketMarkdown(description)
+			: '';
+
+		if (description) {
+			methodLogger.debug(
+				'Description has been optimized for Bitbucket rendering',
+			);
+		}
+
 		// Map controller options to service parameters
 		const serviceParams: CreatePullRequestParams = {
 			workspace: workspaceSlug,
@@ -444,7 +462,7 @@ async function add(
 					name: destinationBranch || 'main', // Default to 'main' if not specified
 				},
 			},
-			description: description || '',
+			description: optimizedDescription,
 			close_source_branch: closeSourceBranch || false,
 		};
 

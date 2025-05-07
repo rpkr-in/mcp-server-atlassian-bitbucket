@@ -292,3 +292,122 @@ export function formatDiff(
 
 	return formattedLines.join('\n');
 }
+
+/**
+ * Optimizes markdown content for Bitbucket's rendering engine
+ *
+ * This function preprocesses markdown content to ensure consistent rendering
+ * in Bitbucket's interfaces (PR descriptions, comments, etc.) by applying
+ * formatting adjustments that address common rendering issues.
+ *
+ * Fixes include:
+ * - Proper list indentation and spacing
+ * - Proper code block formatting
+ * - Nested list rendering
+ * - Handling of backticks and special characters
+ * - Preserving diff syntax formatting
+ *
+ * @param {string} markdown - The original markdown content
+ * @returns {string} Optimized markdown for Bitbucket rendering
+ */
+export function optimizeBitbucketMarkdown(markdown: string): string {
+	const methodLogger = Logger.forContext(
+		'utils/formatter.util.ts',
+		'optimizeBitbucketMarkdown',
+	);
+
+	if (!markdown || markdown.trim() === '') {
+		return markdown;
+	}
+
+	methodLogger.debug('Optimizing markdown for Bitbucket rendering');
+
+	// First, let's extract code blocks to protect them from other transformations
+	const codeBlocks: string[] = [];
+	let optimized = markdown.replace(
+		/```(\w*)\n([\s\S]*?)```/g,
+		(match, language, code) => {
+			// Store the code block and replace with a placeholder
+			const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+			codeBlocks.push(`\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n`);
+			return placeholder;
+		},
+	);
+
+	// Fix numbered lists with proper spacing
+	// Match numbered lists (1. Item) and ensure proper spacing between items
+	optimized = optimized.replace(
+		/^(\d+\.)\s+(.*?)$/gm,
+		(match, number, content) => {
+			// Keep the list item and ensure it ends with double line breaks if it doesn't already
+			return `${number} ${content.trim()}\n\n`;
+		},
+	);
+
+	// Fix bullet lists with proper spacing
+	optimized = optimized.replace(
+		/^(\s*)[-*]\s+(.*?)$/gm,
+		(match, indent, content) => {
+			// Ensure proper indentation and spacing for bullet lists
+			return `${indent}- ${content.trim()}\n\n`;
+		},
+	);
+
+	// Ensure nested lists have proper indentation
+	// Matches lines that are part of nested lists and ensures proper indentation
+	optimized = optimized.replace(
+		/^(\s+)[-*]\s+(.*?)$/gm,
+		(match, indent, content) => {
+			// For nested items, ensure proper indentation (4 spaces per level)
+			const indentLevel = Math.ceil(indent.length / 2);
+			const properIndent = '    '.repeat(indentLevel);
+			return `${properIndent}- ${content.trim()}\n\n`;
+		},
+	);
+
+	// Fix inline code formatting - ensure it has spaces around it for rendering
+	optimized = optimized.replace(/`([^`]+)`/g, (match, code) => {
+		// Ensure inline code is properly formatted with spaces before and after
+		// but avoid adding spaces within diff lines (+ or - prefixed)
+		const trimmedCode = code.trim();
+		const firstChar = trimmedCode.charAt(0);
+
+		// Don't add spaces if it's part of a diff line
+		if (firstChar === '+' || firstChar === '-') {
+			return `\`${trimmedCode}\``;
+		}
+
+		return ` \`${trimmedCode}\` `;
+	});
+
+	// Ensure diff lines are properly preserved
+	// This helps with preserving + and - prefixes in diff code blocks
+	optimized = optimized.replace(
+		/^([+-])(.*?)$/gm,
+		(match, prefix, content) => {
+			return `${prefix}${content}`;
+		},
+	);
+
+	// Remove excessive line breaks (more than 2 consecutive)
+	optimized = optimized.replace(/\n{3,}/g, '\n\n');
+
+	// Restore code blocks
+	codeBlocks.forEach((codeBlock, index) => {
+		optimized = optimized.replace(`__CODE_BLOCK_${index}__`, codeBlock);
+	});
+
+	// Ensure headings have proper spacing
+	optimized = optimized.replace(
+		/^(#{1,6})\s+(.*?)$/gm,
+		(match, hashes, content) => {
+			return `\n${hashes} ${content.trim()}\n\n`;
+		},
+	);
+
+	// Ensure the content ends with a single line break
+	optimized = optimized.trim() + '\n';
+
+	methodLogger.debug('Markdown optimization complete');
+	return optimized;
+}
