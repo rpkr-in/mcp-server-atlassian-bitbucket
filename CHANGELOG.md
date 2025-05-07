@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.25.1...v1.26.0) (2025-05-07)
+
+
+### Features
+
+* Add file content retrieval via CLI and Tool ([a8a306e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a8a306e154ff2aea30a5161faa7575c499bd82c0))
+
 ## [1.25.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.25.0...v1.25.1) (2025-05-06)
 
 
