@@ -294,21 +294,28 @@ export function formatDiff(
 }
 
 /**
- * Optimizes markdown content for Bitbucket's rendering engine
+ * Optimizes markdown content to address Bitbucket Cloud's rendering quirks
  *
- * This function preprocesses markdown content to ensure consistent rendering
- * in Bitbucket's interfaces (PR descriptions, comments, etc.) by applying
- * formatting adjustments that address common rendering issues.
+ * IMPORTANT: This function does NOT convert between formats (unlike Jira's ADF conversion).
+ * Bitbucket Cloud API natively accepts and returns markdown format. This function specifically
+ * addresses documented rendering issues in Bitbucket's markdown renderer by applying targeted
+ * formatting adjustments for better display in the Bitbucket UI.
  *
- * Fixes include:
- * - Proper list indentation and spacing
- * - Proper code block formatting
- * - Nested list rendering
- * - Handling of backticks and special characters
- * - Preserving diff syntax formatting
+ * Known Bitbucket rendering issues this function fixes:
+ * - List spacing and indentation (prevents items from concatenating on a single line)
+ * - Code block formatting (addresses BCLOUD-20503 and similar bugs)
+ * - Nested list indentation (ensures proper hierarchy display)
+ * - Inline code formatting (adds proper spacing around backticks)
+ * - Diff syntax preservation (maintains +/- at line starts)
+ * - Excessive line break normalization
+ * - Heading spacing consistency
+ *
+ * Use this function for both:
+ * - Content received FROM the Bitbucket API (to properly display in CLI/tools)
+ * - Content being sent TO the Bitbucket API (to ensure proper rendering in Bitbucket UI)
  *
  * @param {string} markdown - The original markdown content
- * @returns {string} Optimized markdown for Bitbucket rendering
+ * @returns {string} Optimized markdown with workarounds for Bitbucket rendering issues
  */
 export function optimizeBitbucketMarkdown(markdown: string): string {
 	const methodLogger = Logger.forContext(
@@ -326,7 +333,7 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 	const codeBlocks: string[] = [];
 	let optimized = markdown.replace(
 		/```(\w*)\n([\s\S]*?)```/g,
-		(match, language, code) => {
+		(_match, language, code) => {
 			// Store the code block and replace with a placeholder
 			const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
 			codeBlocks.push(`\n\n\`\`\`${language}\n${code}\n\`\`\`\n\n`);
@@ -338,7 +345,7 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 	// Match numbered lists (1. Item) and ensure proper spacing between items
 	optimized = optimized.replace(
 		/^(\d+\.)\s+(.*?)$/gm,
-		(match, number, content) => {
+		(_match, number, content) => {
 			// Keep the list item and ensure it ends with double line breaks if it doesn't already
 			return `${number} ${content.trim()}\n\n`;
 		},
@@ -347,7 +354,7 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 	// Fix bullet lists with proper spacing
 	optimized = optimized.replace(
 		/^(\s*)[-*]\s+(.*?)$/gm,
-		(match, indent, content) => {
+		(_match, indent, content) => {
 			// Ensure proper indentation and spacing for bullet lists
 			return `${indent}- ${content.trim()}\n\n`;
 		},
@@ -355,18 +362,19 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 
 	// Ensure nested lists have proper indentation
 	// Matches lines that are part of nested lists and ensures proper indentation
-	optimized = optimized.replace(
-		/^(\s+)[-*]\s+(.*?)$/gm,
-		(match, indent, content) => {
-			// For nested items, ensure proper indentation (4 spaces per level)
-			const indentLevel = Math.ceil(indent.length / 2);
-			const properIndent = '    '.repeat(indentLevel);
-			return `${properIndent}- ${content.trim()}\n\n`;
-		},
-	);
+	// REMOVED: This step added excessive leading spaces causing Bitbucket to treat lists as code blocks
+	// optimized = optimized.replace(
+	// 	/^(\s+)[-*]\s+(.*?)$/gm,
+	// 	(_match, indent, content) => {
+	// 		// For nested items, ensure proper indentation (4 spaces per level)
+	// 		const indentLevel = Math.ceil(indent.length / 2);
+	// 		const properIndent = '    '.repeat(indentLevel);
+	// 		return `${properIndent}- ${content.trim()}\n\n`;
+	// 	},
+	// );
 
 	// Fix inline code formatting - ensure it has spaces around it for rendering
-	optimized = optimized.replace(/`([^`]+)`/g, (match, code) => {
+	optimized = optimized.replace(/`([^`]+)`/g, (_match, code) => {
 		// Ensure inline code is properly formatted with spaces before and after
 		// but avoid adding spaces within diff lines (+ or - prefixed)
 		const trimmedCode = code.trim();
@@ -384,7 +392,7 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 	// This helps with preserving + and - prefixes in diff code blocks
 	optimized = optimized.replace(
 		/^([+-])(.*?)$/gm,
-		(match, prefix, content) => {
+		(_match, prefix, content) => {
 			return `${prefix}${content}`;
 		},
 	);
@@ -400,7 +408,7 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 	// Ensure headings have proper spacing
 	optimized = optimized.replace(
 		/^(#{1,6})\s+(.*?)$/gm,
-		(match, hashes, content) => {
+		(_match, hashes, content) => {
 			return `\n${hashes} ${content.trim()}\n\n`;
 		},
 	);

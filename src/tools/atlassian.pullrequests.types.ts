@@ -209,7 +209,7 @@ export const CreatePullRequestCommentToolArgs = z.object({
 		.string()
 		.min(1, 'Comment content is required')
 		.describe(
-			'The content of the comment to add to the pull request. Can include markdown formatting.',
+			'The content of the comment to add to the pull request in Markdown format. Bitbucket Cloud natively accepts Markdown - supports headings, lists, code blocks, links, and other standard Markdown syntax.',
 		),
 
 	/**
@@ -295,7 +295,9 @@ export const CreatePullRequestToolArgs = z.object({
 	description: z
 		.string()
 		.optional()
-		.describe('Optional description for the pull request.'),
+		.describe(
+			'Optional description for the pull request in Markdown format. Supports standard Markdown syntax including headings, lists, code blocks, and links.',
+		),
 
 	/**
 	 * Whether to close the source branch after merge
