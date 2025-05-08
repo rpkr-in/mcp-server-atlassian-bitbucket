@@ -33,6 +33,18 @@ import { optimizeBitbucketMarkdown } from '../utils/formatter.util.js';
 /**
  * Controller for managing Bitbucket pull requests.
  * Provides functionality for listing, retrieving, and creating pull requests and comments.
+ *
+ * NOTE ON MARKDOWN HANDLING:
+ * Unlike Jira (which uses ADF) or Confluence (which uses a mix of formats),
+ * Bitbucket Cloud API natively accepts Markdown for text content in both directions:
+ * - When sending data TO the API (comments, PR descriptions)
+ * - When receiving data FROM the API (PR descriptions, comments)
+ *
+ * The API expects content in the format: { content: { raw: "markdown-text" } }
+ *
+ * We use optimizeBitbucketMarkdown() to address specific rendering quirks in
+ * Bitbucket's markdown renderer but it does NOT perform format conversion.
+ * See formatter.util.ts for details on the specific issues it addresses.
  */
 
 // Create a contextualized logger for this file
@@ -352,6 +364,7 @@ async function addComment(
 		}
 
 		// Optimize the markdown content for Bitbucket rendering
+		// This does NOT convert the format but fixes known rendering quirks
 		const optimizedContent = optimizeBitbucketMarkdown(content);
 		methodLogger.debug(
 			'Content has been optimized for Bitbucket rendering',
@@ -437,6 +450,7 @@ async function add(
 
 	try {
 		// Optimize the description markdown for Bitbucket rendering
+		// Bitbucket natively accepts markdown format - this fixes rendering issues only
 		const optimizedDescription = description
 			? optimizeBitbucketMarkdown(description)
 			: '';
