@@ -1,3 +1,10 @@
+## [1.26.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.5...v1.26.6) (2025-05-08)
+
+
+### Bug Fixes
+
+* Remove unused ADF conversion functions from Bitbucket implementation ([1abe807](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1abe807ec17ad21a06dde3e88ee90d9597f14519))
+
 ## [1.26.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.4...v1.26.5) (2025-05-08)
 
 
