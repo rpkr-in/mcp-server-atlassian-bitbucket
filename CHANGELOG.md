@@ -1,3 +1,11 @@
+## [1.26.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.4...v1.26.5) (2025-05-08)
+
+
+### Bug Fixes
+
+* Fix bullet list rendering in Bitbucket markdown handling ([c3a4b71](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c3a4b71d2d6e7c2e077ef3941c6b5bea0f5efb15))
+* improve markdown rendering in Bitbucket PR descriptions and comments ([4e73784](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4e7378425fd71e629b3fc3c6cc67a6d4f69672ce))
+
 ## [1.26.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.3...v1.26.4) (2025-05-07)
 
 
