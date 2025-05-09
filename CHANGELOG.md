@@ -1,3 +1,10 @@
+## [1.26.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.6...v1.26.7) (2025-05-09)
+
+
+### Bug Fixes
+
+* increase test timeouts for API-dependent tests to improve reliability ([08a4d75](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/08a4d754c819207b96ff91f813599561c313c3e6))
+
 ## [1.26.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.5...v1.26.6) (2025-05-08)
 
 
