@@ -298,7 +298,7 @@ describe('Atlassian Search Controller', () => {
 			expect(result.content).not.toContain(
 				'# Pull Request Search Results',
 			);
-		}, 10000);
+		}, 30000);
 
 		it('should handle no results scenario', async () => {
 			if (skipIfNoCredentials()) return;

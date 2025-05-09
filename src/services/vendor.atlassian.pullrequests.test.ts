@@ -61,7 +61,7 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 		} catch (error) {
 			console.warn('Error setting up test data:', error);
 		}
-	});
+	}, 30000); // <--- Increased timeout for beforeAll hook
 
 	describe('listPullRequests', () => {
 		it('should return a list of pull requests', async () => {
@@ -226,7 +226,7 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 				}
 				throw error; // Re-throw if it's some other error
 			}
-		}, 15000); // Increase timeout for API call
+		}, 30000); // Increase timeout for API call
 
 		it('should filter by state', async () => {
 			// Check if credentials are available
@@ -309,7 +309,7 @@ describe('Vendor Atlassian Pull Requests Service', () => {
 				}
 				throw error; // Re-throw if it's some other error
 			}
-		}, 15000); // Increase timeout for API call
+		}, 30000); // Increase timeout for API call
 	});
 
 	describe('getPullRequest', () => {
