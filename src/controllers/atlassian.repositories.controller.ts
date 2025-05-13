@@ -33,6 +33,7 @@ import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { createApiError } from '../utils/error.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -501,12 +502,7 @@ async function cloneRepository(
 				`Ensure that the machine running the MCP server has a valid SSH key added to Bitbucket **or** that your app-password credentials are correct. ` +
 				`If your environment exposes a terminal tool, try running 'git clone <clone-ssh-url>' manually to verify SSH connectivity. ` +
 				`Original git error: ${error.message}`;
-			throw handleControllerError(new Error(enhancedMessage), {
-				entityType: 'Repository Clone',
-				operation: 'cloning',
-				source: 'controllers/atlassian.repositories.controller.ts@cloneRepository',
-				additionalInfo: { options },
-			});
+			throw createApiError(enhancedMessage, 403);
 		}
 		throw handleControllerError(error, {
 			entityType: 'Repository Clone',
