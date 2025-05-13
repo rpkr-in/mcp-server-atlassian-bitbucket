@@ -289,3 +289,50 @@ export const GetFileContentParamsSchema = z.object({
 	path: z.string(), // File path within the repository
 });
 export type GetFileContentParams = z.infer<typeof GetFileContentParamsSchema>;
+
+/**
+ * Represents a branch target (usually a commit).
+ */
+export const BranchTargetSchema = z.object({
+	hash: z.string(),
+	type: z.string(), // Usually 'commit'
+});
+
+/**
+ * Represents a branch in a Bitbucket repository.
+ */
+export const BranchSchema = z.object({
+	name: z.string(),
+	type: z.literal('branch'),
+	target: BranchTargetSchema,
+	merge_strategies: z.array(z.string()).optional(),
+	default_merge_strategy: z.string().optional(),
+	links: z.record(z.string(), z.unknown()).optional(),
+});
+export type Branch = z.infer<typeof BranchSchema>;
+
+/**
+ * Parameters for listing branches in a repository.
+ */
+export const ListBranchesParamsSchema = z.object({
+	workspace: z.string(),
+	repo_slug: z.string(),
+	page: z.number().optional(),
+	pagelen: z.number().optional(),
+	q: z.string().optional(), // Query for filtering branches
+	sort: z.string().optional(), // Sort field
+});
+export type ListBranchesParams = z.infer<typeof ListBranchesParamsSchema>;
+
+/**
+ * API response for listing branches (paginated).
+ */
+export const BranchesResponseSchema = z.object({
+	pagelen: z.number(),
+	page: z.number().optional(),
+	size: z.number().optional(),
+	next: z.string().optional(),
+	previous: z.string().optional(),
+	values: z.array(BranchSchema),
+});
+export type BranchesResponse = z.infer<typeof BranchesResponseSchema>;

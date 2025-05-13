@@ -35,6 +35,7 @@ function register(program: Command): void {
 	registerAddBranchCommand(program);
 	registerCloneRepositoryCommand(program);
 	registerGetFileCommand(program);
+	registerListBranchesCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -421,6 +422,92 @@ function registerGetFileCommand(program: Command): void {
 					});
 
 				console.log(result.content);
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for listing branches in a Bitbucket repository
+ *
+ * @param program - The Commander program instance
+ */
+function registerListBranchesCommand(program: Command): void {
+	program
+		.command('list-branches')
+		.description(
+			'List branches in a Bitbucket repository, with filtering and pagination.',
+		)
+		.requiredOption(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug to list branches from. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+		)
+		.option(
+			'-q, --query <string>',
+			'Filter branches by name or other properties (text search).',
+		)
+		.option(
+			'-s, --sort <string>',
+			'Sort branches by this field. Examples: "name" (default), "-name", "target.date".',
+		)
+		.option(
+			'-l, --limit <number>',
+			'Maximum number of branches to return (1-100). Defaults to 25 if omitted.',
+		)
+		.option(
+			'-c, --cursor <string>',
+			'Pagination cursor for retrieving the next set of results.',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.repositories.cli.ts',
+				'list-branches',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate options
+				if (options.limit) {
+					const limit = parseInt(options.limit, 10);
+					if (isNaN(limit) || limit <= 0) {
+						throw new Error(
+							'Invalid --limit value: Must be a positive integer.',
+						);
+					}
+				}
+
+				// Map CLI options to controller params
+				const params = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					query: options.query,
+					sort: options.sort,
+					limit: options.limit
+						? parseInt(options.limit, 10)
+						: undefined,
+					cursor: options.cursor,
+				};
+
+				actionLogger.debug(
+					'Fetching branches with parameters:',
+					params,
+				);
+				const result =
+					await atlassianRepositoriesController.listBranches(params);
+				actionLogger.debug('Successfully retrieved branches');
+
+				console.log(result.content);
+
+				// Display pagination information if available
+				if (result.pagination) {
+					console.log('\n' + formatPagination(result.pagination));
+				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

@@ -14,6 +14,8 @@ import {
 	CloneRepositoryToolArgsType,
 	GetFileContentToolArgs,
 	GetFileContentToolArgsType,
+	ListBranchesToolArgs,
+	ListBranchesToolArgsType,
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
@@ -229,6 +231,59 @@ async function handleGetFileContent(args: GetFileContentToolArgsType) {
 }
 
 /**
+ * MCP Tool: List Branches in a Bitbucket Repository
+ *
+ * Lists branches within a specific repository with optional filtering.
+ * Returns a formatted markdown response with branch details.
+ *
+ * @param args - Tool arguments for identifying the repository and filtering branches
+ * @returns MCP response with formatted branches list and pagination
+ * @throws Will return error message if branch listing fails
+ */
+async function listBranches(args: ListBranchesToolArgsType) {
+	const methodLogger = Logger.forContext(
+		'tools/atlassian.repositories.tool.ts',
+		'listBranches',
+	);
+	methodLogger.debug(
+		'Listing Bitbucket repository branches with filters:',
+		args,
+	);
+
+	try {
+		// Pass the options to the controller
+		const result = await atlassianRepositoriesController.listBranches({
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
+			query: args.query,
+			sort: args.sort,
+			limit: args.limit,
+			cursor: args.cursor,
+		});
+
+		methodLogger.debug('Successfully retrieved branches from controller', {
+			count: result.pagination?.count,
+			hasMore: result.pagination?.hasMore,
+		});
+
+		return {
+			content: [
+				{
+					type: 'text' as const,
+					text: result.content,
+				},
+			],
+			metadata: {
+				pagination: result.pagination,
+			},
+		};
+	} catch (error) {
+		methodLogger.error('Failed to list branches', error);
+		return formatErrorForMcpTool(error);
+	}
+}
+
+/**
  * Register all Bitbucket repository tools with the MCP server.
  */
 function registerTools(server: McpServer) {
@@ -284,6 +339,14 @@ function registerTools(server: McpServer) {
 		`Retrieves the content of a file from a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. Specify the file to retrieve using the \`filePath\` parameter. Optionally, you can specify a \`revision\` (branch name, tag, or commit hash) to retrieve the file from - if omitted, the repository's default branch is used. Returns the raw content of the file as text. Requires Bitbucket credentials.`,
 		GetFileContentToolArgs.shape,
 		handleGetFileContent,
+	);
+
+	// Register the list branches tool
+	server.tool(
+		'bb_list_branches',
+		`Lists branches in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Filters branches by an optional text \`query\` and supports custom \`sort\` order. Provides pagination via \`limit\` and \`cursor\`. Returns branch details as Markdown with each branch's name, latest commit, and default merge strategy. Requires Bitbucket credentials.`,
+		ListBranchesToolArgs.shape,
+		listBranches,
 	);
 
 	registerLogger.debug('Successfully registered Repository tools');

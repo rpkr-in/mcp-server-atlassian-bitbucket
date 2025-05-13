@@ -229,3 +229,55 @@ export const GetFileContentToolArgs = z.object({
 });
 
 export type GetFileContentToolArgsType = z.infer<typeof GetFileContentToolArgs>;
+
+/**
+ * Schema for list-branches tool arguments
+ */
+export const ListBranchesToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.min(1, 'Workspace slug is required')
+		.describe(
+			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug to list branches from
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug to list branches from. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Optional query to filter branches
+	 */
+	query: z
+		.string()
+		.optional()
+		.describe(
+			'Query string to filter branches by name or other properties (text search).',
+		),
+
+	/**
+	 * Optional sort parameter
+	 */
+	sort: z
+		.string()
+		.optional()
+		.describe(
+			'Field to sort branches by. Common values: "name" (default), "-name", "target.date". Prefix with "-" for descending order.',
+		),
+
+	/**
+	 * Maximum number of branches to return (default: 25)
+	 */
+	...PaginationArgs,
+});
+
+export type ListBranchesToolArgsType = z.infer<typeof ListBranchesToolArgs>;

@@ -19,6 +19,7 @@ import {
 	formatRepositoriesList,
 	formatRepositoryDetails,
 	formatCommitHistory,
+	formatBranchesList,
 } from './atlassian.repositories.formatter.js';
 import {
 	ListRepositoriesParams,
@@ -574,6 +575,83 @@ async function getFileContent(
 	}
 }
 
+/**
+ * Lists branches for a specific repository.
+ * @param options Options containing workspace and repository identifiers, plus pagination and filtering options
+ * @returns Formatted list of branches with pagination information
+ */
+async function listBranches(options: {
+	workspaceSlug: string;
+	repoSlug: string;
+	limit?: number;
+	cursor?: string;
+	query?: string;
+	sort?: string;
+}): Promise<ControllerResponse> {
+	const { workspaceSlug, repoSlug } = options;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'listBranches',
+	);
+
+	methodLogger.debug(
+		`Listing branches for repository ${workspaceSlug}/${repoSlug}`,
+		options,
+	);
+
+	try {
+		const defaults = {
+			limit: DEFAULT_PAGE_SIZE,
+			sort: 'name', // Default to sorting by name
+		};
+		const mergedOptions = applyDefaults(options, defaults);
+
+		// Map controller options to service parameters
+		const serviceParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			pagelen: mergedOptions.limit,
+			page: options.cursor // Access from original options, not merged options
+				? parseInt(options.cursor, 10)
+				: undefined,
+			q: options.query, // Access from original options, not merged options
+			sort: mergedOptions.sort,
+		};
+
+		methodLogger.debug('Using service parameters:', serviceParams);
+
+		const branchesData =
+			await atlassianRepositoriesService.listBranches(serviceParams);
+		methodLogger.debug(
+			`Retrieved ${branchesData.values?.length || 0} branches`,
+		);
+
+		// Extract pagination information
+		const pagination = extractPaginationInfo(
+			branchesData,
+			PaginationType.PAGE,
+		);
+
+		// Format the branches into a Markdown list
+		const formattedBranches = formatBranchesList(branchesData, {
+			workspaceSlug,
+			repoSlug,
+		});
+
+		return {
+			content: formattedBranches,
+			pagination,
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'Branches',
+			operation: 'listing',
+			source: 'controllers/atlassian.repositories.controller.ts@listBranches',
+			additionalInfo: { options },
+		});
+	}
+}
+
 export default {
 	list,
 	get,
@@ -581,4 +659,5 @@ export default {
 	createBranch,
 	cloneRepository,
 	getFileContent,
+	listBranches,
 };

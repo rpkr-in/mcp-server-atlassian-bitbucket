@@ -26,6 +26,10 @@ import {
 	type CreateBranchParams,
 	type BranchRef,
 	type GetFileContentParams,
+	ListBranchesParamsSchema,
+	BranchesResponseSchema,
+	type ListBranchesParams,
+	type BranchesResponse,
 } from './vendor.atlassian.repositories.types.js';
 
 /**
@@ -522,4 +526,107 @@ async function getFileContent(params: GetFileContentParams): Promise<string> {
 	}
 }
 
-export default { list, get, listCommits, createBranch, getFileContent };
+/**
+ * Lists branches for a specific repository.
+ *
+ * @param params Parameters including workspace, repo slug, and optional filters.
+ * @returns Promise resolving to paginated branches data.
+ * @throws {Error} If workspace or repo_slug are missing, or if credentials are not found.
+ */
+async function listBranches(
+	params: ListBranchesParams,
+): Promise<BranchesResponse> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.repositories.service.ts',
+		'listBranches',
+	);
+	methodLogger.debug(
+		`Listing branches for ${params.workspace}/${params.repo_slug}`,
+		params,
+	);
+
+	// Validate params with Zod
+	try {
+		ListBranchesParamsSchema.parse(params);
+	} catch (error) {
+		if (error instanceof z.ZodError) {
+			methodLogger.error(
+				'Invalid parameters provided to list branches:',
+				error.format(),
+			);
+			throw createApiError(
+				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				400,
+				error,
+			);
+		}
+		throw error;
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const queryParams = new URLSearchParams();
+	if (params.q) {
+		queryParams.set('q', params.q);
+	}
+	if (params.sort) {
+		queryParams.set('sort', params.sort);
+	}
+	if (params.pagelen) {
+		queryParams.set('pagelen', params.pagelen.toString());
+	}
+	if (params.page) {
+		queryParams.set('page', params.page.toString());
+	}
+
+	const queryString = queryParams.toString()
+		? `?${queryParams.toString()}`
+		: '';
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/refs/branches${queryString}`;
+
+	methodLogger.debug(`Sending branches request to: ${path}`);
+	try {
+		const rawData = await fetchAtlassian(credentials, path);
+		// Validate response with Zod schema
+		try {
+			const validatedData = BranchesResponseSchema.parse(rawData);
+			return validatedData;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Invalid response from Bitbucket API:',
+					error.format(),
+				);
+				throw createApiError(
+					'Received invalid response format from Bitbucket API',
+					500,
+					error,
+				);
+			}
+			throw error;
+		}
+	} catch (error) {
+		if (error instanceof McpError) {
+			throw error;
+		}
+		throw createApiError(
+			`Failed to list branches: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
+	}
+}
+
+export default {
+	list,
+	get,
+	listCommits,
+	createBranch,
+	getFileContent,
+	listBranches,
+};
