@@ -33,7 +33,6 @@ import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { getAtlassianCredentials } from '../utils/transport.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -366,46 +365,30 @@ async function cloneRepository(
 			repo_slug: repoSlug,
 		});
 
-		// 2. Prefer HTTPS clone URL (with embedded credentials) for non-interactive environments; fallback to SSH if HTTPS is unavailable
+		// 2. Prefer SSH clone URL for environments with configured SSH keys; fallback to HTTPS if SSH is unavailable
 		let cloneUrl: string | undefined;
 		if (repoDetails.links?.clone) {
-			const httpsLink = repoDetails.links.clone.find(
-				(link) => link.name === 'https',
-			);
 			const sshLink = repoDetails.links.clone.find(
 				(link) => link.name === 'ssh',
 			);
+			const httpsLink = repoDetails.links.clone.find(
+				(link) => link.name === 'https',
+			);
 
-			if (httpsLink) {
-				cloneUrl = httpsLink.href;
-				methodLogger.info(`Found HTTPS clone URL: ${cloneUrl}`);
-
-				// Embed credentials for seamless cloning
-				const creds = getAtlassianCredentials();
-				if (creds?.bitbucketUsername && creds?.bitbucketAppPassword) {
-					const urlObj = new URL(cloneUrl);
-					urlObj.username = encodeURIComponent(
-						creds.bitbucketUsername,
-					);
-					urlObj.password = encodeURIComponent(
-						creds.bitbucketAppPassword,
-					);
-					cloneUrl = urlObj.toString();
-					methodLogger.debug(
-						'Embedded credentials into HTTPS clone URL',
-					);
-				}
-			} else if (sshLink) {
+			if (sshLink) {
 				cloneUrl = sshLink.href;
+				methodLogger.info(`Using SSH clone URL: ${cloneUrl}`);
+			} else if (httpsLink) {
+				cloneUrl = httpsLink.href;
 				methodLogger.info(
-					`HTTPS clone URL not found. Falling back to SSH: ${cloneUrl}`,
+					`SSH clone URL not found. Falling back to HTTPS: ${cloneUrl}`,
 				);
 			}
 		}
 
 		if (!cloneUrl) {
 			throw new Error(
-				`Could not find a clone URL for repository ${workspaceSlug}/${repoSlug}.`,
+				`Could not determine clone URL for ${workspaceSlug}/${repoSlug}`,
 			);
 		}
 		methodLogger.info(`Resolved clone URL: ${cloneUrl}`);
