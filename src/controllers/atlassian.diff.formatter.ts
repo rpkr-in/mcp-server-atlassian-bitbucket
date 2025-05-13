@@ -81,7 +81,7 @@ export function formatDiffstat(
 		const changeStr = changes.length > 0 ? ` (${changes.join(', ')})` : '';
 
 		// Handle potentially null old/new paths
-		let filePath = file.new?.path || file.old?.path || '(unnamed file)';
+		const filePath = file.new?.path || file.old?.path || '(unnamed file)';
 
 		// Show path, changes, and status if it's a conflict
 		let line = `- \`${filePath}\`${changeStr}`;
