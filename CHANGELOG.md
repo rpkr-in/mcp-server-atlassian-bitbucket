@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.7...v1.27.0) (2025-05-13)
+
+
+### Features
+
+* add diff tools for branch and commit comparison ([e201f9e](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e201f9e6cbe940fc8354eff2224dfe78bc7fa637))
+
 ## [1.26.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.26.6...v1.26.7) (2025-05-09)
 
 
