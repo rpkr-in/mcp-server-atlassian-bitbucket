@@ -33,6 +33,7 @@ import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { getAtlassianCredentials } from '../utils/transport.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -365,34 +366,40 @@ async function cloneRepository(
 			repo_slug: repoSlug,
 		});
 
-		// 2. Find the SSH clone URL first, then HTTPS as a fallback
+		// 2. Prefer HTTPS clone URL (with embedded credentials) for non-interactive environments; fallback to SSH if HTTPS is unavailable
 		let cloneUrl: string | undefined;
 		if (repoDetails.links?.clone) {
+			const httpsLink = repoDetails.links.clone.find(
+				(link) => link.name === 'https',
+			);
 			const sshLink = repoDetails.links.clone.find(
 				(link) => link.name === 'ssh',
 			);
-			if (sshLink) {
-				cloneUrl = sshLink.href;
-				methodLogger.info(`Found SSH clone URL: ${cloneUrl}`);
-			} else {
-				methodLogger.warn(
-					'SSH clone URL not found. Looking for HTTPS.',
-				);
-				const httpsLink = repoDetails.links.clone.find(
-					(link) => link.name === 'https',
-				);
-				if (httpsLink) {
-					cloneUrl = httpsLink.href;
-					methodLogger.info(
-						`Found HTTPS clone URL as fallback: ${cloneUrl}`,
+
+			if (httpsLink) {
+				cloneUrl = httpsLink.href;
+				methodLogger.info(`Found HTTPS clone URL: ${cloneUrl}`);
+
+				// Embed credentials for seamless cloning
+				const creds = getAtlassianCredentials();
+				if (creds?.bitbucketUsername && creds?.bitbucketAppPassword) {
+					const urlObj = new URL(cloneUrl);
+					urlObj.username = encodeURIComponent(
+						creds.bitbucketUsername,
 					);
-				} else if (repoDetails.links.clone.length > 0) {
-					// Fallback to the first available clone link if neither SSH nor HTTPS is explicitly named
-					cloneUrl = repoDetails.links.clone[0].href;
-					methodLogger.warn(
-						`Neither SSH nor HTTPS clone URL found by name, using first available: ${cloneUrl}`,
+					urlObj.password = encodeURIComponent(
+						creds.bitbucketAppPassword,
+					);
+					cloneUrl = urlObj.toString();
+					methodLogger.debug(
+						'Embedded credentials into HTTPS clone URL',
 					);
 				}
+			} else if (sshLink) {
+				cloneUrl = sshLink.href;
+				methodLogger.info(
+					`HTTPS clone URL not found. Falling back to SSH: ${cloneUrl}`,
+				);
 			}
 		}
 
@@ -401,7 +408,7 @@ async function cloneRepository(
 				`Could not find a clone URL for repository ${workspaceSlug}/${repoSlug}.`,
 			);
 		}
-		methodLogger.info(`Found clone URL: ${cloneUrl}`);
+		methodLogger.info(`Resolved clone URL: ${cloneUrl}`);
 
 		// 3. Construct and execute the git clone command
 		let command;
