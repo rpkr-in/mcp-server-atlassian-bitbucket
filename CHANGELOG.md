@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.28.1...v1.29.0) (2025-05-13)
+
+
+### Features
+
+* enhance clone error handling with user guidance ([3921c1f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3921c1f8c1990aa6b70675622f9b747ea551ff96))
+
 ## [1.28.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.28.0...v1.28.1) (2025-05-13)
 
 
