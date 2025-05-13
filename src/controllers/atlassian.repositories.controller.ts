@@ -489,6 +489,24 @@ async function cloneRepository(
 			content: successMessage,
 		};
 	} catch (error) {
+		// Provide more specific guidance for common clone authentication failures
+		if (
+			error instanceof Error &&
+			/(permission denied|access denied|fatal:.*could not read)/i.test(
+				error.message,
+			)
+		) {
+			const enhancedMessage =
+				`Access denied while attempting to clone the repository. ` +
+				`Ensure that the machine running the MCP server has a valid SSH key added to Bitbucket **or** that your app-password credentials are correct. ` +
+				`Original git error: ${error.message}`;
+			throw handleControllerError(new Error(enhancedMessage), {
+				entityType: 'Repository Clone',
+				operation: 'cloning',
+				source: 'controllers/atlassian.repositories.controller.ts@cloneRepository',
+				additionalInfo: { options },
+			});
+		}
 		throw handleControllerError(error, {
 			entityType: 'Repository Clone',
 			operation: 'cloning',
