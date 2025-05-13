@@ -9,10 +9,11 @@ import { VERSION, PACKAGE_NAME } from './utils/constants.util.js';
 import { runCli } from './cli/index.js';
 
 // Import Bitbucket-specific tools
-import atlassianWorkspacesTools from './tools/atlassian.workspaces.tool.js';
-import atlassianRepositoriesTools from './tools/atlassian.repositories.tool.js';
-import atlassianPullRequestsTools from './tools/atlassian.pullrequests.tool.js';
-import atlassianSearchTools from './tools/atlassian.search.tool.js';
+import atlassianWorkspaces from './tools/atlassian.workspaces.tool.js';
+import atlassianRepositories from './tools/atlassian.repositories.tool.js';
+import atlassianPullRequests from './tools/atlassian.pullrequests.tool.js';
+import atlassianSearch from './tools/atlassian.search.tool.js';
+import atlassianDiff from './tools/atlassian.diff.tool.js';
 
 // Create a contextualized logger for this file
 const indexLogger = Logger.forContext('index.ts');
@@ -66,17 +67,20 @@ export async function startServer(mode: 'stdio' | 'sse' = 'stdio') {
 	// Register tools
 	serverLogger.info('Registering MCP tools...');
 
-	atlassianWorkspacesTools.registerTools(serverInstance);
+	atlassianWorkspaces.registerTools(serverInstance);
 	serverLogger.debug('Registered Workspaces tools');
 
-	atlassianRepositoriesTools.registerTools(serverInstance);
+	atlassianRepositories.registerTools(serverInstance);
 	serverLogger.debug('Registered Repositories tools');
 
-	atlassianPullRequestsTools.registerTools(serverInstance);
+	atlassianPullRequests.registerTools(serverInstance);
 	serverLogger.debug('Registered Pull requests tools');
 
-	atlassianSearchTools.registerTools(serverInstance);
+	atlassianSearch.registerTools(serverInstance);
 	serverLogger.debug('Registered Search tools');
+
+	atlassianDiff.registerTools(serverInstance);
+	serverLogger.debug('Registered Diff tools');
 
 	serverLogger.info('All tools registered successfully');
 
