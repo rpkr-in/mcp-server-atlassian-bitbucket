@@ -499,6 +499,7 @@ async function cloneRepository(
 			const enhancedMessage =
 				`Access denied while attempting to clone the repository. ` +
 				`Ensure that the machine running the MCP server has a valid SSH key added to Bitbucket **or** that your app-password credentials are correct. ` +
+				`If your environment exposes a terminal tool, try running 'git clone <clone-ssh-url>' manually to verify SSH connectivity. ` +
 				`Original git error: ${error.message}`;
 			throw handleControllerError(new Error(enhancedMessage), {
 				entityType: 'Repository Clone',
