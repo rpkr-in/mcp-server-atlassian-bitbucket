@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.29.0...v1.29.1) (2025-05-13)
+
+
+### Bug Fixes
+
+* route enhanced clone error via createApiError to keep details ([4c03cdb](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4c03cdbe6e16bd85a78d106b957a33f51057bc80))
+
 # [1.29.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.28.1...v1.29.0) (2025-05-13)
 
 
