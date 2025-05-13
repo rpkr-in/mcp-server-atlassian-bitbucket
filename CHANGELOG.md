@@ -1,3 +1,15 @@
+# [1.28.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.27.1...v1.28.0) (2025-05-13)
+
+
+### Bug Fixes
+
+* use HTTPS clone with embedded credentials to avoid SSH access denied in server mode ([3fa0bad](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3fa0bad1d8faeafe0659b76340a0b15682a74083))
+
+
+### Features
+
+* add list branches feature for Bitbucket repositories (CLI, MCP tool, controller, service, formatter) ([e68e8da](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e68e8da865d0f128b4930ee2c7b40cf799d3fd28))
+
 ## [1.27.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.27.0...v1.27.1) (2025-05-13)
 
 
