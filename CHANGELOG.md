@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.28.0...v1.28.1) (2025-05-13)
+
+
+### Bug Fixes
+
+* prefer ssh clone to use default ssh keys ([ef5a13f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ef5a13f150bc3a2a4a03c0aea2c2a6a5dc910819))
+
 # [1.28.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.27.1...v1.28.0) (2025-05-13)
 
 
