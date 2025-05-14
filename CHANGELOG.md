@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.29.1...v1.30.0) (2025-05-14)
+
+
+### Features
+
+* enhance error handling with vendor propagation and enriched CLI/Tool formatting ([db16d11](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/db16d1113d6148e5d207cdbc804e6fec4012d5ea))
+
 ## [1.29.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.29.0...v1.29.1) (2025-05-13)
 
 
