@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.0...v1.30.1) (2025-05-14)
+
+
+### Bug Fixes
+
+* remove Dockerfile and smithery.yaml ([42ffad6](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/42ffad6cbb0baf7d0644a580957d7c86d39da561))
+
 # [1.30.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.29.1...v1.30.0) (2025-05-14)
 
 
