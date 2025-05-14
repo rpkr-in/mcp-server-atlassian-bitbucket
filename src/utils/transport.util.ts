@@ -212,15 +212,20 @@ export async function fetchAtlassian<T>(
 				// Fall back to the default error message
 			}
 
-			// Classify HTTP errors based on status code
+			// Classify HTTP errors based on status code – always include vendor detail
 			if (response.status === 401 || response.status === 403) {
-				throw createAuthInvalidError('Invalid Atlassian credentials');
-			} else if (response.status === 404) {
-				throw createApiError(`Resource not found`, 404, errorText);
-			} else {
-				// For other API errors, preserve the original error message from Atlassian API
-				throw createApiError(errorMessage, response.status, errorText);
+				throw createAuthInvalidError(
+					`Invalid Atlassian credentials: ${errorMessage}`,
+					errorText,
+				);
 			}
+
+			if (response.status === 404) {
+				throw createApiError('Resource not found', 404, errorText);
+			}
+
+			// For other API errors, preserve the original vendor message
+			throw createApiError(errorMessage, response.status, errorText);
 		}
 
 		// Check if the response is expected to be plain text

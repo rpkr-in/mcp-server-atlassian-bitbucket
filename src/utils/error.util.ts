@@ -1,4 +1,5 @@
 import { Logger } from './logger.util.js';
+import { formatSeparator } from './formatter.util.js';
 
 /**
  * Error types for classification
@@ -33,12 +34,36 @@ export class McpError extends Error {
 }
 
 /**
+ * Helper to unwrap nested McpErrors and return the deepest original error.
+ * This is useful when an McpError contains another McpError as `originalError`
+ * which in turn may wrap the vendor (Bitbucket) error text or object.
+ */
+function getDeepOriginalError(error: McpError | unknown): unknown {
+	let current: unknown = error;
+	// Traverse a maximum of 5 levels to avoid infinite loops in pathological cases
+	for (let i = 0; i < 5; i += 1) {
+		if (current instanceof McpError && current.originalError) {
+			current = current.originalError;
+			continue;
+		}
+		break;
+	}
+	return current instanceof McpError ? current.message : current;
+}
+
+/**
  * Create an authentication missing error
  */
 export function createAuthMissingError(
 	message: string = 'Authentication credentials are missing',
+	originalError?: unknown,
 ): McpError {
-	return new McpError(message, ErrorType.AUTH_MISSING);
+	return new McpError(
+		message,
+		ErrorType.AUTH_MISSING,
+		undefined,
+		originalError,
+	);
 }
 
 /**
@@ -46,8 +71,9 @@ export function createAuthMissingError(
  */
 export function createAuthInvalidError(
 	message: string = 'Authentication credentials are invalid',
+	originalError?: unknown,
 ): McpError {
-	return new McpError(message, ErrorType.AUTH_INVALID, 401);
+	return new McpError(message, ErrorType.AUTH_INVALID, 401, originalError);
 }
 
 /**
@@ -97,7 +123,9 @@ export function ensureMcpError(error: unknown): McpError {
 }
 
 /**
- * Format error for MCP tool response
+ * Format error for MCP tool response – provides enough detail for LLMs
+ * while remaining concise.  Vendor (Bitbucket) error details are included
+ * when available so the AI can reason about the exact failure cause.
  */
 export function formatErrorForMcpTool(error: unknown): {
 	content: Array<{ type: 'text'; text: string }>;
@@ -110,11 +138,24 @@ export function formatErrorForMcpTool(error: unknown): {
 
 	methodLogger.error(`${mcpError.type} error`, mcpError);
 
+	let detailedMessage = `Error: ${mcpError.message}`;
+
+	const deepOriginal = getDeepOriginalError(mcpError);
+	if (deepOriginal && typeof deepOriginal === 'string') {
+		if (!detailedMessage.includes(deepOriginal)) {
+			detailedMessage += `\nVendor API Error: ${deepOriginal}`;
+		}
+	} else if (deepOriginal instanceof Error) {
+		if (!detailedMessage.includes(deepOriginal.message)) {
+			detailedMessage += `\nVendor API Error: ${deepOriginal.message}`;
+		}
+	}
+
 	return {
 		content: [
 			{
 				type: 'text' as const,
-				text: `Error: ${mcpError.message}`,
+				text: detailedMessage,
 			},
 		],
 	};
@@ -190,7 +231,33 @@ export function handleCliError(error: unknown, source?: string): never {
 		stack: mcpError.stack,
 	});
 
-	// Display user-friendly message to console
-	console.error(`Error: ${mcpError.message}`);
+	// Build a well-formatted CLI output using markdown-style helpers
+	const cliLines: string[] = [];
+
+	// Primary error headline
+	cliLines.push(`❌  ${mcpError.message}`);
+
+	// Status code (if any)
+	if (mcpError.statusCode) {
+		cliLines.push(`HTTP Status: ${mcpError.statusCode}`);
+	}
+
+	// Separator
+	cliLines.push(formatSeparator());
+
+	// Vendor error (code block for readability)
+	const deepOriginal = getDeepOriginalError(mcpError);
+	if (deepOriginal) {
+		cliLines.push('Vendor API Error:');
+		const vendorText =
+			deepOriginal instanceof Error
+				? deepOriginal.message
+				: String(deepOriginal);
+		cliLines.push('```');
+		cliLines.push(vendorText.trim());
+		cliLines.push('```');
+	}
+
+	console.error(cliLines.join('\n'));
 	process.exit(1);
 }
