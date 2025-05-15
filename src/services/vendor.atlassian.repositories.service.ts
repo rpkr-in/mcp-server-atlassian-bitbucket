@@ -223,30 +223,37 @@ async function get(params: GetRepositoryParams): Promise<Repository> {
 	methodLogger.debug(`Sending request to: ${path}`);
 	try {
 		const rawData = await fetchAtlassian(credentials, path);
+		
 		// Validate response with Zod schema
 		try {
 			const validatedData = RepositorySchema.parse(rawData);
 			return validatedData;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
+				// Log the detailed formatting errors but provide a clear message to users
 				methodLogger.error(
-					'Invalid response from Bitbucket API:',
+					'Bitbucket API response validation failed:',
 					error.format(),
 				);
+				
+				// Create API error with appropriate context for validation failures
 				throw createApiError(
-					'Received invalid response format from Bitbucket API',
-					500,
-					error,
+					`Invalid response format from Bitbucket API for repository ${params.workspace}/${params.repo_slug}`,
+					500, // Internal server error since the API responded but with unexpected format
+					error, // Include the Zod error as originalError for better debugging
 				);
 			}
-			throw error;
+			throw error; // Re-throw any other errors
 		}
 	} catch (error) {
+		// If it's already an McpError (from fetchAtlassian or Zod validation), just rethrow it
 		if (error instanceof McpError) {
 			throw error;
 		}
+		
+		// Otherwise, wrap in a standard API error with context
 		throw createApiError(
-			`Failed to get repository details: ${error instanceof Error ? error.message : String(error)}`,
+			`Failed to get repository details for ${params.workspace}/${params.repo_slug}: ${error instanceof Error ? error.message : String(error)}`,
 			500,
 			error,
 		);

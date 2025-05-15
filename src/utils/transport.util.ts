@@ -179,17 +179,28 @@ export async function fetchAtlassian<T>(
 
 			// Try to parse the error response
 			let errorMessage = `${response.status} ${response.statusText}`;
-			let parsedError = null;
+			let parsedBitbucketError = null;
 
 			try {
 				if (
 					errorText &&
 					(errorText.startsWith('{') || errorText.startsWith('['))
 				) {
-					parsedError = JSON.parse(errorText);
-
-					// Extract specific error details from various Atlassian API response formats
-					if (
+					const parsedError = JSON.parse(errorText);
+					
+					// Extract specific error details from various Bitbucket API response formats
+					if (parsedError.type === 'error' && parsedError.error && parsedError.error.message) {
+						// Format: {"type":"error", "error":{"message":"...", "detail":"..."}}
+						parsedBitbucketError = parsedError.error;
+						errorMessage = parsedBitbucketError.message;
+						if (parsedBitbucketError.detail) {
+							errorMessage += ` Detail: ${parsedBitbucketError.detail}`;
+						}
+					} else if (parsedError.error && parsedError.error.message) {
+						// Alternative error format: {"error": {"message": "..."}}
+						parsedBitbucketError = parsedError.error;
+						errorMessage = parsedBitbucketError.message;
+					} else if (
 						parsedError.errors &&
 						Array.isArray(parsedError.errors) &&
 						parsedError.errors.length > 0
@@ -198,13 +209,12 @@ export async function fetchAtlassian<T>(
 						const atlassianError = parsedError.errors[0];
 						if (atlassianError.title) {
 							errorMessage = atlassianError.title;
+							parsedBitbucketError = atlassianError;
 						}
 					} else if (parsedError.message) {
 						// Format: {"message":"Some error message"}
 						errorMessage = parsedError.message;
-					} else if (parsedError.error && parsedError.error.message) {
-						// Bitbucket specific format: {"error": {"message": "..."}}
-						errorMessage = parsedError.error.message;
+						parsedBitbucketError = parsedError;
 					}
 				}
 			} catch (parseError) {
@@ -212,20 +222,58 @@ export async function fetchAtlassian<T>(
 				// Fall back to the default error message
 			}
 
-			// Classify HTTP errors based on status code – always include vendor detail
-			if (response.status === 401 || response.status === 403) {
+			// Log the parsed error or raw error text
+			methodLogger.debug('Parsed Bitbucket error:', parsedBitbucketError || errorText);
+
+			// Use parsedBitbucketError (or errorText if parsing failed) as originalError
+			const originalErrorForMcp = parsedBitbucketError || errorText;
+
+			// Handle common Bitbucket API error status codes
+			if (response.status === 401) {
 				throw createAuthInvalidError(
-					`Invalid Atlassian credentials: ${errorMessage}`,
-					errorText,
+					`Bitbucket API: Authentication failed - ${errorMessage}`,
+					originalErrorForMcp,
+				);
+			}
+
+			if (response.status === 403) {
+				throw createApiError(
+					`Bitbucket API: Permission denied - ${errorMessage}`,
+					403,
+					originalErrorForMcp,
 				);
 			}
 
 			if (response.status === 404) {
-				throw createApiError('Resource not found', 404, errorText);
+				throw createApiError(
+					`Bitbucket API: Resource not found - ${errorMessage}`,
+					404,
+					originalErrorForMcp,
+				);
+			}
+
+			if (response.status === 429) {
+				throw createApiError(
+					`Bitbucket API: Rate limit exceeded - ${errorMessage}`,
+					429,
+					originalErrorForMcp,
+				);
+			}
+
+			if (response.status >= 500) {
+				throw createApiError(
+					`Bitbucket API: Service error - ${errorMessage}`,
+					response.status,
+					originalErrorForMcp,
+				);
 			}
 
 			// For other API errors, preserve the original vendor message
-			throw createApiError(errorMessage, response.status, errorText);
+			throw createApiError(
+				`Bitbucket API Error: ${errorMessage}`, 
+				response.status, 
+				originalErrorForMcp
+			);
 		}
 
 		// Check if the response is expected to be plain text

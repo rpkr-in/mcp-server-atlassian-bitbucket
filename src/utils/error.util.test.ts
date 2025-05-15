@@ -1,3 +1,4 @@
+import { describe, expect, test, jest } from '@jest/globals';
 import {
 	ErrorType,
 	McpError,
@@ -8,101 +9,146 @@ import {
 	ensureMcpError,
 	formatErrorForMcpTool,
 	formatErrorForMcpResource,
+	getDeepOriginalError,
 } from './error.util.js';
 
-describe('Error Utility', () => {
-	describe('McpError', () => {
-		it('should create an error with the correct properties', () => {
-			const error = new McpError('Test error', ErrorType.API_ERROR, 404);
-
-			expect(error).toBeInstanceOf(Error);
-			expect(error).toBeInstanceOf(McpError);
-			expect(error.message).toBe('Test error');
-			expect(error.type).toBe(ErrorType.API_ERROR);
-			expect(error.statusCode).toBe(404);
-			expect(error.name).toBe('McpError');
-		});
-	});
-
-	describe('Error Factory Functions', () => {
-		it('should create auth missing error', () => {
-			const error = createAuthMissingError();
-
+describe('Error Utilities', () => {
+	describe('Error creation functions', () => {
+		test('createAuthMissingError creates an error with AUTH_MISSING type', () => {
+			const error = createAuthMissingError('Missing credentials');
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.AUTH_MISSING);
-			expect(error.message).toBe(
-				'Authentication credentials are missing',
-			);
+			expect(error.message).toBe('Missing credentials');
+			expect(error.statusCode).toBeUndefined();
 		});
 
-		it('should create auth invalid error', () => {
+		test('createAuthInvalidError creates an error with AUTH_INVALID type and 401 status', () => {
 			const error = createAuthInvalidError('Invalid token');
-
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.AUTH_INVALID);
-			expect(error.statusCode).toBe(401);
 			expect(error.message).toBe('Invalid token');
+			expect(error.statusCode).toBe(401);
 		});
 
-		it('should create API error', () => {
-			const originalError = new Error('Original error');
-			const error = createApiError('API failed', 500, originalError);
-
+		test('createApiError creates an error with API_ERROR type and specified status', () => {
+			const error = createApiError('Not found', 404, { details: 'Resource missing' });
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.API_ERROR);
-			expect(error.statusCode).toBe(500);
-			expect(error.message).toBe('API failed');
-			expect(error.originalError).toBe(originalError);
+			expect(error.message).toBe('Not found');
+			expect(error.statusCode).toBe(404);
+			expect(error.originalError).toEqual({ details: 'Resource missing' });
 		});
 
-		it('should create unexpected error', () => {
-			const error = createUnexpectedError();
-
+		test('createUnexpectedError creates an error with UNEXPECTED_ERROR type', () => {
+			const originalError = new Error('Original error');
+			const error = createUnexpectedError('Something went wrong', originalError);
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.UNEXPECTED_ERROR);
-			expect(error.message).toBe('An unexpected error occurred');
+			expect(error.message).toBe('Something went wrong');
+			expect(error.statusCode).toBeUndefined();
+			expect(error.originalError).toBe(originalError);
 		});
 	});
 
-	describe('ensureMcpError', () => {
-		it('should return the same error if it is already an McpError', () => {
-			const originalError = createApiError('Original error');
-			const error = ensureMcpError(originalError);
-
-			expect(error).toBe(originalError);
+	describe('ensureMcpError function', () => {
+		test('returns the error if it is already an McpError', () => {
+			const error = createApiError('API error', 500);
+			expect(ensureMcpError(error)).toBe(error);
 		});
 
-		it('should wrap a standard Error', () => {
-			const originalError = new Error('Standard error');
-			const error = ensureMcpError(originalError);
-
-			expect(error).toBeInstanceOf(McpError);
-			expect(error.type).toBe(ErrorType.UNEXPECTED_ERROR);
-			expect(error.message).toBe('Standard error');
-			expect(error.originalError).toBe(originalError);
+		test('wraps a standard Error with McpError', () => {
+			const stdError = new Error('Standard error');
+			const mcpError = ensureMcpError(stdError);
+			expect(mcpError).toBeInstanceOf(McpError);
+			expect(mcpError.message).toBe('Standard error');
+			expect(mcpError.type).toBe(ErrorType.UNEXPECTED_ERROR);
+			expect(mcpError.originalError).toBe(stdError);
 		});
 
-		it('should handle non-Error objects', () => {
-			const error = ensureMcpError('String error');
+		test('wraps a string with McpError', () => {
+			const mcpError = ensureMcpError('Error message');
+			expect(mcpError).toBeInstanceOf(McpError);
+			expect(mcpError.message).toBe('Error message');
+			expect(mcpError.type).toBe(ErrorType.UNEXPECTED_ERROR);
+		});
 
-			expect(error).toBeInstanceOf(McpError);
-			expect(error.type).toBe(ErrorType.UNEXPECTED_ERROR);
-			expect(error.message).toBe('String error');
+		test('wraps other types with McpError', () => {
+			const mcpError = ensureMcpError({ message: 'Object error' });
+			expect(mcpError).toBeInstanceOf(McpError);
+			expect(mcpError.message).toBe('[object Object]');
+			expect(mcpError.type).toBe(ErrorType.UNEXPECTED_ERROR);
 		});
 	});
 
-	describe('formatErrorForMcpTool', () => {
-		it('should format an error for MCP tool response', () => {
-			const error = createApiError('API error');
-			const response = formatErrorForMcpTool(error);
+	describe('getDeepOriginalError function', () => {
+		test('returns the deepest error in a chain', () => {
+			const deepestError = { message: 'Root cause' };
+			const level3 = createApiError('Level 3', 500, deepestError);
+			const level2 = createApiError('Level 2', 500, level3);
+			const level1 = createApiError('Level 1', 500, level2);
 
-			expect(response).toHaveProperty('content');
-			expect(response.content).toHaveLength(1);
-			expect(response.content[0]).toHaveProperty('type', 'text');
-			expect(response.content[0]).toHaveProperty(
-				'text',
-				'Error: API error',
-			);
+			expect(getDeepOriginalError(level1)).toEqual(deepestError);
+		});
+
+		test('handles non-McpError values', () => {
+			const originalValue = 'Original error text';
+			expect(getDeepOriginalError(originalValue)).toBe(originalValue);
+		});
+
+		test('stops traversing at maximum depth', () => {
+			// Create a circular error chain that would cause infinite recursion
+			const circular1: any = new McpError('Circular 1', ErrorType.API_ERROR);
+			const circular2: any = new McpError('Circular 2', ErrorType.API_ERROR);
+			circular1.originalError = circular2;
+			circular2.originalError = circular1;
+
+			// Should not cause infinite recursion
+			const result = getDeepOriginalError(circular1);
+			
+			// Expect either circular1 or circular2 depending on max depth
+			expect([circular1, circular2]).toContain(result);
+		});
+	});
+
+	describe('formatErrorForMcpTool function', () => {
+		test('formats an McpError for MCP tool response', () => {
+			const originalError = { code: 'NOT_FOUND', message: 'Repository does not exist' };
+			const error = createApiError('Resource not found', 404, originalError);
+			
+			const formatted = formatErrorForMcpTool(error);
+			
+			expect(formatted).toHaveProperty('content');
+			expect(formatted.content[0].type).toBe('text');
+			expect(formatted.content[0].text).toBe('Error: Resource not found');
+			
+			expect(formatted).toHaveProperty('metadata');
+			expect(formatted.metadata?.errorType).toBe(ErrorType.API_ERROR);
+			expect(formatted.metadata?.statusCode).toBe(404);
+			expect(formatted.metadata?.errorDetails).toEqual(originalError);
+		});
+
+		test('formats a non-McpError for MCP tool response', () => {
+			const error = new Error('Standard error');
+			
+			const formatted = formatErrorForMcpTool(error);
+			
+			expect(formatted).toHaveProperty('content');
+			expect(formatted.content[0].type).toBe('text');
+			expect(formatted.content[0].text).toBe('Error: Standard error');
+			
+			expect(formatted).toHaveProperty('metadata');
+			expect(formatted.metadata?.errorType).toBe(ErrorType.UNEXPECTED_ERROR);
+		});
+
+		test('extracts detailed error information from nested errors', () => {
+			const deepError = { message: 'API quota exceeded', type: 'RateLimitError' };
+			const midError = createApiError('Rate limit exceeded', 429, deepError);
+			const topError = createApiError('API error', 429, midError);
+			
+			const formatted = formatErrorForMcpTool(topError);
+			
+			expect(formatted.content[0].text).toBe('Error: API error');
+			expect(formatted.metadata?.errorDetails).toEqual(deepError);
 		});
 	});
 

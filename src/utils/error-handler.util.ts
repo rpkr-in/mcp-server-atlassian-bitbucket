@@ -1,5 +1,6 @@
 import { createApiError } from './error.util.js';
 import { Logger } from './logger.util.js';
+import { getDeepOriginalError } from './error.util.js';
 
 /**
  * Standard error codes for consistent handling
@@ -10,6 +11,10 @@ export enum ErrorCode {
 	ACCESS_DENIED = 'ACCESS_DENIED',
 	VALIDATION_ERROR = 'VALIDATION_ERROR',
 	UNEXPECTED_ERROR = 'UNEXPECTED_ERROR',
+	NETWORK_ERROR = 'NETWORK_ERROR',
+	RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
+	PRIVATE_IP_ERROR = 'PRIVATE_IP_ERROR',
+	RESERVED_RANGE_ERROR = 'RESERVED_RANGE_ERROR',
 }
 
 /**
@@ -43,12 +48,37 @@ export interface ErrorContext {
 }
 
 /**
+ * Helper function to create a consistent error context object
+ * @param entityType Type of entity being processed
+ * @param operation Operation being performed
+ * @param source Source of the error (typically file path and function)
+ * @param entityId Optional identifier of the entity
+ * @param additionalInfo Optional additional information for debugging
+ * @returns A formatted ErrorContext object
+ */
+export function buildErrorContext(
+	entityType: string,
+	operation: string,
+	source: string,
+	entityId?: string | Record<string, string>,
+	additionalInfo?: Record<string, unknown>,
+): ErrorContext {
+	return {
+		entityType,
+		operation,
+		source,
+		...(entityId && { entityId }),
+		...(additionalInfo && { additionalInfo }),
+	};
+}
+
+/**
  * Detect specific error types from raw errors
  * @param error The error to analyze
  * @param context Context information for better error detection
  * @returns Object containing the error code and status code
  */
-function detectErrorType(
+export function detectErrorType(
 	error: unknown,
 	context: ErrorContext = {},
 ): { code: ErrorCode; statusCode: number } {
@@ -63,6 +93,74 @@ function detectErrorType(
 		error instanceof Error && 'statusCode' in error
 			? (error as { statusCode: number }).statusCode
 			: undefined;
+
+	// Network error detection
+	if (
+		errorMessage.includes('network error') ||
+		errorMessage.includes('fetch failed') ||
+		errorMessage.includes('ECONNREFUSED') ||
+		errorMessage.includes('ENOTFOUND') ||
+		errorMessage.includes('Failed to fetch') ||
+		errorMessage.includes('Network request failed')
+	) {
+		return { code: ErrorCode.NETWORK_ERROR, statusCode: 500 };
+	}
+
+	// Rate limiting detection
+	if (
+		errorMessage.includes('rate limit') ||
+		errorMessage.includes('too many requests') ||
+		statusCode === 429
+	) {
+		return { code: ErrorCode.RATE_LIMIT_ERROR, statusCode: 429 };
+	}
+
+	// Bitbucket-specific error detection
+	if (
+		error instanceof Error && 
+		'originalError' in error && 
+		error.originalError
+	) {
+		const originalError = getDeepOriginalError(error.originalError);
+		
+		if (originalError && typeof originalError === 'object') {
+			const oe = originalError as Record<string, unknown>;
+			
+			// Check for Bitbucket API error structure
+			if (oe.error && typeof oe.error === 'object') {
+				const bbError = oe.error as Record<string, unknown>;
+				const errorMsg = String(bbError.message || '').toLowerCase();
+				
+				if (
+					errorMsg.includes('repository not found') ||
+					errorMsg.includes('does not exist')
+				) {
+					return { code: ErrorCode.NOT_FOUND, statusCode: 404 };
+				}
+				
+				if (
+					errorMsg.includes('access') ||
+					errorMsg.includes('permission') || 
+					errorMsg.includes('credentials') ||
+					errorMsg.includes('unauthorized')
+				) {
+					return { code: ErrorCode.ACCESS_DENIED, statusCode: 403 };
+				}
+				
+				if (
+					errorMsg.includes('invalid') &&
+					(errorMsg.includes('parameter') ||
+						errorMsg.includes('input'))
+				) {
+					return { code: ErrorCode.VALIDATION_ERROR, statusCode: 400 };
+				}
+				
+				if (errorMsg.includes('rate limit') || errorMsg.includes('too many requests')) {
+					return { code: ErrorCode.RATE_LIMIT_ERROR, statusCode: 429 };
+				}
+			}
+		}
+	}
 
 	// Not Found detection
 	if (
@@ -123,7 +221,7 @@ function detectErrorType(
  * @param originalMessage The original error message
  * @returns User-friendly error message
  */
-function createUserFriendlyErrorMessage(
+export function createUserFriendlyErrorMessage(
 	code: ErrorCode,
 	context: ErrorContext = {},
 	originalMessage?: string,
@@ -171,6 +269,14 @@ function createUserFriendlyErrorMessage(
 				`Invalid data provided for ${operation || 'operation'} ${entity.toLowerCase()}.`;
 			break;
 
+		case ErrorCode.NETWORK_ERROR:
+			message = `Network error while ${operation || 'connecting to'} the Bitbucket API. Please check your internet connection and try again.`;
+			break;
+
+		case ErrorCode.RATE_LIMIT_ERROR:
+			message = `Bitbucket API rate limit exceeded. Please wait a moment and try again, or reduce the frequency of requests.`;
+			break;
+
 		default:
 			message = `An unexpected error occurred while ${operation || 'processing'} ${entity.toLowerCase()}.`;
 	}
@@ -179,8 +285,7 @@ function createUserFriendlyErrorMessage(
 	if (
 		originalMessage &&
 		code !== ErrorCode.NOT_FOUND &&
-		code !== ErrorCode.ACCESS_DENIED &&
-		code !== ErrorCode.VALIDATION_ERROR
+		code !== ErrorCode.ACCESS_DENIED
 	) {
 		message += ` Error details: ${originalMessage}`;
 	}

@@ -1,7 +1,10 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
-import { handleControllerError } from '../utils/error-handler.util.js';
+import { 
+	handleControllerError, 
+	buildErrorContext,
+} from '../utils/error-handler.util.js';
 import {
 	extractPaginationInfo,
 	PaginationType,
@@ -143,9 +146,9 @@ async function list(
 }
 
 /**
- * Gets details of a specific Bitbucket repository
- * @param identifier - Repository identifier containing workspaceSlug and repoSlug
- * @returns Formatted repository details
+ * Get detailed information about a specific Bitbucket repository
+ * @param identifier The repository identifier (workspace slug and repo slug)
+ * @returns Formatted repository details with recent pull requests
  */
 async function get(
 	identifier: GetRepositoryToolArgsType,
@@ -157,30 +160,29 @@ async function get(
 	);
 
 	methodLogger.debug(
-		`Getting repository details for ${workspaceSlug}/${repoSlug}...`,
+		`Getting repository details for ${workspaceSlug}/${repoSlug}`,
 	);
 
 	try {
-		// Map controller options to service parameters
-		const serviceParams: GetRepositoryParams = {
+		const repositoryData = await atlassianRepositoriesService.get({
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
+		});
+
+		methodLogger.debug(`Retrieved repository data`, {
+			name: repositoryData.name,
+			created_on: repositoryData.created_on,
+			updated_on: repositoryData.updated_on,
+		});
+
+		// Fetch recent pull requests for the repository (if available)
+		let recentPullRequests: PullRequestsResponse = {
+			pagelen: 0,
+			size: 0,
+			page: 1,
+			values: [],
 		};
 
-		methodLogger.debug('Using service parameters:', serviceParams);
-
-		// Fetch repository data
-		const repositoryData =
-			await atlassianRepositoriesService.get(serviceParams);
-
-		methodLogger.debug(`Retrieved repository: ${repositoryData.full_name}`);
-
-		// Fetch recent pull requests to provide immediate context and activity history.
-		// This enhances usability by including relevant PRs directly in repository details,
-		// saving users from having to make a separate API call. While this crosses entity
-		// boundaries slightly, it significantly improves the user experience by showing
-		// recent activity alongside the repository's metadata.
-		let recentPullRequests = null;
 		try {
 			// Create pull request list parameters similar to how the PR controller would
 			const pullRequestsParams = {
@@ -214,12 +216,15 @@ async function get(
 			content: formattedRepository,
 		};
 	} catch (error) {
-		throw handleControllerError(error, {
-			source: 'controllers/atlassian.repositories.controller.ts@get',
-			entityType: 'Repository',
-			operation: 'retrieving',
-			entityId: { workspaceSlug, repoSlug },
-		});
+		throw handleControllerError(
+			error,
+			buildErrorContext(
+				'Repository',
+				'retrieving',
+				'controllers/atlassian.repositories.controller.ts@get',
+				{ workspaceSlug, repoSlug },
+			)
+		);
 	}
 }
 

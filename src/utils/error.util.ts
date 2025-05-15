@@ -38,17 +38,26 @@ export class McpError extends Error {
  * This is useful when an McpError contains another McpError as `originalError`
  * which in turn may wrap the vendor (Bitbucket) error text or object.
  */
-function getDeepOriginalError(error: McpError | unknown): unknown {
-	let current: unknown = error;
-	// Traverse a maximum of 5 levels to avoid infinite loops in pathological cases
-	for (let i = 0; i < 5; i += 1) {
-		if (current instanceof McpError && current.originalError) {
-			current = current.originalError;
-			continue;
-		}
-		break;
+export function getDeepOriginalError(error: unknown): unknown {
+	if (!error) {
+		return error;
 	}
-	return current instanceof McpError ? current.message : current;
+
+	let current = error;
+	let depth = 0;
+	const maxDepth = 10; // Prevent infinite recursion
+
+	while (
+		depth < maxDepth &&
+		current instanceof Error &&
+		'originalError' in current &&
+		current.originalError
+	) {
+		current = current.originalError;
+		depth++;
+	}
+
+	return current;
 }
 
 /**
@@ -123,41 +132,44 @@ export function ensureMcpError(error: unknown): McpError {
 }
 
 /**
- * Format error for MCP tool response – provides enough detail for LLMs
- * while remaining concise.  Vendor (Bitbucket) error details are included
- * when available so the AI can reason about the exact failure cause.
+ * Format error for MCP tool response
  */
 export function formatErrorForMcpTool(error: unknown): {
 	content: Array<{ type: 'text'; text: string }>;
+	metadata?: {
+		errorType: ErrorType;
+		statusCode?: number;
+		errorDetails?: unknown;
+	};
 } {
 	const methodLogger = Logger.forContext(
 		'utils/error.util.ts',
 		'formatErrorForMcpTool',
 	);
 	const mcpError = ensureMcpError(error);
-
 	methodLogger.error(`${mcpError.type} error`, mcpError);
 
-	let detailedMessage = `Error: ${mcpError.message}`;
+	// Get the deep original error for additional context
+	const originalError = getDeepOriginalError(mcpError.originalError);
 
-	const deepOriginal = getDeepOriginalError(mcpError);
-	if (deepOriginal && typeof deepOriginal === 'string') {
-		if (!detailedMessage.includes(deepOriginal)) {
-			detailedMessage += `\nVendor API Error: ${deepOriginal}`;
-		}
-	} else if (deepOriginal instanceof Error) {
-		if (!detailedMessage.includes(deepOriginal.message)) {
-			detailedMessage += `\nVendor API Error: ${deepOriginal.message}`;
-		}
-	}
+	// Safely extract details from the original error
+	const errorDetails =
+		originalError instanceof Error
+			? { message: originalError.message }
+			: originalError;
 
 	return {
 		content: [
 			{
 				type: 'text' as const,
-				text: detailedMessage,
+				text: `Error: ${mcpError.message}`,
 			},
 		],
+		metadata: {
+			errorType: mcpError.type,
+			statusCode: mcpError.statusCode,
+			errorDetails,
+		},
 	};
 }
 
@@ -180,7 +192,6 @@ export function formatErrorForMcpResource(
 		'formatErrorForMcpResource',
 	);
 	const mcpError = ensureMcpError(error);
-
 	methodLogger.error(`${mcpError.type} error`, mcpError);
 
 	return {
@@ -196,40 +207,18 @@ export function formatErrorForMcpResource(
 }
 
 /**
- * Handle error in CLI context
- * @param error The error to handle
- * @param source Optional source information for better error messages
+ * Handle error in CLI context with improved user feedback
  */
-export function handleCliError(error: unknown, source?: string): never {
+export function handleCliError(error: unknown): never {
 	const methodLogger = Logger.forContext(
 		'utils/error.util.ts',
 		'handleCliError',
 	);
 	const mcpError = ensureMcpError(error);
+	methodLogger.error(`${mcpError.type} error`, mcpError);
 
-	// Log detailed information at different levels based on error type
-	if (mcpError.statusCode && mcpError.statusCode >= 500) {
-		methodLogger.error(`${mcpError.type} error occurred`, {
-			message: mcpError.message,
-			statusCode: mcpError.statusCode,
-			source,
-			stack: mcpError.stack,
-		});
-	} else {
-		methodLogger.warn(`${mcpError.type} error occurred`, {
-			message: mcpError.message,
-			statusCode: mcpError.statusCode,
-			source,
-		});
-	}
-
-	// Log additional debug information if DEBUG is enabled
-	methodLogger.debug('Error details', {
-		type: mcpError.type,
-		statusCode: mcpError.statusCode,
-		originalError: mcpError.originalError,
-		stack: mcpError.stack,
-	});
+	// Get the deep original error for more context
+	const originalError = getDeepOriginalError(mcpError.originalError);
 
 	// Build a well-formatted CLI output using markdown-style helpers
 	const cliLines: string[] = [];
@@ -245,17 +234,48 @@ export function handleCliError(error: unknown, source?: string): never {
 	// Separator
 	cliLines.push(formatSeparator());
 
-	// Vendor error (code block for readability)
-	const deepOriginal = getDeepOriginalError(mcpError);
-	if (deepOriginal) {
-		cliLines.push('Vendor API Error:');
-		const vendorText =
-			deepOriginal instanceof Error
-				? deepOriginal.message
-				: String(deepOriginal);
+	// Provide helpful context based on error type
+	if (mcpError.type === ErrorType.AUTH_MISSING) {
+		cliLines.push('Tip: Make sure to set up your Atlassian credentials in the configuration file or environment variables:');
+		cliLines.push('- ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN; or');
+		cliLines.push('- ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD');
+	} else if (mcpError.type === ErrorType.AUTH_INVALID) {
+		cliLines.push('Tip: Check that your Atlassian API token or app password is correct and has not expired.');
+		cliLines.push('Also verify that the configured user has access to the requested resource.');
+	} else if (mcpError.type === ErrorType.API_ERROR) {
+		if (mcpError.statusCode === 429) {
+			cliLines.push('Tip: You may have exceeded your Bitbucket API rate limits. Try again later.');
+		}
+	}
+
+	// Vendor error details (if available)
+	if (originalError) {
+		cliLines.push('Bitbucket API Error:');
 		cliLines.push('```');
-		cliLines.push(vendorText.trim());
+		if (typeof originalError === 'object' && originalError !== null) {
+			// Try to extract the most useful parts of Bitbucket's error response
+			const origErr = originalError as Record<string, unknown>;
+			if (origErr.error && typeof origErr.error === 'object') {
+				// Format {"error": {"message": "..."}} structure
+				const bitbucketError = origErr.error as Record<string, unknown>;
+				cliLines.push(`Message: ${bitbucketError.message || 'Unknown error'}`);
+				if (bitbucketError.detail) cliLines.push(`Detail: ${bitbucketError.detail}`);
+			} else if (origErr.message) {
+				// Simple message
+				cliLines.push(`${String(origErr.message)}`);
+			} else {
+				// Fall back to JSON representation for anything else
+				cliLines.push(JSON.stringify(originalError, null, 2));
+			}
+		} else {
+			cliLines.push(String(originalError).trim());
+		}
 		cliLines.push('```');
+	}
+
+	// Display DEBUG tip
+	if (!process.env.DEBUG || !process.env.DEBUG.includes('mcp:')) {
+		cliLines.push('For more detailed error information, run with DEBUG=mcp:* environment variable.');
 	}
 
 	console.error(cliLines.join('\n'));
