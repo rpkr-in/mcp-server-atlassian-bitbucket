@@ -6,11 +6,7 @@ import {
 	createUserFriendlyErrorMessage,
 	handleControllerError,
 } from './error-handler.util.js';
-import {
-	McpError,
-	ErrorType,
-	createApiError,
-} from './error.util.js';
+import { McpError, ErrorType, createApiError } from './error.util.js';
 
 describe('Error Handler Utilities', () => {
 	describe('buildErrorContext function', () => {
@@ -20,7 +16,7 @@ describe('Error Handler Utilities', () => {
 				'retrieving',
 				'controllers/repositories.controller.ts@get',
 				{ workspaceSlug: 'atlassian', repoSlug: 'bitbucket' },
-				{ queryParams: { sort: 'name' } }
+				{ queryParams: { sort: 'name' } },
 			);
 
 			expect(context).toEqual({
@@ -36,7 +32,7 @@ describe('Error Handler Utilities', () => {
 			const context = buildErrorContext(
 				'Repository',
 				'listing',
-				'controllers/repositories.controller.ts@list'
+				'controllers/repositories.controller.ts@list',
 			);
 
 			expect(context).toEqual({
@@ -105,7 +101,11 @@ describe('Error Handler Utilities', () => {
 		});
 
 		test('respects explicit status code from error', () => {
-			const error = new McpError('Custom error', ErrorType.API_ERROR, 418);
+			const error = new McpError(
+				'Custom error',
+				ErrorType.API_ERROR,
+				418,
+			);
 			const result = detectErrorType(error);
 			expect(result.statusCode).toBe(418);
 		});
@@ -160,9 +160,11 @@ describe('Error Handler Utilities', () => {
 				{
 					entityType: 'Repository',
 					entityId: 'atlassian/bitbucket',
-				}
+				},
 			);
-			expect(message).toContain('Repository atlassian/bitbucket not found');
+			expect(message).toContain(
+				'Repository atlassian/bitbucket not found',
+			);
 		});
 
 		test('creates NOT_FOUND message with entityId object', () => {
@@ -170,10 +172,15 @@ describe('Error Handler Utilities', () => {
 				ErrorCode.NOT_FOUND,
 				{
 					entityType: 'Repository',
-					entityId: { workspaceSlug: 'atlassian', repoSlug: 'bitbucket' },
-				}
+					entityId: {
+						workspaceSlug: 'atlassian',
+						repoSlug: 'bitbucket',
+					},
+				},
 			);
-			expect(message).toContain('Repository atlassian/bitbucket not found');
+			expect(message).toContain(
+				'Repository atlassian/bitbucket not found',
+			);
 		});
 
 		test('creates ACCESS_DENIED message', () => {
@@ -182,9 +189,11 @@ describe('Error Handler Utilities', () => {
 				{
 					entityType: 'Repository',
 					entityId: 'atlassian/bitbucket',
-				}
+				},
 			);
-			expect(message).toContain('Access denied for repository atlassian/bitbucket');
+			expect(message).toContain(
+				'Access denied for repository atlassian/bitbucket',
+			);
 		});
 
 		test('creates VALIDATION_ERROR message', () => {
@@ -195,9 +204,11 @@ describe('Error Handler Utilities', () => {
 					entityType: 'Repository',
 					operation: 'creating',
 				},
-				originalMessage
+				originalMessage,
 			);
-			expect(message).toBe(`${originalMessage} Error details: ${originalMessage}`);
+			expect(message).toBe(
+				`${originalMessage} Error details: ${originalMessage}`,
+			);
 		});
 
 		test('creates NETWORK_ERROR message', () => {
@@ -206,7 +217,7 @@ describe('Error Handler Utilities', () => {
 				{
 					entityType: 'Repository',
 					operation: 'retrieving',
-				}
+				},
 			);
 			expect(message).toContain('Network error');
 			expect(message).toContain('Bitbucket API');
@@ -214,7 +225,7 @@ describe('Error Handler Utilities', () => {
 
 		test('creates RATE_LIMIT_ERROR message', () => {
 			const message = createUserFriendlyErrorMessage(
-				ErrorCode.RATE_LIMIT_ERROR
+				ErrorCode.RATE_LIMIT_ERROR,
 			);
 			expect(message).toContain('Bitbucket API rate limit exceeded');
 		});
@@ -226,7 +237,7 @@ describe('Error Handler Utilities', () => {
 					entityType: 'Repository',
 					operation: 'processing',
 				},
-				'Something went wrong'
+				'Something went wrong',
 			);
 			expect(message).toContain('unexpected error');
 			expect(message).toContain('Something went wrong');
@@ -240,7 +251,7 @@ describe('Error Handler Utilities', () => {
 				'Repository',
 				'retrieving',
 				'controllers/repositories.controller.ts@get',
-				'atlassian/bitbucket'
+				'atlassian/bitbucket',
 			);
 
 			expect(() => {
@@ -251,11 +262,13 @@ describe('Error Handler Utilities', () => {
 				handleControllerError(originalError, context);
 			} catch (error) {
 				expect(error).toBeInstanceOf(McpError);
-				expect(error.type).toBe(ErrorType.API_ERROR);
-				expect(error.statusCode).toBe(404);
-				expect(error.message).toContain('Repository atlassian/bitbucket not found');
-				expect(error.originalError).toBe(originalError);
+				expect((error as McpError).type).toBe(ErrorType.API_ERROR);
+				expect((error as McpError).statusCode).toBe(404);
+				expect((error as McpError).message).toContain(
+					'Repository atlassian/bitbucket not found',
+				);
+				expect((error as McpError).originalError).toBe(originalError);
 			}
 		});
 	});
-}); 
+});

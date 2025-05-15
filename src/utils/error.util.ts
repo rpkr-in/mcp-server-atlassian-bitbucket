@@ -236,15 +236,27 @@ export function handleCliError(error: unknown): never {
 
 	// Provide helpful context based on error type
 	if (mcpError.type === ErrorType.AUTH_MISSING) {
-		cliLines.push('Tip: Make sure to set up your Atlassian credentials in the configuration file or environment variables:');
-		cliLines.push('- ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN; or');
-		cliLines.push('- ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD');
+		cliLines.push(
+			'Tip: Make sure to set up your Atlassian credentials in the configuration file or environment variables:',
+		);
+		cliLines.push(
+			'- ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN; or',
+		);
+		cliLines.push(
+			'- ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD',
+		);
 	} else if (mcpError.type === ErrorType.AUTH_INVALID) {
-		cliLines.push('Tip: Check that your Atlassian API token or app password is correct and has not expired.');
-		cliLines.push('Also verify that the configured user has access to the requested resource.');
+		cliLines.push(
+			'Tip: Check that your Atlassian API token or app password is correct and has not expired.',
+		);
+		cliLines.push(
+			'Also verify that the configured user has access to the requested resource.',
+		);
 	} else if (mcpError.type === ErrorType.API_ERROR) {
 		if (mcpError.statusCode === 429) {
-			cliLines.push('Tip: You may have exceeded your Bitbucket API rate limits. Try again later.');
+			cliLines.push(
+				'Tip: You may have exceeded your Bitbucket API rate limits. Try again later.',
+			);
 		}
 	}
 
@@ -258,8 +270,11 @@ export function handleCliError(error: unknown): never {
 			if (origErr.error && typeof origErr.error === 'object') {
 				// Format {"error": {"message": "..."}} structure
 				const bitbucketError = origErr.error as Record<string, unknown>;
-				cliLines.push(`Message: ${bitbucketError.message || 'Unknown error'}`);
-				if (bitbucketError.detail) cliLines.push(`Detail: ${bitbucketError.detail}`);
+				cliLines.push(
+					`Message: ${bitbucketError.message || 'Unknown error'}`,
+				);
+				if (bitbucketError.detail)
+					cliLines.push(`Detail: ${bitbucketError.detail}`);
 			} else if (origErr.message) {
 				// Simple message
 				cliLines.push(`${String(origErr.message)}`);
@@ -275,7 +290,9 @@ export function handleCliError(error: unknown): never {
 
 	// Display DEBUG tip
 	if (!process.env.DEBUG || !process.env.DEBUG.includes('mcp:')) {
-		cliLines.push('For more detailed error information, run with DEBUG=mcp:* environment variable.');
+		cliLines.push(
+			'For more detailed error information, run with DEBUG=mcp:* environment variable.',
+		);
 	}
 
 	console.error(cliLines.join('\n'));

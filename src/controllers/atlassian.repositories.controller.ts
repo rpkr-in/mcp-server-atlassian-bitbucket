@@ -1,8 +1,8 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
-import { 
-	handleControllerError, 
+import {
+	handleControllerError,
 	buildErrorContext,
 } from '../utils/error-handler.util.js';
 import {
@@ -26,7 +26,6 @@ import {
 } from './atlassian.repositories.formatter.js';
 import {
 	ListRepositoriesParams,
-	GetRepositoryParams,
 	ListCommitsParams,
 	BranchRef,
 	CreateBranchParams,
@@ -37,6 +36,7 @@ import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { createApiError } from '../utils/error.util.js';
+import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -223,7 +223,7 @@ async function get(
 				'retrieving',
 				'controllers/atlassian.repositories.controller.ts@get',
 				{ workspaceSlug, repoSlug },
-			)
+			),
 		);
 	}
 }

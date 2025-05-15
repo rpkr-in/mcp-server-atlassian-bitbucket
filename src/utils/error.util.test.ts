@@ -31,17 +31,24 @@ describe('Error Utilities', () => {
 		});
 
 		test('createApiError creates an error with API_ERROR type and specified status', () => {
-			const error = createApiError('Not found', 404, { details: 'Resource missing' });
+			const error = createApiError('Not found', 404, {
+				details: 'Resource missing',
+			});
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.API_ERROR);
 			expect(error.message).toBe('Not found');
 			expect(error.statusCode).toBe(404);
-			expect(error.originalError).toEqual({ details: 'Resource missing' });
+			expect(error.originalError).toEqual({
+				details: 'Resource missing',
+			});
 		});
 
 		test('createUnexpectedError creates an error with UNEXPECTED_ERROR type', () => {
 			const originalError = new Error('Original error');
-			const error = createUnexpectedError('Something went wrong', originalError);
+			const error = createUnexpectedError(
+				'Something went wrong',
+				originalError,
+			);
 			expect(error).toBeInstanceOf(McpError);
 			expect(error.type).toBe(ErrorType.UNEXPECTED_ERROR);
 			expect(error.message).toBe('Something went wrong');
@@ -97,14 +104,20 @@ describe('Error Utilities', () => {
 
 		test('stops traversing at maximum depth', () => {
 			// Create a circular error chain that would cause infinite recursion
-			const circular1: any = new McpError('Circular 1', ErrorType.API_ERROR);
-			const circular2: any = new McpError('Circular 2', ErrorType.API_ERROR);
+			const circular1: any = new McpError(
+				'Circular 1',
+				ErrorType.API_ERROR,
+			);
+			const circular2: any = new McpError(
+				'Circular 2',
+				ErrorType.API_ERROR,
+			);
 			circular1.originalError = circular2;
 			circular2.originalError = circular1;
 
 			// Should not cause infinite recursion
 			const result = getDeepOriginalError(circular1);
-			
+
 			// Expect either circular1 or circular2 depending on max depth
 			expect([circular1, circular2]).toContain(result);
 		});
@@ -112,15 +125,22 @@ describe('Error Utilities', () => {
 
 	describe('formatErrorForMcpTool function', () => {
 		test('formats an McpError for MCP tool response', () => {
-			const originalError = { code: 'NOT_FOUND', message: 'Repository does not exist' };
-			const error = createApiError('Resource not found', 404, originalError);
-			
+			const originalError = {
+				code: 'NOT_FOUND',
+				message: 'Repository does not exist',
+			};
+			const error = createApiError(
+				'Resource not found',
+				404,
+				originalError,
+			);
+
 			const formatted = formatErrorForMcpTool(error);
-			
+
 			expect(formatted).toHaveProperty('content');
 			expect(formatted.content[0].type).toBe('text');
 			expect(formatted.content[0].text).toBe('Error: Resource not found');
-			
+
 			expect(formatted).toHaveProperty('metadata');
 			expect(formatted.metadata?.errorType).toBe(ErrorType.API_ERROR);
 			expect(formatted.metadata?.statusCode).toBe(404);
@@ -129,24 +149,33 @@ describe('Error Utilities', () => {
 
 		test('formats a non-McpError for MCP tool response', () => {
 			const error = new Error('Standard error');
-			
+
 			const formatted = formatErrorForMcpTool(error);
-			
+
 			expect(formatted).toHaveProperty('content');
 			expect(formatted.content[0].type).toBe('text');
 			expect(formatted.content[0].text).toBe('Error: Standard error');
-			
+
 			expect(formatted).toHaveProperty('metadata');
-			expect(formatted.metadata?.errorType).toBe(ErrorType.UNEXPECTED_ERROR);
+			expect(formatted.metadata?.errorType).toBe(
+				ErrorType.UNEXPECTED_ERROR,
+			);
 		});
 
 		test('extracts detailed error information from nested errors', () => {
-			const deepError = { message: 'API quota exceeded', type: 'RateLimitError' };
-			const midError = createApiError('Rate limit exceeded', 429, deepError);
+			const deepError = {
+				message: 'API quota exceeded',
+				type: 'RateLimitError',
+			};
+			const midError = createApiError(
+				'Rate limit exceeded',
+				429,
+				deepError,
+			);
 			const topError = createApiError('API error', 429, midError);
-			
+
 			const formatted = formatErrorForMcpTool(topError);
-			
+
 			expect(formatted.content[0].text).toBe('Error: API error');
 			expect(formatted.metadata?.errorDetails).toEqual(deepError);
 		});
