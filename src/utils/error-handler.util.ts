@@ -117,46 +117,55 @@ export function detectErrorType(
 
 	// Bitbucket-specific error detection
 	if (
-		error instanceof Error && 
-		'originalError' in error && 
+		error instanceof Error &&
+		'originalError' in error &&
 		error.originalError
 	) {
 		const originalError = getDeepOriginalError(error.originalError);
-		
+
 		if (originalError && typeof originalError === 'object') {
 			const oe = originalError as Record<string, unknown>;
-			
+
 			// Check for Bitbucket API error structure
 			if (oe.error && typeof oe.error === 'object') {
 				const bbError = oe.error as Record<string, unknown>;
 				const errorMsg = String(bbError.message || '').toLowerCase();
-				
+
 				if (
 					errorMsg.includes('repository not found') ||
 					errorMsg.includes('does not exist')
 				) {
 					return { code: ErrorCode.NOT_FOUND, statusCode: 404 };
 				}
-				
+
 				if (
 					errorMsg.includes('access') ||
-					errorMsg.includes('permission') || 
+					errorMsg.includes('permission') ||
 					errorMsg.includes('credentials') ||
 					errorMsg.includes('unauthorized')
 				) {
 					return { code: ErrorCode.ACCESS_DENIED, statusCode: 403 };
 				}
-				
+
 				if (
 					errorMsg.includes('invalid') &&
 					(errorMsg.includes('parameter') ||
 						errorMsg.includes('input'))
 				) {
-					return { code: ErrorCode.VALIDATION_ERROR, statusCode: 400 };
+					return {
+						code: ErrorCode.VALIDATION_ERROR,
+						statusCode: 400,
+					};
 				}
-				
-				if (errorMsg.includes('rate limit') || errorMsg.includes('too many requests')) {
-					return { code: ErrorCode.RATE_LIMIT_ERROR, statusCode: 429 };
+
+				if (
+					errorMsg.includes('rate limit') ||
+					errorMsg.includes('too many requests')
+				) {
+					return {
+						code: ErrorCode.RATE_LIMIT_ERROR,
+						statusCode: 429,
+					};
 				}
 			}
 		}
@@ -355,6 +364,3 @@ export function handleControllerError(
 	// Throw an appropriate API error with the user-friendly message
 	throw createApiError(message, finalStatusCode, error);
 }
-
-// Export utility functions for use elsewhere
-export { detectErrorType, createUserFriendlyErrorMessage };

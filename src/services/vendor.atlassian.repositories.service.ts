@@ -223,7 +223,7 @@ async function get(params: GetRepositoryParams): Promise<Repository> {
 	methodLogger.debug(`Sending request to: ${path}`);
 	try {
 		const rawData = await fetchAtlassian(credentials, path);
-		
+
 		// Validate response with Zod schema
 		try {
 			const validatedData = RepositorySchema.parse(rawData);
@@ -235,7 +235,7 @@ async function get(params: GetRepositoryParams): Promise<Repository> {
 					'Bitbucket API response validation failed:',
 					error.format(),
 				);
-				
+
 				// Create API error with appropriate context for validation failures
 				throw createApiError(
 					`Invalid response format from Bitbucket API for repository ${params.workspace}/${params.repo_slug}`,
@@ -250,7 +250,7 @@ async function get(params: GetRepositoryParams): Promise<Repository> {
 		if (error instanceof McpError) {
 			throw error;
 		}
-		
+
 		// Otherwise, wrap in a standard API error with context
 		throw createApiError(
 			`Failed to get repository details for ${params.workspace}/${params.repo_slug}: ${error instanceof Error ? error.message : String(error)}`,

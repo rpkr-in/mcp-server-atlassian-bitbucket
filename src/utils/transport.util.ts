@@ -187,9 +187,13 @@ export async function fetchAtlassian<T>(
 					(errorText.startsWith('{') || errorText.startsWith('['))
 				) {
 					const parsedError = JSON.parse(errorText);
-					
+
 					// Extract specific error details from various Bitbucket API response formats
-					if (parsedError.type === 'error' && parsedError.error && parsedError.error.message) {
+					if (
+						parsedError.type === 'error' &&
+						parsedError.error &&
+						parsedError.error.message
+					) {
 						// Format: {"type":"error", "error":{"message":"...", "detail":"..."}}
 						parsedBitbucketError = parsedError.error;
 						errorMessage = parsedBitbucketError.message;
@@ -223,7 +227,10 @@ export async function fetchAtlassian<T>(
 			}
 
 			// Log the parsed error or raw error text
-			methodLogger.debug('Parsed Bitbucket error:', parsedBitbucketError || errorText);
+			methodLogger.debug(
+				'Parsed Bitbucket error:',
+				parsedBitbucketError || errorText,
+			);
 
 			// Use parsedBitbucketError (or errorText if parsing failed) as originalError
 			const originalErrorForMcp = parsedBitbucketError || errorText;
@@ -270,9 +277,9 @@ export async function fetchAtlassian<T>(
 
 			// For other API errors, preserve the original vendor message
 			throw createApiError(
-				`Bitbucket API Error: ${errorMessage}`, 
-				response.status, 
-				originalErrorForMcp
+				`Bitbucket API Error: ${errorMessage}`,
+				response.status,
+				originalErrorForMcp,
 			);
 		}
 
