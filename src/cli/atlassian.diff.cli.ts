@@ -53,11 +53,6 @@ function register(program: Command) {
 			'Pagination cursor for additional results',
 			(value) => parseInt(value, 10),
 		)
-		.option(
-			'--topic <true|false>',
-			'When true (default), shows only changes in the source branch. When false, shows all changes.',
-			(value) => value === 'true',
-		)
 		.action(async (options) => {
 			const methodLogger = cliLogger.forMethod('diff-branches');
 			try {
@@ -72,7 +67,6 @@ function register(program: Command) {
 					includeFullDiff: Boolean(options.fullDiff),
 					limit: options.limit,
 					cursor: options.cursor,
-					topic: options.topic,
 				};
 
 				// Call controller
@@ -125,11 +119,6 @@ function register(program: Command) {
 			'Pagination cursor for additional results',
 			(value) => parseInt(value, 10),
 		)
-		.option(
-			'--topic <true|false>',
-			'Control comparison type',
-			(value) => value === 'true',
-		)
 		.action(async (options) => {
 			const methodLogger = cliLogger.forMethod('diff-commits');
 			try {
@@ -144,7 +133,6 @@ function register(program: Command) {
 					includeFullDiff: Boolean(options.fullDiff),
 					limit: options.limit,
 					cursor: options.cursor,
-					topic: options.topic,
 				};
 
 				// Call controller

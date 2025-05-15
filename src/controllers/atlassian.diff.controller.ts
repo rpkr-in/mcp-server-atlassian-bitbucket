@@ -61,7 +61,7 @@ async function branchDiff(
 			limit: DEFAULT_PAGE_SIZE,
 			includeFullDiff: false,
 			destinationBranch: 'main', // Default to main if not provided
-			topic: true, // Default to topic=true which shows changes in sourceBranch only
+			topic: false, // Default to topic=false which shows all changes between branches
 		};
 
 		// Explicitly cast the result of applyDefaults to preserve the original types
@@ -141,6 +141,7 @@ async function commitDiff(
 		const defaults = {
 			limit: DEFAULT_PAGE_SIZE,
 			includeFullDiff: false,
+			topic: false, // Default to topic=false which shows all changes between commits
 		};
 
 		// Explicitly cast the result of applyDefaults to preserve the original types

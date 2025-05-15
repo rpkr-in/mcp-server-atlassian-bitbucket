@@ -40,12 +40,6 @@ export const BranchDiffArgsSchema = z.object({
 		.positive()
 		.optional()
 		.describe('Pagination cursor for retrieving additional results'),
-	topic: z
-		.boolean()
-		.optional()
-		.describe(
-			'When true (default), only show changes in the source branch. When false, show all changes from both branches.',
-		),
 });
 
 export type BranchDiffArgsType = z.infer<typeof BranchDiffArgsSchema>;
@@ -88,12 +82,6 @@ export const CommitDiffArgsSchema = z.object({
 		.positive()
 		.optional()
 		.describe('Pagination cursor for retrieving additional results'),
-	topic: z
-		.boolean()
-		.optional()
-		.describe(
-			'When true, only show changes in untilCommit. When false, show all changes from both commits.',
-		),
 });
 
 export type CommitDiffArgsType = z.infer<typeof CommitDiffArgsSchema>;
