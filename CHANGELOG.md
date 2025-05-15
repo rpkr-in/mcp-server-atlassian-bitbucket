@@ -1,3 +1,10 @@
+## [1.30.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.2...v1.30.3) (2025-05-15)
+
+
+### Bug Fixes
+
+* set default topic=false for diff operations and remove topic parameter from CLI/tools ([2300228](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/23002286221b70fede8c5d7986d8236c752b7766))
+
 ## [1.30.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.1...v1.30.2) (2025-05-15)
 
 
