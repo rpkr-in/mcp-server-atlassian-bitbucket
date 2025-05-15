@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.31.0...v1.32.0) (2025-05-15)
+
+
+### Features
+
+* improve search, pagination, and filtering features ([167af40](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/167af40154b69868fdab26a7582d140ee658b0cb))
+
 # [1.31.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.3...v1.31.0) (2025-05-15)
 
 
