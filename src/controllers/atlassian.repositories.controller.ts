@@ -611,6 +611,20 @@ async function listBranches(options: {
 		};
 		const mergedOptions = applyDefaults(options, defaults);
 
+		// Format query parameter correctly for Bitbucket API if it's a simple string
+		let formattedQuery = options.query;
+		if (
+			formattedQuery &&
+			!formattedQuery.includes('~') &&
+			!formattedQuery.includes('=')
+		) {
+			// If the query is a simple string without operators, assume it's a name search
+			formattedQuery = `name ~ "${formattedQuery}"`;
+			methodLogger.debug(
+				`Reformatted simple query to: ${formattedQuery}`,
+			);
+		}
+
 		// Map controller options to service parameters
 		const serviceParams = {
 			workspace: workspaceSlug,
@@ -619,7 +633,7 @@ async function listBranches(options: {
 			page: options.cursor // Access from original options, not merged options
 				? parseInt(options.cursor, 10)
 				: undefined,
-			q: options.query, // Access from original options, not merged options
+			q: formattedQuery, // Use the formatted query
 			sort: mergedOptions.sort,
 		};
 
