@@ -6,7 +6,7 @@ import {
 } from '../utils/pagination.util.js';
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import atlassianSearchService from '../services/vendor.atlassian.search.service.js';
-import { ControllerResponse } from '../types/common.types.js';
+import { ControllerResponse, ResponsePagination } from '../types/common.types.js';
 import { SearchToolArgsType } from '../tools/atlassian.search.types.js';
 import {
 	formatCodeSearchResults,
@@ -219,10 +219,7 @@ async function handleCodeSearch(
 			page: page,
 			size: searchResponse.size,
 			values: searchResponse.values || [],
-			next:
-				searchResponse.values?.length === limit
-					? 'available'
-					: undefined,
+			next: 'available', // Fallback to 'available' since searchResponse doesn't have a next property
 		};
 
 		const pagination = extractPaginationInfo(
@@ -231,11 +228,26 @@ async function handleCodeSearch(
 		);
 
 		// Format the code search results
-		const formattedCode = formatCodeSearchResults(searchResponse);
+		let formattedCode = formatCodeSearchResults(searchResponse);
+
+		// Add note about language filtering if applied
+		if (
+			language &&
+			(searchResponse.size > 0 || searchResponse.size === 0)
+		) {
+			// Make it clear that language filtering is a best-effort by the API
+			const languageNote = `> **Note:** Language filtering for '${language}' is applied as a best effort by the Bitbucket API. Results may include files in other languages or may be restricted based on Bitbucket's language detection.`;
+			formattedCode = `${languageNote}\n\n${formattedCode}`;
+		}
 
 		return {
 			content: formattedCode,
 			pagination,
+			metadata: language
+				? {
+						appliedLanguageFilter: language,
+					}
+				: undefined,
 		};
 	} catch (searchError) {
 		methodLogger.error('Error performing code search:', searchError);
@@ -471,7 +483,7 @@ async function handleCommitSearch(
 }
 
 /**
- * Handle default search that combines repo and PR search
+ * Handle default search that searches across multiple scopes and combines results
  */
 async function handleDefaultSearch(
 	workspaceSlug?: string,
@@ -486,7 +498,7 @@ async function handleDefaultSearch(
 		'controllers/atlassian.search.controller.ts',
 		'handleDefaultSearch',
 	);
-	methodLogger.debug('Performing default (combined) search');
+	methodLogger.debug('Performing combined multi-scope search');
 
 	if (!query) {
 		return {
@@ -501,130 +513,244 @@ async function handleDefaultSearch(
 		};
 	}
 
-	// If we have a repository, prioritize pull request and commits search
-	if (repoSlug) {
-		try {
-			// First try pull requests
-			const prResults = await handlePullRequestSearch(
-				workspaceSlug,
-				repoSlug,
-				query,
-				limit,
-				cursor,
-			);
+	// Track results from each scope
+	interface ScopeResult {
+		scope: string;
+		content: string;
+		count: number;
+		pagination?: ResponsePagination;
+	}
 
-			// If we found pull requests, return them with scope indication
-			if (
-				prResults.content &&
-				!prResults.content.includes('No pull requests found')
-			) {
-				return {
-					...prResults,
-					content: `## Search Results (Scope: Pull Requests)\n\n${prResults.content}`,
-				};
+	const results: ScopeResult[] = [];
+	const searchPromises: Promise<void>[] = [];
+
+	// Helper function to extract count from search results
+	function extractResultCount(content: string): number {
+		const match = content.match(
+			/Found (\d+) matches|Showing (\d+) of (\d+) total items/,
+		);
+		if (match) {
+			// Return the first captured number that isn't undefined
+			for (let i = 1; i < match.length; i++) {
+				if (match[i] !== undefined) {
+					return parseInt(match[i], 10);
+				}
 			}
-
-			// If no pull requests, try commits
-			const commitResults = await handleCommitSearch(
-				workspaceSlug,
-				repoSlug,
-				query,
-				limit,
-				cursor,
-			);
-
-			// If we found commits, return them with scope indication
-			if (
-				commitResults.content &&
-				!commitResults.content.includes('No commits found')
-			) {
-				return {
-					...commitResults,
-					content: `## Search Results (Scope: Commits)\n\n${commitResults.content}`,
-				};
-			}
-
-			// Finally, try code search
-			const codeResults = await handleCodeSearch(
-				workspaceSlug,
-				repoSlug,
-				query,
-				limit,
-				cursor,
-				language,
-				extension,
-			);
-			return {
-				...codeResults,
-				content: `## Search Results (Scope: Code)\n\n${codeResults.content}`,
-			};
-		} catch (searchError) {
-			methodLogger.warn(
-				'Error in PR/commit search, falling back to code search',
-				searchError,
-			);
-			return handleCodeSearch(
-				workspaceSlug,
-				repoSlug,
-				query,
-				limit,
-				cursor,
-				language,
-				extension,
-			);
 		}
-	} else {
-		// Without a specific repo, search for repositories first
-		try {
-			const repoResults = await handleRepositorySearch(
-				workspaceSlug,
-				undefined,
-				query,
-				limit,
-				cursor,
-			);
 
-			// If we found repositories, return them with scope indication
-			if (
-				repoResults.content &&
-				!repoResults.content.includes('No repositories found')
-			) {
-				return {
-					...repoResults,
-					content: `## Search Results (Scope: Repositories)\n\n${repoResults.content}`,
-				};
+		// Check for empty results messages
+		if (
+			content.includes('No repositories found') ||
+			content.includes('No pull requests found') ||
+			content.includes('No commits found') ||
+			content.includes('No code matches found')
+		) {
+			return 0;
+		}
+
+		// Default to 1 if we couldn't extract a count but content exists
+		return 1;
+	}
+
+	// Search for repositories
+	searchPromises.push(
+		(async () => {
+			try {
+				const repoResults = await handleRepositorySearch(
+					workspaceSlug,
+					undefined,
+					query,
+					Math.min(limit, 10), // Limit to top 10 repo results
+					cursor,
+				);
+
+				const content = repoResults.content.replace(
+					'# Repository Search Results\n\n',
+					'',
+				);
+				const count = extractResultCount(content);
+
+				results.push({
+					scope: 'repositories',
+					content,
+					count,
+					pagination: repoResults.pagination,
+				});
+
+				methodLogger.debug(`Found ${count} matching repositories`);
+			} catch (error) {
+				methodLogger.warn('Repository search failed:', error);
 			}
+		})(),
+	);
 
-			// If no repositories found, try code search
-			const codeResults = await handleCodeSearch(
-				workspaceSlug,
-				undefined,
-				query,
-				limit,
-				cursor,
-				language,
-				extension,
-			);
-			return {
-				...codeResults,
-				content: `## Search Results (Scope: Code)\n\n${codeResults.content}`,
-			};
-		} catch (repoSearchError) {
-			methodLogger.warn(
-				'Error in repository search, falling back to code search',
-				repoSearchError,
-			);
-			return handleCodeSearch(
-				workspaceSlug,
-				undefined,
-				query,
-				limit,
-				cursor,
-				language,
-				extension,
+	// If a specific repo is provided, search pull requests and commits
+	if (repoSlug) {
+		// Search for pull requests
+		searchPromises.push(
+			(async () => {
+				try {
+					const prResults = await handlePullRequestSearch(
+						workspaceSlug,
+						repoSlug,
+						query,
+						Math.min(limit, 10), // Limit to top 10 PR results
+						cursor,
+					);
+
+					const content = prResults.content.replace(
+						'# Pull Request Search Results\n\n',
+						'',
+					);
+					const count = extractResultCount(content);
+
+					results.push({
+						scope: 'pull requests',
+						content,
+						count,
+						pagination: prResults.pagination,
+					});
+
+					methodLogger.debug(`Found ${count} matching pull requests`);
+				} catch (error) {
+					methodLogger.warn('Pull request search failed:', error);
+				}
+			})(),
+		);
+
+		// Search for commits
+		searchPromises.push(
+			(async () => {
+				try {
+					const commitResults = await handleCommitSearch(
+						workspaceSlug,
+						repoSlug,
+						query,
+						Math.min(limit, 10), // Limit to top 10 commit results
+						cursor,
+					);
+
+					const content = commitResults.content.replace(
+						'# Commit Search Results\n\n',
+						'',
+					);
+					const count = extractResultCount(content);
+
+					results.push({
+						scope: 'commits',
+						content,
+						count,
+						pagination: commitResults.pagination,
+					});
+
+					methodLogger.debug(`Found ${count} matching commits`);
+				} catch (error) {
+					methodLogger.warn('Commit search failed:', error);
+				}
+			})(),
+		);
+	}
+
+	// Always search for code
+	searchPromises.push(
+		(async () => {
+			try {
+				const codeResults = await handleCodeSearch(
+					workspaceSlug,
+					repoSlug,
+					query,
+					Math.min(limit, 15), // Limit to top 15 code results
+					cursor,
+					language,
+					extension,
+				);
+
+				// Remove the language note to avoid repetition in the combined results
+				let content = codeResults.content.replace(
+					/> \*\*Note:\*\* Language filtering.+\n\n/,
+					'',
+				);
+				content = content.replace('# Code Search Results\n\n', '');
+				const count = extractResultCount(content);
+
+				results.push({
+					scope: 'code',
+					content,
+					count,
+					pagination: codeResults.pagination,
+				});
+
+				methodLogger.debug(`Found ${count} matching code files`);
+			} catch (error) {
+				methodLogger.warn('Code search failed:', error);
+			}
+		})(),
+	);
+
+	// Wait for all search promises to complete
+	await Promise.all(searchPromises);
+
+	// If we didn't find any results, provide a message
+	if (results.length === 0 || results.every((r) => r.count === 0)) {
+		return {
+			content: `No results found for query "${query}" across any search scope.`,
+		};
+	}
+
+	// Sort results by count (most matches first)
+	results.sort((a, b) => b.count - a.count);
+
+	// Create a summary section
+	const summaryLines = [`# Search Results for "${query}"\n`];
+	summaryLines.push('## Summary of Results\n');
+
+	results.forEach((result) => {
+		const countText = result.count === 1 ? 'match' : 'matches';
+		summaryLines.push(
+			`- **${result.scope}**: ${result.count} ${countText}`,
+		);
+	});
+
+	// Add note about language filtering if applied
+	if (language) {
+		summaryLines.push('');
+		summaryLines.push(
+			`> **Note:** Language filtering for '${language}' is applied to code search results as a best effort. Results may include files in other languages based on Bitbucket's language detection.`,
+		);
+	}
+
+	// Create content sections for each scope with results
+	const contentSections: string[] = [];
+
+	for (const result of results) {
+		if (result.count > 0) {
+			contentSections.push(
+				`\n## Results from ${result.scope}\n\n${result.content}`,
 			);
 		}
 	}
+
+	// Combine everything
+	const combinedContent =
+		summaryLines.join('\n') + '\n' + contentSections.join('\n');
+
+	// For pagination, use the pagination from the first scope with results
+	// In a production environment, we would need a more sophisticated approach to handle pagination across scopes
+	const firstResultWithPagination = results.find(
+		(r) => r.pagination?.hasMore,
+	);
+
+	return {
+		content: combinedContent,
+		pagination: firstResultWithPagination?.pagination,
+		metadata: {
+			totalScopes: results.length,
+			scopeResults: results.map((r) => ({
+				scope: r.scope,
+				count: r.count,
+			})),
+		},
+	};
 }
 
 export default { search };

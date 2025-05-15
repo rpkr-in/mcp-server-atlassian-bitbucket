@@ -200,10 +200,25 @@ export async function searchCode(
 		? `${params.searchQuery} repo:${params.repoSlug}`
 		: params.searchQuery;
 
+	// Language mapping to handle common alternative names
+	const languageMapping: Record<string, string> = {
+		'hcl': 'terraform',
+		'tf': 'terraform',
+		'typescript': 'ts',
+		'javascript': 'js',
+		'python': 'py',
+		// Add more mappings as needed
+	};
+
 	// Append language and extension filters if provided
 	let finalSearchQuery = searchQuery;
 	if (params.language) {
-		finalSearchQuery += ` lang:${params.language}`;
+		// Use the mapped language name if available, otherwise use the original
+		const mappedLanguage = params.language.toLowerCase();
+		const apiLanguage = languageMapping[mappedLanguage] || mappedLanguage;
+		
+		logger.debug(`Language mapping: "${mappedLanguage}" -> "${apiLanguage}"`);
+		finalSearchQuery += ` lang:${apiLanguage}`;
 	}
 	if (params.extension) {
 		finalSearchQuery += ` ext:${params.extension}`;

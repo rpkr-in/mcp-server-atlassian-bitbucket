@@ -74,13 +74,16 @@ export function formatPagination(pagination: ResponsePagination): string {
 		parts.push('More results are available.');
 	}
 
-	// Prompt for the next action (using page number for Bitbucket)
+	// Include the actual cursor value for programmatic use
 	if (hasMore && nextCursor) {
-		// Assuming nextCursor holds the next page number for PaginationType.PAGE
+		parts.push(`*Next cursor: \`${nextCursor}\`*`);
+		// Assuming nextCursor holds the next page number for Bitbucket
 		parts.push(`*Use --page ${nextCursor} to view more.*`);
 	} else if (hasMore && page !== undefined) {
 		// Fallback if nextCursor wasn't parsed but page exists
-		parts.push(`*Use --page ${page + 1} to view more.*`);
+		const nextPage = page + 1;
+		parts.push(`*Next cursor: \`${nextPage}\`*`);
+		parts.push(`*Use --page ${nextPage} to view more.*`);
 	}
 
 	// Add standard timestamp

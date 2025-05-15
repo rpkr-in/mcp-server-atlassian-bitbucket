@@ -48,6 +48,10 @@ export function extractPaginationInfo<T extends Partial<PaginationData>>(
 	}
 
 	let pagination: ResponsePagination | undefined;
+	const methodLogger = Logger.forContext(
+		'utils/pagination.util.ts',
+		'extractPaginationInfo',
+	);
 
 	switch (paginationType) {
 		case PaginationType.PAGE: {
@@ -55,19 +59,28 @@ export function extractPaginationInfo<T extends Partial<PaginationData>>(
 			if (data.page !== undefined && data.pagelen !== undefined) {
 				const hasMore = !!data.next;
 				let nextCursorValue: string | undefined = undefined;
-				if (hasMore && data.next) {
+				
+				if (hasMore) {
 					try {
-						// Attempt to parse the full URL
-						const nextUrl = new URL(data.next);
-						nextCursorValue =
-							nextUrl.searchParams.get('page') || undefined;
+						// First attempt to parse the full URL if it looks like one
+						if (typeof data.next === 'string' && data.next.includes('://')) {
+							const nextUrl = new URL(data.next);
+							nextCursorValue = nextUrl.searchParams.get('page') || undefined;
+							methodLogger.debug(`Successfully extracted page from URL: ${nextCursorValue}`);
+						} else if (data.next === 'available') {
+							// Handle the 'available' placeholder used in some transformedResponses
+							nextCursorValue = String(Number(data.page) + 1);
+							methodLogger.debug(`Using calculated next page from 'available': ${nextCursorValue}`);
+						} else if (typeof data.next === 'string') {
+							// Try to use data.next directly if it's not a URL but still a string
+							nextCursorValue = data.next;
+							methodLogger.debug(`Using next value directly: ${nextCursorValue}`);
+						}
 					} catch (e) {
-						// Handle potential errors if data.next is not a full valid URL
-						// Or if URL parsing fails for other reasons
-						Logger.forContext(
-							'utils/pagination.util.ts',
-							'extractPaginationInfo',
-						).warn(`Failed to parse next URL: ${data.next}`, e);
+						// If URL parsing fails, calculate the next page based on current page
+						nextCursorValue = String(Number(data.page) + 1);
+						methodLogger.debug(`Calculated next page after URL parsing error: ${nextCursorValue}`);
+						methodLogger.warn(`Failed to parse next URL: ${data.next}`, e);
 					}
 				}
 
@@ -126,10 +139,7 @@ export function extractPaginationInfo<T extends Partial<PaginationData>>(
 		}
 
 		default:
-			Logger.forContext(
-				'utils/pagination.util.ts',
-				'extractPaginationInfo',
-			).warn(`Unknown pagination type: ${paginationType}`);
+			methodLogger.warn(`Unknown pagination type: ${paginationType}`);
 	}
 
 	// Ensure a default pagination object if none was created but data exists
