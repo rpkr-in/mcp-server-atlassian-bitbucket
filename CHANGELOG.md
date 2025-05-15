@@ -1,3 +1,10 @@
+## [1.30.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.1...v1.30.2) (2025-05-15)
+
+
+### Bug Fixes
+
+* apply proper formatting to query handling in listBranches ([169f75b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/169f75b32bf05feb3551c569d12fdfa7e27f553f))
+
 ## [1.30.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.0...v1.30.1) (2025-05-14)
 
 
