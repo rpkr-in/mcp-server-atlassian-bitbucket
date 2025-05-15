@@ -1,3 +1,18 @@
+# [1.31.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.3...v1.31.0) (2025-05-15)
+
+
+### Bug Fixes
+
+* resolve duplicate exports in error-handler utilities ([fec7ecb](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/fec7ecb08512467e02a4cc52ef3856adff0c88e6))
+
+
+### Features
+
+* enhance Bitbucket-specific error handling ([165e566](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/165e566c25c0056bdb498fadf6d543372e41a1d8))
+* enhanced error handling for Bitbucket API responses ([a9cf6c0](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a9cf6c0184e0d50cbf179a77c3e83342b0376de0))
+* enhanced error handling for Bitbucket API responses ([08cbf83](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/08cbf83d81b633201cc2873e4461302377ab9be1))
+* enhanced error handling for Bitbucket API responses ([91e3354](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/91e3354746e106d3ed3d4ccca16631db00ef2ab4))
+
 ## [1.30.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.30.2...v1.30.3) (2025-05-15)
 
 
