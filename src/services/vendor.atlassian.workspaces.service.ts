@@ -80,7 +80,7 @@ async function list(
 				error.format(),
 			);
 			throw createApiError(
-				`Invalid parameters: ${error.errors.map((e) => e.message).join(', ')}`,
+				`Invalid parameters for listing workspaces: ${error.errors.map((e) => e.message).join(', ')}`,
 				400,
 				error,
 			);
@@ -131,7 +131,7 @@ async function list(
 					error.format(),
 				);
 				throw createApiError(
-					'Received invalid response format from Bitbucket API',
+					`Invalid response format from Bitbucket API for workspace list: ${error.message}`,
 					500,
 					error,
 				);
@@ -197,7 +197,7 @@ async function get(
 					error.format(),
 				);
 				throw createApiError(
-					'Received invalid response format from Bitbucket API',
+					`Invalid response format from Bitbucket API for workspace details: ${error.message}`,
 					500,
 					error,
 				);

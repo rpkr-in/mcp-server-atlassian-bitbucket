@@ -70,18 +70,30 @@ export async function getDiffstat(
 	methodLogger.debug(`Requesting: ${path}`);
 	try {
 		const rawData = await fetchAtlassian(credentials, path);
-		const validated = DiffstatResponseSchema.parse(rawData);
-		return validated;
+		try {
+			const validated = DiffstatResponseSchema.parse(rawData);
+			return validated;
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				methodLogger.error(
+					'Bitbucket API response validation failed:',
+					error.format(),
+				);
+				throw createApiError(
+					`Invalid response format from Bitbucket API for diffstat: ${error.message}`,
+					500,
+					error,
+				);
+			}
+			throw error; // Re-throw any other errors
+		}
 	} catch (error) {
 		if (error instanceof McpError) throw error;
-		if (error instanceof z.ZodError) {
-			throw createApiError(
-				'Invalid response format from Bitbucket API',
-				500,
-				error,
-			);
-		}
-		throw createApiError('Failed to fetch diffstat', 500, error as Error);
+		throw createApiError(
+			`Failed to fetch diffstat: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
 	}
 }
 
@@ -118,7 +130,11 @@ export async function getRawDiff(params: GetRawDiffParams): Promise<string> {
 		return diffText;
 	} catch (error) {
 		if (error instanceof McpError) throw error;
-		throw createApiError('Failed to fetch raw diff', 500, error as Error);
+		throw createApiError(
+			`Failed to fetch raw diff: ${error instanceof Error ? error.message : String(error)}`,
+			500,
+			error,
+		);
 	}
 }
 

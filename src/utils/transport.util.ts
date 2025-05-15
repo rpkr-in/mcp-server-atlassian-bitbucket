@@ -316,17 +316,33 @@ export async function fetchAtlassian<T>(
 			throw error;
 		}
 
-		// Handle network or parsing errors
-		if (error instanceof TypeError || error instanceof SyntaxError) {
+		// Handle network errors more explicitly
+		if (error instanceof TypeError) {
+			// TypeError is typically a network/fetch error in this context
+			const errorMessage = error.message || 'Network error occurred';
+			methodLogger.debug(`Network error details: ${errorMessage}`);
+
 			throw createApiError(
-				`Network or parsing error: ${error instanceof Error ? error.message : String(error)}`,
+				`Network error while calling Bitbucket API: ${errorMessage}`,
+				500, // This will be classified as NETWORK_ERROR by detectErrorType
+				error,
+			);
+		}
+
+		// Handle JSON parsing errors
+		if (error instanceof SyntaxError) {
+			methodLogger.debug(`JSON parsing error: ${error.message}`);
+
+			throw createApiError(
+				`Invalid response format from Bitbucket API: ${error.message}`,
 				500,
 				error,
 			);
 		}
 
+		// Generic error handler for any other types of errors
 		throw createUnexpectedError(
-			`Unexpected error while calling Atlassian API: ${error instanceof Error ? error.message : String(error)}`,
+			`Unexpected error while calling Bitbucket API: ${error instanceof Error ? error.message : String(error)}`,
 			error,
 		);
 	}
