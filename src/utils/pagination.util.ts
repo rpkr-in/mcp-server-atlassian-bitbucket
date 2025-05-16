@@ -59,28 +59,43 @@ export function extractPaginationInfo<T extends Partial<PaginationData>>(
 			if (data.page !== undefined && data.pagelen !== undefined) {
 				const hasMore = !!data.next;
 				let nextCursorValue: string | undefined = undefined;
-				
+
 				if (hasMore) {
 					try {
 						// First attempt to parse the full URL if it looks like one
-						if (typeof data.next === 'string' && data.next.includes('://')) {
+						if (
+							typeof data.next === 'string' &&
+							data.next.includes('://')
+						) {
 							const nextUrl = new URL(data.next);
-							nextCursorValue = nextUrl.searchParams.get('page') || undefined;
-							methodLogger.debug(`Successfully extracted page from URL: ${nextCursorValue}`);
+							nextCursorValue =
+								nextUrl.searchParams.get('page') || undefined;
+							methodLogger.debug(
+								`Successfully extracted page from URL: ${nextCursorValue}`,
+							);
 						} else if (data.next === 'available') {
 							// Handle the 'available' placeholder used in some transformedResponses
 							nextCursorValue = String(Number(data.page) + 1);
-							methodLogger.debug(`Using calculated next page from 'available': ${nextCursorValue}`);
+							methodLogger.debug(
+								`Using calculated next page from 'available': ${nextCursorValue}`,
+							);
 						} else if (typeof data.next === 'string') {
 							// Try to use data.next directly if it's not a URL but still a string
 							nextCursorValue = data.next;
-							methodLogger.debug(`Using next value directly: ${nextCursorValue}`);
+							methodLogger.debug(
+								`Using next value directly: ${nextCursorValue}`,
+							);
 						}
 					} catch (e) {
 						// If URL parsing fails, calculate the next page based on current page
 						nextCursorValue = String(Number(data.page) + 1);
-						methodLogger.debug(`Calculated next page after URL parsing error: ${nextCursorValue}`);
-						methodLogger.warn(`Failed to parse next URL: ${data.next}`, e);
+						methodLogger.debug(
+							`Calculated next page after URL parsing error: ${nextCursorValue}`,
+						);
+						methodLogger.warn(
+							`Failed to parse next URL: ${data.next}`,
+							e,
+						);
 					}
 				}
 

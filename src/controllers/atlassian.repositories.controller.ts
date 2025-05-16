@@ -219,7 +219,7 @@ async function list(
 
 							// Update pagination info if we still have more results
 							if (nextPageFiltered.length > itemsToAdd.length) {
-								repositoriesData.next = repositoriesData.next; // Keep the same next URL
+								// Keep the next URL as is (no need to reassign)
 							} else if (nextPageData.next) {
 								repositoriesData.next = nextPageData.next; // Use the next page's next URL
 							} else {
@@ -639,7 +639,12 @@ async function cloneRepository(
  * Get file content from a repository.
  * Stub implementation for backward compatibility.
  */
-async function getFileContent(options: any): Promise<ControllerResponse> {
+async function getFileContent(options: {
+	workspaceSlug: string;
+	repoSlug: string;
+	path: string;
+	ref?: string;
+}): Promise<ControllerResponse> {
 	console.log('getFileContent called with:', options); // Use options to prevent unused variable warning
 	throw new Error('Method getFileContent is not implemented');
 }
@@ -648,7 +653,14 @@ async function getFileContent(options: any): Promise<ControllerResponse> {
  * List branches in a repository.
  * Stub implementation for backward compatibility.
  */
-async function listBranches(options: any): Promise<ControllerResponse> {
+async function listBranches(options: {
+	workspaceSlug: string;
+	repoSlug: string;
+	query?: string;
+	sort?: string;
+	limit?: number;
+	cursor?: string;
+}): Promise<ControllerResponse> {
 	console.log('listBranches called with:', options); // Use options to prevent unused variable warning
 	throw new Error('Method listBranches is not implemented');
 }

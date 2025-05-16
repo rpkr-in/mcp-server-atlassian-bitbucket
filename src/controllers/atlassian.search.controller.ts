@@ -6,7 +6,10 @@ import {
 } from '../utils/pagination.util.js';
 import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import atlassianSearchService from '../services/vendor.atlassian.search.service.js';
-import { ControllerResponse, ResponsePagination } from '../types/common.types.js';
+import {
+	ControllerResponse,
+	ResponsePagination,
+} from '../types/common.types.js';
 import { SearchToolArgsType } from '../tools/atlassian.search.types.js';
 import {
 	formatCodeSearchResults,

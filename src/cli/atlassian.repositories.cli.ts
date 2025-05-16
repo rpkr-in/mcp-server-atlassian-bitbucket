@@ -417,8 +417,8 @@ function registerGetFileCommand(program: Command): void {
 					await atlassianRepositoriesController.getFileContent({
 						workspaceSlug: options.workspaceSlug,
 						repoSlug: options.repoSlug,
-						filePath: options.filePath,
-						revision: options.revision,
+						path: options.filePath,
+						ref: options.revision,
 					});
 
 				console.log(result.content);

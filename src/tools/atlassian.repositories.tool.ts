@@ -218,8 +218,12 @@ async function handleGetFileContent(args: GetFileContentToolArgsType) {
 	);
 	try {
 		methodLogger.debug('Tool bb_get_file called', args);
-		const result =
-			await atlassianRepositoriesController.getFileContent(args);
+		const result = await atlassianRepositoriesController.getFileContent({
+			workspaceSlug: args.workspaceSlug,
+			repoSlug: args.repoSlug,
+			path: args.filePath,
+			ref: args.revision,
+		});
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 			// No specific metadata needed for file content retrieval

@@ -202,11 +202,11 @@ export async function searchCode(
 
 	// Language mapping to handle common alternative names
 	const languageMapping: Record<string, string> = {
-		'hcl': 'terraform',
-		'tf': 'terraform',
-		'typescript': 'ts',
-		'javascript': 'js',
-		'python': 'py',
+		hcl: 'terraform',
+		tf: 'terraform',
+		typescript: 'ts',
+		javascript: 'js',
+		python: 'py',
 		// Add more mappings as needed
 	};
 
@@ -216,8 +216,10 @@ export async function searchCode(
 		// Use the mapped language name if available, otherwise use the original
 		const mappedLanguage = params.language.toLowerCase();
 		const apiLanguage = languageMapping[mappedLanguage] || mappedLanguage;
-		
-		logger.debug(`Language mapping: "${mappedLanguage}" -> "${apiLanguage}"`);
+
+		logger.debug(
+			`Language mapping: "${mappedLanguage}" -> "${apiLanguage}"`,
+		);
 		finalSearchQuery += ` lang:${apiLanguage}`;
 	}
 	if (params.extension) {
