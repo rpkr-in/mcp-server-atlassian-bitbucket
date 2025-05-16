@@ -300,7 +300,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace identified by \`workspaceSlug\`. Filters repositories by the user\`s \`role\`, project key \`projectKey\`, or a \`query\` string (searches name/description). Supports sorting via \`sort\` and pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list. Requires Bitbucket credentials.`,
+		`Lists repositories within a workspace identified by \`workspaceSlug\`. Filters repositories by the user\`s \`role\`, project key \`projectKey\`, or a \`query\` string (searches name/description). Note that \`projectKey\` filtering is performed client-side, which means repositories are first fetched from Bitbucket and then filtered by this tool, potentially resulting in fewer results than expected when combined with \`limit\`. Supports sorting via \`sort\` and pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list. Requires Bitbucket credentials.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);

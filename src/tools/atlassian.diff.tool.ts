@@ -70,7 +70,7 @@ function registerTools(server: McpServer) {
 	// Register branch diff tool
 	server.tool(
 		'bb_diff_branches',
-		`Displays differences between two branches in a repository. Requires \`workspaceSlug\`, \`repoSlug\`, and \`sourceBranch\`. Optionally accepts \`destinationBranch\` (defaults to "main") and \`includeFullDiff\` (to include raw code changes). Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a summary of changed files as Markdown.`,
+		`Displays differences between two branches in a repository. Requires \`workspaceSlug\`, \`repoSlug\`, and \`sourceBranch\`. Optionally accepts \`destinationBranch\` (defaults to "main") and \`includeFullDiff\` (to include raw code changes). The diff shows changes that would need to be applied to the destination branch to match the source branch. Note: Both branches must exist in the repository. Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a summary of changed files as Markdown.`,
 		BranchDiffArgsSchema.shape,
 		handleBranchDiff,
 	);
@@ -78,7 +78,7 @@ function registerTools(server: McpServer) {
 	// Register commit diff tool
 	server.tool(
 		'bb_diff_commits',
-		`Displays differences between two commits in a repository. Requires \`workspaceSlug\`, \`repoSlug\`, \`sinceCommit\`, and \`untilCommit\`. Optionally accepts \`includeFullDiff\` (to include raw code changes). Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a summary of changed files as Markdown.`,
+		`Displays differences between two commits in a repository. Requires \`workspaceSlug\`, \`repoSlug\`, \`sinceCommit\`, and \`untilCommit\`. Optionally accepts \`includeFullDiff\` (to include raw code changes). The diff shows changes that would need to be applied to the since commit to match the until commit. Note: Both commits must exist in the repository and be specified in the correct order. Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a summary of changed files as Markdown.`,
 		CommitDiffArgsSchema.shape,
 		handleCommitDiff,
 	);

@@ -69,50 +69,77 @@ async function branchDiff(
 			typeof defaults;
 
 		// Construct the spec (e.g., "main..feature")
+		// NOTE: Bitbucket API expects the destination branch first, then the source branch
+		// This is the opposite of what some Git tools use (e.g., git diff source..destination)
+		// The diff shows changes that would need to be applied to destination to match source
 		const spec = `${params.destinationBranch}..${params.sourceBranch}`;
 
-		// Fetch diffstat for the branches
-		const diffstat = await diffService.getDiffstat({
-			workspace: params.workspaceSlug,
-			repo_slug: params.repoSlug,
-			spec,
-			pagelen: params.limit,
-			cursor: params.cursor,
-			topic: params.topic,
-		});
+		methodLogger.debug(`Using diff spec: ${spec}`);
 
-		// Extract pagination info
-		const pagination = extractPaginationInfo(diffstat, PaginationType.PAGE);
-
-		// Fetch full diff if requested
-		let rawDiff: string | null = null;
-		if (params.includeFullDiff) {
-			rawDiff = await diffService.getRawDiff({
+		try {
+			// Fetch diffstat for the branches
+			const diffstat = await diffService.getDiffstat({
 				workspace: params.workspaceSlug,
 				repo_slug: params.repoSlug,
 				spec,
+				pagelen: params.limit,
+				cursor: params.cursor,
+				topic: params.topic,
 			});
+
+			// Extract pagination info
+			const pagination = extractPaginationInfo(
+				diffstat,
+				PaginationType.PAGE,
+			);
+
+			// Fetch full diff if requested
+			let rawDiff: string | null = null;
+			if (params.includeFullDiff) {
+				rawDiff = await diffService.getRawDiff({
+					workspace: params.workspaceSlug,
+					repo_slug: params.repoSlug,
+					spec,
+				});
+			}
+
+			// Format the results
+			const content =
+				params.includeFullDiff && rawDiff
+					? formatFullDiff(
+							diffstat,
+							rawDiff,
+							params.destinationBranch,
+							params.sourceBranch,
+						)
+					: formatDiffstat(
+							diffstat,
+							params.destinationBranch,
+							params.sourceBranch,
+						);
+
+			return {
+				content,
+				pagination,
+			};
+		} catch (error) {
+			// Enhance error handling for common diff-specific errors
+			if (
+				error instanceof Error &&
+				error.message.includes(
+					'source or destination could not be found',
+				)
+			) {
+				// Create a more user-friendly error message
+				throw new Error(
+					`Unable to generate diff between '${params.sourceBranch}' and '${params.destinationBranch}'. ` +
+						`One or both of these branches may not exist in the repository. ` +
+						`Please verify both branch names and ensure you have access to view them.`,
+				);
+			}
+			// Re-throw other errors to be handled by the outer catch block
+			throw error;
 		}
-
-		// Format the results
-		const content =
-			params.includeFullDiff && rawDiff
-				? formatFullDiff(
-						diffstat,
-						rawDiff,
-						params.destinationBranch,
-						params.sourceBranch,
-					)
-				: formatDiffstat(
-						diffstat,
-						params.destinationBranch,
-						params.sourceBranch,
-					);
-
-		return {
-			content,
-			pagination,
-		};
 	} catch (error) {
 		throw handleControllerError(error, {
 			entityType: 'Branch Diff',
@@ -149,49 +176,75 @@ async function commitDiff(
 			typeof defaults;
 
 		// Construct the spec (e.g., "a1b2c3d..e4f5g6h")
+		// NOTE: Bitbucket API expects the base/since commit first, then the target/until commit
+		// The diff shows changes that would need to be applied to base to match target
 		const spec = `${params.sinceCommit}..${params.untilCommit}`;
 
-		// Fetch diffstat for the commits
-		const diffstat = await diffService.getDiffstat({
-			workspace: params.workspaceSlug,
-			repo_slug: params.repoSlug,
-			spec,
-			pagelen: params.limit,
-			cursor: params.cursor,
-		});
+		methodLogger.debug(`Using diff spec: ${spec}`);
 
-		// Extract pagination info
-		const pagination = extractPaginationInfo(diffstat, PaginationType.PAGE);
-
-		// Fetch full diff if requested
-		let rawDiff: string | null = null;
-		if (params.includeFullDiff) {
-			rawDiff = await diffService.getRawDiff({
+		try {
+			// Fetch diffstat for the commits
+			const diffstat = await diffService.getDiffstat({
 				workspace: params.workspaceSlug,
 				repo_slug: params.repoSlug,
 				spec,
+				pagelen: params.limit,
+				cursor: params.cursor,
 			});
+
+			// Extract pagination info
+			const pagination = extractPaginationInfo(
+				diffstat,
+				PaginationType.PAGE,
+			);
+
+			// Fetch full diff if requested
+			let rawDiff: string | null = null;
+			if (params.includeFullDiff) {
+				rawDiff = await diffService.getRawDiff({
+					workspace: params.workspaceSlug,
+					repo_slug: params.repoSlug,
+					spec,
+				});
+			}
+
+			// Format the results
+			const content =
+				params.includeFullDiff && rawDiff
+					? formatFullDiff(
+							diffstat,
+							rawDiff,
+							params.sinceCommit,
+							params.untilCommit,
+						)
+					: formatDiffstat(
+							diffstat,
+							params.sinceCommit,
+							params.untilCommit,
+						);
+
+			return {
+				content,
+				pagination,
+			};
+		} catch (error) {
+			// Enhance error handling for common diff-specific errors
+			if (
+				error instanceof Error &&
+				error.message.includes(
+					'source or destination could not be found',
+				)
+			) {
+				// Create a more user-friendly error message
+				throw new Error(
+					`Unable to generate diff between commits '${params.sinceCommit}' and '${params.untilCommit}'. ` +
+						`One or both of these commits may not exist in the repository or may be in the wrong order. ` +
+						`Please verify both commit hashes and ensure you have access to view them.`,
+				);
+			}
+			// Re-throw other errors to be handled by the outer catch block
+			throw error;
 		}
-
-		// Format the results
-		const content =
-			params.includeFullDiff && rawDiff
-				? formatFullDiff(
-						diffstat,
-						rawDiff,
-						params.sinceCommit,
-						params.untilCommit,
-					)
-				: formatDiffstat(
-						diffstat,
-						params.sinceCommit,
-						params.untilCommit,
-					);
-
-		return {
-			content,
-			pagination,
-		};
 	} catch (error) {
 		throw handleControllerError(error, {
 			entityType: 'Commit Diff',

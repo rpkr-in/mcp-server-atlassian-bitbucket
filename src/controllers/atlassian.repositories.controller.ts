@@ -123,6 +123,10 @@ async function list(
 			const originalCount = repositoriesData.values.length;
 
 			// Only keep repositories with exact project key match
+			// NOTE: This filtering is done client-side since Bitbucket API doesn't directly support
+			// filtering by project key in its query parameters. This means all repositories are first
+			// fetched and then filtered locally, which may result in fewer results than expected
+			// if the limit parameter is also used.
 			repositoriesData.values = repositoriesData.values.filter(
 				(repo) => repo.project?.key === mergedOptions.projectKey,
 			);

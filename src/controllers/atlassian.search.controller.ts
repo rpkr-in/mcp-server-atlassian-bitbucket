@@ -305,7 +305,7 @@ async function handleCodeSearch(
 		// Add note about language filtering if applied
 		if (language) {
 			// Make it clear that language filtering is a best-effort by the API and we've improved it
-			const languageNote = `> **Note:** Language filtering for '${language}' combines Bitbucket API filtering with client-side filtering for more accurate results. Some files in other languages might still appear.`;
+			const languageNote = `> **Note:** Language filtering for '${language}' combines Bitbucket API filtering with client-side filtering for more accurate results. Due to limitations in the Bitbucket API, some files in other languages might still appear in search results, and filtering is based on file extensions rather than content analysis. This is a known limitation of the Bitbucket API that this tool attempts to mitigate through additional filtering.`;
 			formattedCode = `${languageNote}\n\n${formattedCode}`;
 		}
 
