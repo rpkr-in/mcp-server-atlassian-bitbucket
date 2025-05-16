@@ -34,10 +34,10 @@ const PaginationArgs = z.object({
 });
 
 /**
- * Bitbucket search tool arguments
- * Specifies what to search for and how to filter results
+ * Bitbucket search tool arguments base schema
+ * This defines the shape without the conditional validation
  */
-export const SearchToolArgs = z
+export const SearchToolArgsBase = z
 	.object({
 		/**
 		 * Workspace slug to search in. Example: "myteam"
@@ -95,5 +95,24 @@ export const SearchToolArgs = z
 			.describe('Filter code search by file extension.'),
 	})
 	.merge(PaginationArgs);
+
+/**
+ * Bitbucket search tool arguments
+ * Specifies what to search for and how to filter results
+ * and implements conditional validation
+ */
+export const SearchToolArgs = SearchToolArgsBase.superRefine((data, ctx) => {
+	// Make repoSlug required when scope is 'pullrequests' or 'commits'
+	if (
+		(data.scope === 'pullrequests' || data.scope === 'commits') &&
+		!data.repoSlug
+	) {
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			message: `repoSlug is required when scope is "${data.scope}"`,
+			path: ['repoSlug'], // Specify the path of the error
+		});
+	}
+});
 
 export type SearchToolArgsType = z.infer<typeof SearchToolArgs>;

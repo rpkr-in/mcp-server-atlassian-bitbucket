@@ -340,10 +340,10 @@ async function handlePullRequestSearch(
 	);
 	methodLogger.debug('Performing pull request search');
 
-	if (!workspaceSlug || !repoSlug) {
+	if (!workspaceSlug) {
 		return {
 			content:
-				'Both workspace and repository are required for pull request search. Please provide workspace and repo slugs.',
+				'Workspace is required for pull request search. Please provide a workspace slug.',
 		};
 	}
 
@@ -360,7 +360,7 @@ async function handlePullRequestSearch(
 		// Create the parameters for the PR service
 		const params: ListPullRequestsParams = {
 			workspace: workspaceSlug,
-			repo_slug: repoSlug,
+			repo_slug: repoSlug!, // Can safely use non-null assertion now that schema validation ensures it's present
 			q: formattedQuery,
 			pagelen: limit,
 			page: cursor ? parseInt(cursor, 10) : undefined,
@@ -491,10 +491,10 @@ async function handleCommitSearch(
 	);
 	methodLogger.debug('Performing commit search');
 
-	if (!workspaceSlug || !repoSlug) {
+	if (!workspaceSlug) {
 		return {
 			content:
-				'Both workspace and repository are required for commit search. Please provide workspace and repo slugs.',
+				'Workspace is required for commit search. Please provide a workspace slug.',
 		};
 	}
 
@@ -518,7 +518,7 @@ async function handleCommitSearch(
 		// Use the search service for commits
 		const searchResponse = await atlassianSearchService.searchCommits({
 			workspaceSlug: workspaceSlug,
-			repoSlug: repoSlug,
+			repoSlug: repoSlug!, // Can safely use non-null assertion now that schema validation ensures it's present
 			searchQuery: query,
 			page: page,
 			pageLen: limit,
@@ -537,7 +537,7 @@ async function handleCommitSearch(
 		// Format the search results using the formatter
 		const formattedResults = formatCommitsResults(
 			searchResponse,
-			repoSlug,
+			repoSlug!,
 			workspaceSlug,
 		);
 

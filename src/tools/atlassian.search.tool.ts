@@ -3,7 +3,7 @@ import { Logger } from '../utils/logger.util.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
 	SearchToolArgsType,
-	SearchToolArgs,
+	SearchToolArgsBase,
 } from './atlassian.search.types.js';
 
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
@@ -77,7 +77,7 @@ function registerTools(server: McpServer) {
 	server.tool(
 		'bb_search',
 		`Searches Bitbucket content within a specified \`workspaceSlug\`. Requires a \`query\` string. Optionally scope the search using \`scope\` ('repositories', 'pullrequests', 'commits', 'code', or 'all' - default). The \`code\` scope supports filtering by \`language\` or \`extension\`. The 'pullrequests' and 'commits' scopes require \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope). Returns formatted Markdown results. The 'all' scope automatically tries different scopes and prefixes the output indicating which scope returned results. Requires Bitbucket credentials.`,
-		SearchToolArgs.shape,
+		SearchToolArgsBase.shape,
 		search,
 	);
 
