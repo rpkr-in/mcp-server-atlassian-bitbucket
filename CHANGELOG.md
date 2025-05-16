@@ -1,3 +1,10 @@
+## [1.32.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.1...v1.32.2) (2025-05-16)
+
+
+### Bug Fixes
+
+* improve filtering in Bitbucket commands for projectKey, language, and scope parameters ([3cb34da](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3cb34dae514ee2f76449c3f099a86dd3bd0e47af))
+
 ## [1.32.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.0...v1.32.1) (2025-05-16)
 
 
