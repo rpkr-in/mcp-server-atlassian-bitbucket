@@ -216,12 +216,78 @@ async function handleCodeSearch(
 			`Search complete, found ${searchResponse.size} matches`,
 		);
 
+		// Post-filter by language if specified and Bitbucket API returned mixed results
+		let filteredValues = searchResponse.values || [];
+		let originalSize = searchResponse.size;
+
+		if (language && filteredValues.length > 0) {
+			// Language extension mapping for post-filtering
+			const languageExtMap: Record<string, string[]> = {
+				hcl: ['.tf', '.tfvars', '.hcl'],
+				terraform: ['.tf', '.tfvars', '.hcl'],
+				java: ['.java', '.class', '.jar'],
+				javascript: ['.js', '.jsx', '.mjs'],
+				typescript: ['.ts', '.tsx'],
+				python: ['.py', '.pyw', '.pyc'],
+				ruby: ['.rb', '.rake'],
+				go: ['.go'],
+				rust: ['.rs'],
+				c: ['.c', '.h'],
+				cpp: ['.cpp', '.cc', '.cxx', '.h', '.hpp'],
+				csharp: ['.cs'],
+				php: ['.php'],
+				html: ['.html', '.htm'],
+				css: ['.css'],
+				shell: ['.sh', '.bash', '.zsh'],
+				sql: ['.sql'],
+				yaml: ['.yml', '.yaml'],
+				json: ['.json'],
+				xml: ['.xml'],
+				markdown: ['.md', '.markdown'],
+			};
+
+			// Normalize the language name to lowercase
+			const normalizedLang = language.toLowerCase();
+			const extensions = languageExtMap[normalizedLang] || [];
+
+			// Only apply post-filtering if we have extension mappings for this language
+			if (extensions.length > 0) {
+				const beforeFilterCount = filteredValues.length;
+
+				// Filter results to only include files with the expected extensions
+				filteredValues = filteredValues.filter((result) => {
+					const filePath = result.file.path.toLowerCase();
+					return extensions.some((ext) => filePath.endsWith(ext));
+				});
+
+				const afterFilterCount = filteredValues.length;
+
+				if (afterFilterCount !== beforeFilterCount) {
+					methodLogger.debug(
+						`Post-filtered code search results by language=${language}: ${afterFilterCount} of ${beforeFilterCount} matched extensions ${extensions.join(', ')}`,
+					);
+
+					// Adjust the size estimate
+					originalSize = searchResponse.size;
+					const filterRatio = afterFilterCount / beforeFilterCount;
+					searchResponse.size = Math.max(
+						afterFilterCount,
+						Math.ceil(searchResponse.size * filterRatio),
+					);
+
+					methodLogger.debug(
+						`Adjusted size from ${originalSize} to ${searchResponse.size} based on filtering`,
+					);
+				}
+			}
+		}
+
 		// Extract pagination information
 		const transformedResponse = {
 			pagelen: limit,
 			page: page,
 			size: searchResponse.size,
-			values: searchResponse.values || [],
+			values: filteredValues,
 			next: 'available', // Fallback to 'available' since searchResponse doesn't have a next property
 		};
 
@@ -231,15 +297,15 @@ async function handleCodeSearch(
 		);
 
 		// Format the code search results
-		let formattedCode = formatCodeSearchResults(searchResponse);
+		let formattedCode = formatCodeSearchResults({
+			...searchResponse,
+			values: filteredValues,
+		});
 
 		// Add note about language filtering if applied
-		if (
-			language &&
-			(searchResponse.size > 0 || searchResponse.size === 0)
-		) {
-			// Make it clear that language filtering is a best-effort by the API
-			const languageNote = `> **Note:** Language filtering for '${language}' is applied as a best effort by the Bitbucket API. Results may include files in other languages or may be restricted based on Bitbucket's language detection.`;
+		if (language) {
+			// Make it clear that language filtering is a best-effort by the API and we've improved it
+			const languageNote = `> **Note:** Language filtering for '${language}' combines Bitbucket API filtering with client-side filtering for more accurate results. Some files in other languages might still appear.`;
 			formattedCode = `${languageNote}\n\n${formattedCode}`;
 		}
 
@@ -725,11 +791,54 @@ async function handleDefaultSearch(
 	// Create content sections for each scope with results
 	const contentSections: string[] = [];
 
-	for (const result of results) {
+	// Determine how many results from each scope should be shown
+	// If we have multiple scopes with results, we'll display a more balanced view
+	// Otherwise, we'll show as many as possible from the only scope with results
+	const scopesWithResults = results.filter((r) => r.count > 0);
+
+	if (scopesWithResults.length > 1) {
+		// Give priority to repositories and pull requests first, then code and commits
+		// This ensures users see a more balanced view rather than being overwhelmed by code results
+		const priorityOrder = {
+			repositories: 0,
+			'pull requests': 1,
+			commits: 2,
+			code: 3,
+		};
+
+		// Sort by priority first, then by count for scopes with the same priority
+		scopesWithResults.sort((a, b) => {
+			const priorityA =
+				priorityOrder[a.scope as keyof typeof priorityOrder] ?? 999;
+			const priorityB =
+				priorityOrder[b.scope as keyof typeof priorityOrder] ?? 999;
+			if (priorityA !== priorityB) {
+				return priorityA - priorityB;
+			}
+			return b.count - a.count;
+		});
+
+		// Add a note about the "all" scope behavior
+		summaryLines.push('');
+		summaryLines.push(
+			'> **Note:** When using `scope="all"`, results from all scopes are displayed in a balanced way, prioritizing repositories and pull requests at the top.',
+		);
+	}
+
+	// Add content sections in the determined order
+	for (const result of scopesWithResults) {
 		if (result.count > 0) {
-			contentSections.push(
-				`\n## Results from ${result.scope}\n\n${result.content}`,
-			);
+			// For code results, add a header indicating how many are shown vs. total
+			if (result.scope === 'code' && result.count > 15) {
+				const displayedResults = Math.min(result.count, 15);
+				contentSections.push(
+					`\n## Results from ${result.scope} (showing ${displayedResults} of ${result.count} total matches)\n\n${result.content}`,
+				);
+			} else {
+				contentSections.push(
+					`\n## Results from ${result.scope}\n\n${result.content}`,
+				);
+			}
 		}
 	}
 

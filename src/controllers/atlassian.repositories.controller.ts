@@ -154,84 +154,114 @@ async function list(
 
 				// If this is the first page and we have fewer results than requested, try to fetch more
 				if (
-					!serviceParams.page &&
 					filteredCount <
 						(serviceParams.pagelen || DEFAULT_PAGE_SIZE) &&
 					repositoriesData.next
 				) {
 					methodLogger.debug(
-						`After filtering, only ${filteredCount} items remain. Fetching next page to supplement...`,
+						`After filtering, only ${filteredCount} items remain. Fetching more pages to supplement...`,
 					);
 
-					try {
-						// Extract the next page number
-						let nextPage = 2; // Default to page 2
+					// Keep fetching next pages until we have enough items or no more pages
+					let nextPageUrl: string | undefined = repositoriesData.next;
+					let totalItemsNeeded =
+						(serviceParams.pagelen || DEFAULT_PAGE_SIZE) -
+						filteredCount;
+
+					while (nextPageUrl && totalItemsNeeded > 0) {
 						try {
-							const nextUrl = new URL(repositoriesData.next);
-							const pageParam = nextUrl.searchParams.get('page');
-							if (pageParam) {
-								nextPage = parseInt(pageParam, 10);
-							}
-						} catch (e) {
-							methodLogger.warn(
-								`Could not extract next page from URL: ${repositoriesData.next}`,
-								e,
-							);
-						}
-
-						// Fetch the next page
-						const nextPageParams = {
-							...serviceParams,
-							page: nextPage,
-						};
-
-						const nextPageData =
-							await atlassianRepositoriesService.list(
-								nextPageParams,
-							);
-
-						// Filter the next page results too
-						if (nextPageData.values) {
-							const nextPageFiltered = nextPageData.values.filter(
-								(repo) =>
-									repo.project?.key ===
-									mergedOptions.projectKey,
-							);
-
-							// Add enough items to reach the requested limit
-							const itemsNeeded =
-								(serviceParams.pagelen || DEFAULT_PAGE_SIZE) -
-								filteredCount;
-							const itemsToAdd = nextPageFiltered.slice(
-								0,
-								itemsNeeded,
-							);
-
-							if (itemsToAdd.length > 0) {
-								repositoriesData.values = [
-									...repositoriesData.values,
-									...itemsToAdd,
-								];
-								methodLogger.debug(
-									`Added ${itemsToAdd.length} items from the next page to reach requested limit`,
+							// Extract the next page number
+							let nextPage: number | undefined;
+							try {
+								const nextUrl = new URL(nextPageUrl);
+								const pageParam =
+									nextUrl.searchParams.get('page');
+								if (pageParam) {
+									nextPage = parseInt(pageParam, 10);
+								}
+							} catch (e) {
+								methodLogger.warn(
+									`Could not extract next page from URL: ${nextPageUrl}`,
+									e,
 								);
+								break;
 							}
 
-							// Update pagination info if we still have more results
-							if (nextPageFiltered.length > itemsToAdd.length) {
-								// Keep the next URL as is (no need to reassign)
-							} else if (nextPageData.next) {
-								repositoriesData.next = nextPageData.next; // Use the next page's next URL
+							if (!nextPage) break;
+
+							// Fetch the next page
+							const nextPageParams = {
+								...serviceParams,
+								page: nextPage,
+							};
+
+							const nextPageData =
+								await atlassianRepositoriesService.list(
+									nextPageParams,
+								);
+
+							// Filter the next page results
+							if (nextPageData.values) {
+								const nextPageFiltered =
+									nextPageData.values.filter(
+										(repo) =>
+											repo.project?.key ===
+											mergedOptions.projectKey,
+									);
+
+								// Add items to reach the requested limit
+								const itemsToAdd = nextPageFiltered.slice(
+									0,
+									totalItemsNeeded,
+								);
+
+								if (itemsToAdd.length > 0) {
+									repositoriesData.values = [
+										...repositoriesData.values,
+										...itemsToAdd,
+									];
+
+									totalItemsNeeded -= itemsToAdd.length;
+
+									methodLogger.debug(
+										`Added ${itemsToAdd.length} items from page ${nextPage} to reach requested limit. ${totalItemsNeeded} more needed.`,
+									);
+								}
+
+								// Update next page URL for the loop
+								nextPageUrl = nextPageData.next || undefined;
+
+								// If we've fetched all filtered items from this page but there are more pages
+								// and we still need more items, continue to the next page
+								if (
+									nextPageFiltered.length <=
+										itemsToAdd.length &&
+									totalItemsNeeded > 0
+								) {
+									continue;
+								}
+
+								// If we got all the items we need, update pagination accordingly
+								if (totalItemsNeeded <= 0) {
+									// We have enough items now, but there are more available
+									if (nextPageData.next) {
+										repositoriesData.next =
+											nextPageData.next;
+									}
+									break;
+								}
 							} else {
-								repositoriesData.next = undefined; // No more results
+								// No values in the response, stop fetching
+								nextPageUrl = undefined;
 							}
+						} catch (fetchError) {
+							// Log the error but continue with what we have
+							methodLogger.warn(
+								`Error fetching page to supplement filtered results:`,
+								fetchError,
+							);
+							break;
 						}
-					} catch (fetchError) {
-						// Just log the error but continue with the current results
-						methodLogger.warn(
-							`Error fetching next page to supplement filtered results:`,
-							fetchError,
-						);
 					}
 				}
 			}
