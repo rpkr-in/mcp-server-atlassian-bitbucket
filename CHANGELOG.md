@@ -1,3 +1,10 @@
+## [1.32.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.2...v1.32.3) (2025-05-16)
+
+
+### Bug Fixes
+
+* Make repoSlug conditionally required for pullrequests and commits scopes in search tool ([a1adc3a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a1adc3af40fec80f4c85dccf3b60c02770d0f306))
+
 ## [1.32.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.1...v1.32.2) (2025-05-16)
 
 
