@@ -1,3 +1,10 @@
+## [1.32.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.0...v1.32.1) (2025-05-16)
+
+
+### Bug Fixes
+
+* resolve type errors in repository controller stub functions ([4ec45e7](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4ec45e7e05deadc67b9c5e9f17da276f9302aba6))
+
 # [1.32.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.31.0...v1.32.0) (2025-05-15)
 
 
