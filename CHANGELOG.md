@@ -1,3 +1,10 @@
+## [1.32.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.3...v1.32.4) (2025-05-16)
+
+
+### Bug Fixes
+
+* improve documentation and error handling for searching and diffing operations ([2670423](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/267042342b3102d82737aeee588db684e4cf00c5))
+
 ## [1.32.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.2...v1.32.3) (2025-05-16)
 
 
