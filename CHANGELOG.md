@@ -1,3 +1,10 @@
+## [1.32.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.4...v1.32.5) (2025-05-16)
+
+
+### Bug Fixes
+
+* implement getFileContent in atlassian.repositories.controller.ts ([5ebc2fb](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5ebc2fbb54e1516de2ee9848dbfcddb643cd2512))
+
 ## [1.32.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.3...v1.32.4) (2025-05-16)
 
 
