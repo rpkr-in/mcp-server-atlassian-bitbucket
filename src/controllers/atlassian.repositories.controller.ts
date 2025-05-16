@@ -671,7 +671,8 @@ async function cloneRepository(
 
 /**
  * Get file content from a repository.
- * Stub implementation for backward compatibility.
+ * @param options Options including workspaceSlug, repoSlug, path, and optional ref.
+ * @returns File content as a ControllerResponse.
  */
 async function getFileContent(options: {
 	workspaceSlug: string;
@@ -679,8 +680,49 @@ async function getFileContent(options: {
 	path: string;
 	ref?: string;
 }): Promise<ControllerResponse> {
-	console.log('getFileContent called with:', options); // Use options to prevent unused variable warning
-	throw new Error('Method getFileContent is not implemented');
+	const { workspaceSlug, repoSlug, path, ref } = options;
+	const methodLogger = Logger.forContext(
+		'controllers/atlassian.repositories.controller.ts',
+		'getFileContent',
+	);
+
+	methodLogger.debug(
+		`Getting file content from ${workspaceSlug}/${repoSlug}/${path}${
+			ref ? ` at ${ref}` : ''
+		}`,
+	);
+
+	try {
+		// Map controller parameters to service parameters
+		const serviceParams = {
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			commit: ref || 'main', // Default to 'main' if no ref is provided
+			path,
+		};
+
+		methodLogger.debug('Using service parameters:', serviceParams);
+
+		// Call the service to get the file content
+		const fileContent =
+			await atlassianRepositoriesService.getFileContent(serviceParams);
+
+		methodLogger.debug(
+			`Retrieved file content (${fileContent.length} characters)`,
+		);
+
+		// Return the file content as is, since it's already formatted
+		return {
+			content: fileContent,
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'File content',
+			operation: 'retrieving',
+			source: 'controllers/atlassian.repositories.controller.ts@getFileContent',
+			additionalInfo: { options },
+		});
+	}
 }
 
 /**
