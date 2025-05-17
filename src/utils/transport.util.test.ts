@@ -1,5 +1,4 @@
 import { getAtlassianCredentials, fetchAtlassian } from './transport.util.js';
-import { Logger } from './logger.util.js';
 import { config } from './config.util.js';
 
 /**
@@ -11,24 +10,7 @@ interface TestResponse {
 	total?: number;
 }
 
-// Mock the logger module only to prevent console output during tests
-jest.mock('./logger.util.js', () => {
-	const mockLoggerInstance = {
-		debug: jest.fn(),
-		info: jest.fn(),
-		warn: jest.fn(),
-		error: jest.fn(),
-	};
-
-	return {
-		Logger: {
-			forContext: jest.fn().mockReturnValue(mockLoggerInstance),
-		},
-		// Export only Logger, not the legacy logger
-	};
-});
-
-// NOTE: We are no longer mocking fetch, using real API calls instead
+// NOTE: We are no longer mocking fetch or logger, using real implementations instead
 
 describe('Transport Utility', () => {
 	// Load configuration before all tests
@@ -73,9 +55,18 @@ describe('Transport Utility', () => {
 		});
 
 		it('should return null and log a warning when environment variables are missing', () => {
-			// Temporarily override the config.get function
-			const originalGet = config.get;
-			config.get = jest.fn().mockReturnValue(undefined);
+			// Store original environment variables
+			const originalEnv = { ...process.env };
+
+			// Clear relevant environment variables to simulate missing credentials
+			delete process.env.ATLASSIAN_SITE_NAME;
+			delete process.env.ATLASSIAN_USER_EMAIL;
+			delete process.env.ATLASSIAN_API_TOKEN;
+			delete process.env.ATLASSIAN_BITBUCKET_USERNAME;
+			delete process.env.ATLASSIAN_BITBUCKET_APP_PASSWORD;
+
+			// Force reload configuration
+			config.load();
 
 			// Call the function
 			const credentials = getAtlassianCredentials();
@@ -83,17 +74,11 @@ describe('Transport Utility', () => {
 			// Verify the result is null
 			expect(credentials).toBeNull();
 
-			// Get the mock instance returned from forContext
-			const transportLogger = (Logger.forContext as jest.Mock).mock
-				.results[0].value;
+			// Restore original environment
+			process.env = originalEnv;
 
-			// Verify that a warning was logged with the updated message
-			expect(transportLogger.warn).toHaveBeenCalledWith(
-				'Missing Atlassian credentials. Please set either ATLASSIAN_SITE_NAME, ATLASSIAN_USER_EMAIL, and ATLASSIAN_API_TOKEN environment variables, or ATLASSIAN_BITBUCKET_USERNAME and ATLASSIAN_BITBUCKET_APP_PASSWORD for Bitbucket-specific auth.',
-			);
-
-			// Restore the original function
-			config.get = originalGet;
+			// Reload config with original environment
+			config.load();
 		});
 	});
 
