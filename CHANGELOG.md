@@ -1,3 +1,19 @@
+# [1.36.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.35.1...v1.36.0) (2025-05-17)
+
+
+### Bug Fixes
+
+* Improve tests, refactor, and document includeComments feature ([5d9fbfd](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5d9fbfd7598218af02abdf439d5b304e325753bd))
+* Improve transport utility tests to use real environments ([20b8cf2](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/20b8cf23ef09d42f8556a0f8840ad02f082cc215))
+
+
+### Features
+
+* Add includeComments option to get-pr command ([ba72020](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ba72020ea49bc0e58b0f559ead7df4d54563a8fa))
+* Enhance get-pr to include comments with flag ([a0dbb89](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a0dbb89517e1bd7011b80fb8fcf90352214f784e))
+* Enhance get-repo to include recent PRs by default ([0052629](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/005262911c975f5dd91c1a871659b86c16a454da))
+* Standardize CLI parameter formats across commands ([c267a14](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c267a147c2d59db5ca7487c87d91fd8a123f39d8))
+
 ## [1.35.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.35.0...v1.35.1) (2025-05-17)
 
 
