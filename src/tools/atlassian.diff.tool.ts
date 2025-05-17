@@ -35,9 +35,6 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
 
 		return {
 			content: [{ type: 'text' as const, text: finalText }],
-			metadata: {
-				/*pagination: result.pagination*/
-			}, // Removed pagination from metadata
 		};
 	} catch (error) {
 		methodLogger.error('Branch diff tool failed', error);
@@ -64,9 +61,6 @@ async function handleCommitDiff(args: CommitDiffArgsType) {
 
 		return {
 			content: [{ type: 'text' as const, text: finalText }],
-			metadata: {
-				/*pagination: result.pagination*/
-			}, // Removed pagination from metadata
 		};
 	} catch (error) {
 		methodLogger.error('Commit diff tool failed', error);

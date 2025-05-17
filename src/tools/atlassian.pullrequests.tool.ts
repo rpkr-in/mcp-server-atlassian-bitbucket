@@ -71,9 +71,6 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 					text: finalText, // Contains timestamp footer
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Pass pagination object // Removed
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list pull requests', error);
@@ -122,7 +119,6 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 					text: result.content, // Contains timestamp footer
 				},
 			],
-			// No pagination metadata needed for 'get'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get pull request details', error);
@@ -182,9 +178,6 @@ async function listPullRequestComments(
 					text: finalText, // Contains timestamp footer
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Pass pagination object // Removed
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get pull request comments', error);
@@ -233,7 +226,6 @@ async function addPullRequestComment(
 					text: result.content, // Simple confirmation message
 				},
 			],
-			// No pagination metadata needed for 'add'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to add pull request comment', error);
@@ -281,7 +273,6 @@ async function addPullRequest(args: CreatePullRequestToolArgsType) {
 					text: result.content, // Contains timestamp footer
 				},
 			],
-			// No pagination metadata needed for 'add'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to add pull request', error);

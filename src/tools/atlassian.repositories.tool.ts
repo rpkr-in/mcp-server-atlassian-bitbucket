@@ -77,9 +77,6 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 					text: finalText,
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Removed pagination from metadata
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list repositories', error);
@@ -168,9 +165,6 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 
 		return {
 			content: [{ type: 'text' as const, text: finalText }],
-			metadata: {
-				// pagination: result.pagination, // Removed pagination from metadata
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get commit history', error);
@@ -308,9 +302,6 @@ async function listBranches(args: ListBranchesToolArgsType) {
 					text: finalText,
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Removed pagination from metadata
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list branches', error);

@@ -57,9 +57,6 @@ async function search(args: SearchToolArgsType) {
 					text: finalText, // Contains timestamp footer
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Pass pagination object // Removed
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to search Bitbucket', error);

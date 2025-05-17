@@ -62,9 +62,6 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 					text: finalText, // Contains timestamp footer
 				},
 			],
-			metadata: {
-				// pagination: result.pagination, // Pass pagination object // Removed
-			},
 		};
 	} catch (error) {
 		methodLogger.error('Failed to list workspaces', error);
