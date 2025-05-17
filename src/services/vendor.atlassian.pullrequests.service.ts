@@ -149,6 +149,14 @@ async function get(params: GetPullRequestParams): Promise<PullRequestDetailed> {
 		`Getting Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
 	);
 
+	// Validate pull_request_id is a positive integer
+	const prId = Number(params.pull_request_id);
+	if (isNaN(prId) || prId <= 0 || !Number.isInteger(prId)) {
+		throw new Error(
+			`Invalid pull request ID: ${params.pull_request_id}. Pull request ID must be a positive integer.`,
+		);
+	}
+
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
 		throw new Error(
 			'workspace, repo_slug, and pull_request_id parameters are all required',
@@ -203,6 +211,14 @@ async function getComments(
 	methodLogger.debug(
 		`Getting comments for Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
 	);
+
+	// Validate pull_request_id is a positive integer
+	const prId = Number(params.pull_request_id);
+	if (isNaN(prId) || prId <= 0 || !Number.isInteger(prId)) {
+		throw new Error(
+			`Invalid pull request ID: ${params.pull_request_id}. Pull request ID must be a positive integer.`,
+		);
+	}
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
 		throw new Error(

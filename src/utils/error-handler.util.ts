@@ -94,6 +94,14 @@ export function detectErrorType(
 			? (error as { statusCode: number }).statusCode
 			: undefined;
 
+	// PR ID validation error detection
+	if (
+		errorMessage.includes('Invalid pull request ID') ||
+		errorMessage.includes('Pull request ID must be a positive integer')
+	) {
+		return { code: ErrorCode.VALIDATION_ERROR, statusCode: 400 };
+	}
+
 	// Network error detection
 	if (
 		errorMessage.includes('network error') ||
