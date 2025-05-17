@@ -1,3 +1,10 @@
+## [1.36.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.3...v1.36.4) (2025-05-17)
+
+
+### Bug Fixes
+
+* improve documentation and error guidance for counterintuitive branch and commit diff parameter ordering ([ec374e6](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ec374e6443f383d8552ace999b852d4ecc8458e0))
+
 ## [1.36.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.2...v1.36.3) (2025-05-17)
 
 
