@@ -47,6 +47,8 @@ Generate one from [Bitbucket App Passwords](https://bitbucket.org/account/settin
 - Repositories: Read
 - Pull Requests: Read
 
+You can also optionally set the `BITBUCKET_DEFAULT_WORKSPACE` environment variable or configure it in `~/.mcp/configs.json` to specify a default workspace slug to be used when a workspace is not explicitly provided to a command or tool.
+
 ### Option B: Atlassian API Token
 
 Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
@@ -159,13 +161,20 @@ Get full details for a specific workspace.
 
 ## `bb_ls_repos`
 
-Lists repositories in a workspace. Filters by `role`, `projectKey`, `query` (name/description). Supports sorting and pagination.
+Lists repositories in a workspace. Filters by `role`, `projectKey`, `query` (name/description). Supports sorting and pagination. If `workspaceSlug` is not provided, it will use the configured default workspace (see Authentication/Configuration section).
 
 ```json
 { "workspaceSlug": "acme-corp", "projectKey": "PROJ" }
 ```
 
+_or (using default workspace):_
+
+```json
+{ "projectKey": "PROJ" }
+```
+
 > "List repositories in 'acme-corp' for project PROJ."
+> "List repositories for project PROJ in my default workspace."
 
 ---
 
@@ -375,6 +384,40 @@ Requires Bitbucket credentials.
 
 ---
 
+## `bb_diff_branches`
+
+Compares two branches in a repository and shows the diff. Provides a full diff by default.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "web-app",
+	"sourceBranch": "develop",
+	"targetBranch": "main"
+}
+```
+
+> "Show the diff between develop and main for 'web-app' in 'acme-corp'."
+
+---
+
+## `bb_diff_commits`
+
+Compares two commits in a repository and shows the diff. Provides a full diff by default.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "web-app",
+	"sourceCommit": "a1b2c3d",
+	"targetCommit": "e4f5g6h"
+}
+```
+
+> "Show the diff between commits a1b2c3d and e4f5g6h for 'web-app' in 'acme-corp'."
+
+---
+
 # Command-Line Interface (CLI)
 
 The CLI uses kebab-case for commands (e.g., `ls-workspaces`) and options (e.g., `--workspace-slug`).
@@ -413,6 +456,14 @@ npx -y @aashari/mcp-server-atlassian-bitbucket get-file \
   --repo-slug backend-api \
   --file-path "src/main/java/com/acme/service/Application.java" \
   --revision main
+npx -y @aashari/mcp-server-atlassian-bitbucket diff-branches \
+  --repo-slug "web-app" \
+  --source-branch "develop" \
+  --target-branch "main"
+npx -y @aashari/mcp-server-atlassian-bitbucket diff-commits \
+  --repo-slug "web-app" \
+  --source-commit "a1b2c3d" \
+  --target-commit "e4f5g6h"
 ```
 
 ## Install Globally
@@ -453,7 +504,12 @@ mcp-atlassian-bitbucket get-commit-history --help
 mcp-atlassian-bitbucket create-branch --help
 mcp-atlassian-bitbucket clone --help
 mcp-atlassian-bitbucket get-file --help
+mcp-atlassian-bitbucket diff-branches --help
+mcp-atlassian-bitbucket diff-commits --help
 ```
+
+Note: Many commands now support using your default workspace when `--workspace-slug` is omitted.
+The `diff-branches` and `diff-commits` commands provide full diffs by default.
 
 ---
 
