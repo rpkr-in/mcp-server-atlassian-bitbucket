@@ -1,3 +1,10 @@
+## [1.35.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.35.0...v1.35.1) (2025-05-17)
+
+
+### Bug Fixes
+
+* Update Bitbucket README for default workspace and diffs ([fe36a20](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/fe36a20c834ecf584673c921b293cac050571046))
+
 # [1.35.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.34.0...v1.35.0) (2025-05-17)
 
 
