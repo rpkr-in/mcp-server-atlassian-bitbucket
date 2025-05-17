@@ -218,7 +218,13 @@ async function get(
 			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
 		}
 
-		const { workspaceSlug, repoSlug, prId, includeFullDiff } = options;
+		const {
+			workspaceSlug,
+			repoSlug,
+			prId,
+			includeFullDiff,
+			includeComments,
+		} = options;
 
 		if (!workspaceSlug || !repoSlug) {
 			throw new Error('Workspace slug and repository slug are required');
@@ -275,11 +281,74 @@ async function get(
 			}
 		}
 
+		// Get comments if requested
+		let commentsData = null;
+		if (includeComments) {
+			try {
+				methodLogger.debug('Fetching pull request comments');
+				commentsData = await atlassianPullRequestsService.getComments({
+					workspace: workspaceSlug,
+					repo_slug: repoSlug,
+					pull_request_id: parseInt(prId, 10),
+					pagelen: 25, // Reasonable limit to avoid overly large responses
+				});
+				methodLogger.debug(
+					`Retrieved ${commentsData.values?.length || 0} comments`,
+				);
+
+				// Enhance comments with snippets where applicable, using the same logic as in listComments
+				if (commentsData.values && commentsData.values.length > 0) {
+					const commentsWithSnippets: PullRequestCommentWithSnippet[] =
+						[];
+					for (const comment of commentsData.values) {
+						let snippet = undefined;
+						if (
+							comment.inline &&
+							comment.links?.code?.href &&
+							comment.inline.to !== undefined
+						) {
+							try {
+								methodLogger.debug(
+									`Fetching diff for inline comment ${comment.id} from ${comment.links.code.href}`,
+								);
+								const diffContent =
+									await atlassianPullRequestsService.getDiffForUrl(
+										comment.links.code.href,
+									);
+								snippet = extractDiffSnippet(
+									diffContent,
+									comment.inline.to,
+								);
+								methodLogger.debug(
+									`Extracted snippet for comment ${comment.id} (length: ${snippet?.length})`,
+								);
+							} catch (snippetError) {
+								methodLogger.warn(
+									`Failed to fetch or parse snippet for comment ${comment.id}:`,
+									snippetError,
+								);
+								// Continue without snippet if fetching/parsing fails
+							}
+						}
+						commentsWithSnippets.push({
+							...comment,
+							codeSnippet: snippet,
+						});
+					}
+					commentsData.values = commentsWithSnippets;
+				}
+			} catch (commentsErr) {
+				methodLogger.warn('Failed to retrieve comments:', commentsErr);
+				// Continue without comments
+			}
+		}
+
 		// Format the pull request data
 		const formattedPr = formatPullRequestDetails(
 			pullRequestResponse,
 			diffStats,
 			diffContent,
+			commentsData?.values, // Pass the comments (might be null if not requested or failed)
 		);
 
 		// Return controller response

@@ -102,6 +102,7 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 			repoSlug: args.repoSlug,
 			prId: args.prId,
 			includeFullDiff: args.includeFullDiff,
+			includeComments: args.includeComments,
 		});
 
 		methodLogger.debug(

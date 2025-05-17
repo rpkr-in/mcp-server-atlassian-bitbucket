@@ -154,6 +154,11 @@ function registerGetPullRequestCommand(program: Command): void {
 			'Retrieve the full diff content instead of just the summary. Default: true (rich output by default)',
 			true,
 		)
+		.option(
+			'--include-comments',
+			'Retrieve comments for the pull request. Default: false',
+			false,
+		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
 				'cli/atlassian.pullrequests.cli.ts',
@@ -168,6 +173,7 @@ function registerGetPullRequestCommand(program: Command): void {
 					repoSlug: options.repoSlug,
 					prId: options.prId,
 					includeFullDiff: options.includeFullDiff,
+					includeComments: options.includeComments,
 				};
 
 				actionLogger.debug('Fetching pull request:', params);

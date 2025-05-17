@@ -426,6 +426,7 @@ describe('Atlassian Pull Requests Controller', () => {
 			const result = await atlassianPullRequestsController.get({
 				...prInfo,
 				includeFullDiff: false,
+				includeComments: false,
 			});
 
 			// Verify the response structure
@@ -460,6 +461,7 @@ describe('Atlassian Pull Requests Controller', () => {
 					repoSlug: prInfo.repoSlug,
 					prId: invalidPrId,
 					includeFullDiff: false,
+					includeComments: false,
 				}),
 			).rejects.toThrow(McpError);
 		}, 30000);
@@ -482,6 +484,7 @@ describe('Atlassian Pull Requests Controller', () => {
 			const result = await atlassianPullRequestsController.get({
 				...prInfo,
 				includeFullDiff: true,
+				includeComments: false,
 			});
 
 			// Check that content is still returned, but diff parts might be missing

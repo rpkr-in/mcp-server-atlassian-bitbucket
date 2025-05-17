@@ -92,12 +92,14 @@ export function formatPullRequestsList(
  * @param pullRequest - Raw pull request data from the API
  * @param diffstat - Optional diffstat data from the API
  * @param rawDiff - Optional raw diff content from the API
+ * @param comments - Optional comments data from the API
  * @returns Formatted string with pull request details in markdown format
  */
 export function formatPullRequestDetails(
 	pullRequest: PullRequest,
 	diffstat?: DiffstatResponse | null,
 	rawDiff?: string | null,
+	comments?: PullRequestCommentWithSnippet[] | null,
 ): string {
 	const lines: string[] = [
 		formatHeading(
@@ -197,6 +199,96 @@ export function formatPullRequestDetails(
 		lines.push('');
 		lines.push(formatHeading('Code Changes (Full Diff)', 2));
 		lines.push(formatDiff(rawDiff));
+	}
+
+	// Comments Section (when included)
+	if (comments && comments.length > 0) {
+		lines.push('');
+		lines.push(formatHeading('Comments', 2));
+
+		// Group comments by parent (to handle threads)
+		const topLevelComments: PullRequestCommentWithSnippet[] = [];
+		const childComments: {
+			[parentId: number]: PullRequestCommentWithSnippet[];
+		} = {};
+
+		// First pass: organize comments by parent
+		comments.forEach((comment) => {
+			if (comment.parent) {
+				const parentId = comment.parent.id;
+				if (!childComments[parentId]) {
+					childComments[parentId] = [];
+				}
+				childComments[parentId].push(comment);
+			} else {
+				topLevelComments.push(comment);
+			}
+		});
+
+		// Format each top-level comment and its replies (limit to 5 comments for conciseness)
+		const maxCommentsToShow = 5;
+		const commentsToShow = topLevelComments.slice(0, maxCommentsToShow);
+
+		commentsToShow.forEach((comment, index) => {
+			formatComment(comment, lines);
+
+			// Add replies if any exist (limit to 3 replies per comment for conciseness)
+			const replies = childComments[comment.id] || [];
+			if (replies.length > 0) {
+				lines.push('');
+				lines.push('**Replies:**');
+
+				const maxRepliesToShow = 3;
+				const repliesToShow = replies.slice(0, maxRepliesToShow);
+
+				repliesToShow.forEach((reply) => {
+					lines.push('');
+					lines.push(
+						`> **${reply.user.display_name || 'Unknown User'}** (${formatDate(reply.created_on)})`,
+					);
+					// Optimize the markdown content for replies as well
+					const optimizedReplyContent = optimizeBitbucketMarkdown(
+						reply.content.raw,
+					);
+					lines.push(
+						`> ${optimizedReplyContent.replace(/\n/g, '\n> ')}`,
+					);
+				});
+
+				// Show message if more replies were omitted
+				if (replies.length > maxRepliesToShow) {
+					lines.push('');
+					lines.push(
+						`> *...and ${replies.length - maxRepliesToShow} more replies*`,
+					);
+				}
+			}
+
+			if (index < commentsToShow.length - 1) {
+				lines.push('');
+				lines.push(formatSeparator());
+			}
+		});
+
+		// Show message if more comments were omitted
+		if (topLevelComments.length > maxCommentsToShow) {
+			lines.push('');
+			lines.push(
+				`*...and ${topLevelComments.length - maxCommentsToShow} more comments*`,
+			);
+		}
+
+		// Add link to view all comments if available
+		if (pullRequest.links?.comments?.href) {
+			lines.push('');
+			lines.push(
+				`[View all comments in browser](${pullRequest.links.comments.href})`,
+			);
+		}
+	} else if (comments && comments.length === 0) {
+		lines.push('');
+		lines.push(formatHeading('Comments', 2));
+		lines.push('*No comments found on this pull request.*');
 	}
 
 	// Links

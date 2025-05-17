@@ -120,6 +120,17 @@ export const GetPullRequestToolArgs = z.object({
 			'Set to true to retrieve the full diff content instead of just the summary. Default: true (rich output by default)',
 		)
 		.default(true),
+
+	/**
+	 * Optional flag to include comments
+	 */
+	includeComments: z
+		.boolean()
+		.optional()
+		.describe(
+			'Set to true to retrieve comments for the pull request. Default: false',
+		)
+		.default(false),
 });
 
 export type GetPullRequestToolArgsType = z.infer<typeof GetPullRequestToolArgs>;
