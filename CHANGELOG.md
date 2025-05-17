@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.5...v1.33.0) (2025-05-17)
+
+
+### Features
+
+* implement core principles of minimal input and rich output by default ([0dc2c0d](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/0dc2c0d2dad7a53f6a6202a67fed0372b80d9968))
+
 ## [1.32.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.32.4...v1.32.5) (2025-05-16)
 
 
