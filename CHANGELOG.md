@@ -1,3 +1,10 @@
+## [1.36.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.0...v1.36.1) (2025-05-17)
+
+
+### Bug Fixes
+
+* ensure projectKey is passed from tool to controller for bb_ls_repos ([a0c26db](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a0c26db744edd1f383014c61aa9c25643035b8a3))
+
 # [1.36.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.35.1...v1.36.0) (2025-05-17)
 
 
