@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.34.0...v1.35.0) (2025-05-17)
+
+
+### Features
+
+* make workspaceSlug optional in remaining tools and controllers ([6d2f4d6](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/6d2f4d6860e76cbcd7ff8cde0fd1e70b8377c464))
+
 # [1.34.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.33.0...v1.34.0) (2025-05-17)
 
 
