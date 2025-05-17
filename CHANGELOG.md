@@ -1,3 +1,10 @@
+## [1.36.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.1...v1.36.2) (2025-05-17)
+
+
+### Bug Fixes
+
+* improve error handling for invalid PR IDs in Bitbucket pull request tool ([14afe1a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/14afe1a499f117ad8fd50b75b326e4d8082618fa))
+
 ## [1.36.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.0...v1.36.1) (2025-05-17)
 
 
