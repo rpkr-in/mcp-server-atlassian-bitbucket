@@ -137,9 +137,9 @@ function registerGetPullRequestCommand(program: Command): void {
 		.description(
 			'Get detailed information about a specific Bitbucket pull request.',
 		)
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
@@ -195,9 +195,9 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 		.description(
 			'List comments on a specific Bitbucket pull request, with pagination.',
 		)
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
@@ -272,9 +272,9 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 	program
 		.command('add-pr-comment')
 		.description('Add a comment to a Bitbucket pull request.')
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
@@ -356,9 +356,9 @@ function registerAddPullRequestCommand(program: Command): void {
 	program
 		.command('add-pr')
 		.description('Add a new pull request in a Bitbucket repository.')
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',

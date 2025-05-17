@@ -93,9 +93,9 @@ export const GetRepositoryToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
 		),
 
 	/**
@@ -117,9 +117,9 @@ export type GetRepositoryToolArgsType = z.infer<typeof GetRepositoryToolArgs>;
 export const GetCommitHistoryToolArgs = z.object({
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 	repoSlug: z
 		.string()
@@ -204,9 +204,9 @@ export type CloneRepositoryToolArgsType = z.infer<
 export const GetFileContentToolArgs = z.object({
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 	repoSlug: z
 		.string()
@@ -239,9 +239,9 @@ export const ListBranchesToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 
 	/**

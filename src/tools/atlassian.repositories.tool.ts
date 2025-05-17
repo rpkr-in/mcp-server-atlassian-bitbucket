@@ -19,6 +19,7 @@ import {
 } from './atlassian.repositories.types.js';
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.repositories.tool.ts');
@@ -211,22 +212,35 @@ async function handleCloneRepository(args: CloneRepositoryToolArgsType) {
 /**
  * Handler for getting file content.
  */
-async function handleGetFileContent(args: GetFileContentToolArgsType) {
-	const methodLogger = Logger.forContext(
-		'tools/atlassian.repositories.tool.ts',
-		'handleGetFileContent',
-	);
+async function getFileContent(args: GetFileContentToolArgsType) {
+	const methodLogger = toolLogger.forMethod('getFileContent');
 	try {
 		methodLogger.debug('Tool bb_get_file called', args);
+
+		// Handle optional workspaceSlug
+		if (!args.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from CLI flags or config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			args.workspaceSlug = defaultWorkspace;
+		}
+
+		// Now we can safely pass the parameters to the controller
 		const result = await atlassianRepositoriesController.getFileContent({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: args.workspaceSlug as string, // Type assertion since we've handled the undefined case
 			repoSlug: args.repoSlug,
 			path: args.filePath,
 			ref: args.revision,
 		});
+
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
-			// No specific metadata needed for file content retrieval
 		};
 	} catch (error) {
 		methodLogger.error('Tool bb_get_file failed', error);
@@ -342,7 +356,7 @@ function registerTools(server: McpServer) {
 		'bb_get_file',
 		`Retrieves the content of a file from a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. Specify the file to retrieve using the \`filePath\` parameter. Optionally, you can specify a \`revision\` (branch name, tag, or commit hash) to retrieve the file from - if omitted, the repository's default branch is used. Returns the raw content of the file as text. Requires Bitbucket credentials.`,
 		GetFileContentToolArgs.shape,
-		handleGetFileContent,
+		getFileContent,
 	);
 
 	// Register the list branches tool

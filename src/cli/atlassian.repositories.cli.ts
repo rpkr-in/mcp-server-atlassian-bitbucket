@@ -117,8 +117,7 @@ function registerListRepositoriesCommand(program: Command): void {
 }
 
 /**
- * Register the command for retrieving details of a specific Bitbucket repository
- *
+ * Register the command for retrieving a specific Bitbucket repository
  * @param program - The Commander program instance
  */
 function registerGetRepositoryCommand(program: Command): void {
@@ -127,13 +126,13 @@ function registerGetRepositoryCommand(program: Command): void {
 		.description(
 			'Get detailed information about a specific Bitbucket repository.',
 		)
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or first workspace in your account). Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug to retrieve. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+			'Repository slug to retrieve. Must be a valid repository in the workspace. Example: "project-api"',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
@@ -161,21 +160,20 @@ function registerGetRepositoryCommand(program: Command): void {
 }
 
 /**
- * Register the command for retrieving commit history of a Bitbucket repository
- *
+ * Register the command for retrieving commit history from a repository
  * @param program - The Commander program instance
  */
 function registerGetCommitHistoryCommand(program: Command): void {
 	program
 		.command('get-commit-history')
 		.description('Get commit history for a Bitbucket repository.')
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug to retrieve commit history from. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+			'Repository slug to get commit history from. Example: "project-api"',
 		)
 		.option(
 			'--revision <branch-or-tag>',
@@ -415,23 +413,20 @@ function registerGetFileCommand(program: Command): void {
 }
 
 /**
- * Register the command for listing branches in a Bitbucket repository
- *
+ * Register the command for listing branches in a repository
  * @param program - The Commander program instance
  */
 function registerListBranchesCommand(program: Command): void {
 	program
 		.command('list-branches')
-		.description(
-			'List branches in a Bitbucket repository, with filtering and pagination.',
-		)
-		.requiredOption(
+		.description('List branches in a Bitbucket repository.')
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, uses your default workspace. Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug to list branches from. Must be a valid repository slug in the specified workspace. Example: "project-api"',
+			'Repository slug to list branches from. Example: "project-api"',
 		)
 		.option(
 			'-q, --query <string>',

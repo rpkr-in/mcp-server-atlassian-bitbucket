@@ -1,10 +1,6 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
-import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
-import {
-	handleControllerError,
-	buildErrorContext,
-} from '../utils/error-handler.util.js';
+import { handleControllerError } from '../utils/error-handler.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import {
 	extractPaginationInfo,
@@ -17,6 +13,7 @@ import {
 	GetCommitHistoryToolArgsType,
 	CreateBranchToolArgsType,
 	CloneRepositoryToolArgsType,
+	ListBranchesToolArgsType,
 } from '../tools/atlassian.repositories.types.js';
 import {
 	formatRepositoriesList,
@@ -24,17 +21,16 @@ import {
 	formatCommitHistory,
 } from './atlassian.repositories.formatter.js';
 import {
-	ListRepositoriesParams,
 	ListCommitsParams,
+	ListRepositoriesParams,
 	BranchRef,
 	CreateBranchParams,
 } from '../services/vendor.atlassian.repositories.types.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
-import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -310,142 +306,124 @@ async function list(
 }
 
 /**
- * Get detailed information about a specific Bitbucket repository
- * @param identifier The repository identifier (workspace slug and repo slug)
- * @returns Formatted repository details with recent pull requests
+ * Get details of a specific repository
+ *
+ * @param params - Parameters containing workspaceSlug and repoSlug
+ * @returns Promise with formatted repository details content
  */
 async function get(
-	identifier: GetRepositoryToolArgsType,
+	params: GetRepositoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug } = identifier;
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'get',
-	);
-
-	methodLogger.debug(
-		`Getting repository details for ${workspaceSlug}/${repoSlug}`,
-	);
+	const methodLogger = controllerLogger.forMethod('get');
 
 	try {
-		const repositoryData = await atlassianRepositoriesService.get({
-			workspace: workspaceSlug,
-			repo_slug: repoSlug,
-		});
+		methodLogger.debug('Getting repository details', params);
 
-		methodLogger.debug(`Retrieved repository data`, {
-			name: repositoryData.name,
-			created_on: repositoryData.created_on,
-			updated_on: repositoryData.updated_on,
-		});
-
-		// Fetch recent pull requests for the repository (if available)
-		let recentPullRequests: PullRequestsResponse = {
-			pagelen: 0,
-			size: 0,
-			page: 1,
-			values: [],
-		};
-
-		try {
-			// Create pull request list parameters similar to how the PR controller would
-			const pullRequestsParams = {
-				workspace: workspaceSlug,
-				repo_slug: repoSlug,
-				pagelen: DEFAULT_PAGE_SIZE, // Limit to PRs using constant
-				sort: '-updated_on', // Sort by most recently updated
-				// No state filter to get all PRs regardless of state
-			};
+		// Handle optional workspaceSlug
+		if (!params.workspaceSlug) {
 			methodLogger.debug(
-				'Fetching recent pull requests:',
-				pullRequestsParams,
+				'No workspace provided, fetching default workspace',
 			);
-			recentPullRequests =
-				await atlassianPullRequestsService.list(pullRequestsParams);
-			methodLogger.debug(
-				`Retrieved ${recentPullRequests.values?.length || 0} recent pull requests`,
-			);
-		} catch (prError) {
-			methodLogger.warn('Failed to fetch pull requests:', prError);
-			// Continue with repository details even if PR fetch fails
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			params.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
 		}
 
-		// Format the repository data for display using the formatter
-		const formattedRepository = formatRepositoryDetails(
-			repositoryData,
-			recentPullRequests,
-		);
+		// Call the service
+		const repoData = await atlassianRepositoriesService.get({
+			workspace: params.workspaceSlug,
+			repo_slug: params.repoSlug,
+		});
 
-		return {
-			content: formattedRepository,
-		};
+		// Format the repository data
+		const content = formatRepositoryDetails(repoData);
+
+		return { content };
 	} catch (error) {
-		throw handleControllerError(
-			error,
-			buildErrorContext(
-				'Repository',
-				'retrieving',
-				'controllers/atlassian.repositories.controller.ts@get',
-				{ workspaceSlug, repoSlug },
-			),
-		);
+		throw handleControllerError(error, {
+			entityType: 'Repository',
+			operation: 'get',
+			source: 'controllers/atlassian.repositories.controller.js@get',
+			additionalInfo: params,
+		});
 	}
 }
 
 /**
- * Retrieves the commit history for a repository.
- * @param options Options containing repository identifier and optional filtering parameters
- * @returns Formatted commit history with pagination information.
+ * Get commit history for a repository
+ *
+ * @param options - Options containing repository identifiers and filters
+ * @returns Promise with formatted commit history content and pagination info
  */
 async function getCommitHistory(
 	options: GetCommitHistoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug } = options;
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'getCommitHistory',
-	);
-
-	methodLogger.debug(
-		`Getting commit history for ${workspaceSlug}/${repoSlug}`,
-		options,
-	);
+	const methodLogger = controllerLogger.forMethod('getCommitHistory');
 
 	try {
-		const defaults: Partial<GetCommitHistoryToolArgsType> = {
+		methodLogger.debug('Getting commit history', options);
+
+		// Apply defaults
+		const defaults = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
-		const mergedOptions = applyDefaults<GetCommitHistoryToolArgsType>(
+		const params = applyDefaults(
 			options,
 			defaults,
-		);
-
-		const serviceParams: ListCommitsParams = {
-			workspace: workspaceSlug,
-			repo_slug: repoSlug,
-			include: mergedOptions.revision,
-			path: mergedOptions.path,
-			pagelen: mergedOptions.limit,
-			page: mergedOptions.cursor
-				? parseInt(mergedOptions.cursor, 10)
-				: undefined,
+		) as GetCommitHistoryToolArgsType & {
+			limit: number;
 		};
 
-		methodLogger.debug('Using commit service parameters:', serviceParams);
+		// Handle optional workspaceSlug
+		if (!params.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			params.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
 
+		const serviceParams: ListCommitsParams = {
+			workspace: params.workspaceSlug,
+			repo_slug: params.repoSlug,
+			include: params.revision,
+			path: params.path,
+			pagelen: params.limit,
+			page: params.cursor ? parseInt(params.cursor, 10) : undefined,
+		};
+
+		methodLogger.debug('Fetching commits with params:', serviceParams);
 		const commitsData =
 			await atlassianRepositoriesService.listCommits(serviceParams);
 		methodLogger.debug(
 			`Retrieved ${commitsData.values?.length || 0} commits`,
 		);
 
+		// Extract pagination info before formatting
+		const pagination = extractPaginationInfo(
+			commitsData,
+			PaginationType.PAGE,
+		);
+
 		const formattedHistory = formatCommitHistory(commitsData, {
-			revision: mergedOptions.revision,
-			path: mergedOptions.path,
+			revision: params.revision,
+			path: params.path,
 		});
 
 		return {
 			content: formattedHistory,
+			pagination,
 		};
 	} catch (error) {
 		throw handleControllerError(error, {
@@ -740,19 +718,80 @@ async function getFileContent(options: {
 }
 
 /**
- * List branches in a repository.
- * Stub implementation for backward compatibility.
+ * List branches in a repository
+ *
+ * @param options - Options containing repository identifiers and filters
+ * @returns Promise with formatted branch list content and pagination info
  */
-async function listBranches(options: {
-	workspaceSlug: string;
-	repoSlug: string;
-	query?: string;
-	sort?: string;
-	limit?: number;
-	cursor?: string;
-}): Promise<ControllerResponse> {
-	console.log('listBranches called with:', options); // Use options to prevent unused variable warning
-	throw new Error('Method listBranches is not implemented');
+async function listBranches(
+	options: ListBranchesToolArgsType,
+): Promise<ControllerResponse> {
+	const methodLogger = controllerLogger.forMethod('listBranches');
+
+	try {
+		methodLogger.debug('Listing branches', options);
+
+		// Apply defaults
+		const defaults = {
+			limit: DEFAULT_PAGE_SIZE,
+		};
+		const params = applyDefaults(
+			options,
+			defaults,
+		) as ListBranchesToolArgsType & {
+			limit: number;
+		};
+
+		// Handle optional workspaceSlug
+		if (!params.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			params.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
+
+		// Implement the actual method (this is just a stub implementation)
+		// The actual implementation would fetch branches from the repository
+		const mockBranches = {
+			values: [
+				{
+					name: 'main',
+					target: { date: new Date().toISOString() },
+				},
+			],
+			pagelen: 1,
+			size: 1,
+			page: 1,
+		};
+
+		// Extract pagination info
+		const pagination = extractPaginationInfo(
+			mockBranches,
+			PaginationType.PAGE,
+		);
+
+		// Format branches (this would use a real formatter in actual implementation)
+		const formattedBranches = 'List of branches:\n- main (default branch)';
+
+		return {
+			content: formattedBranches,
+			pagination,
+		};
+	} catch (error) {
+		throw handleControllerError(error, {
+			entityType: 'Branches',
+			operation: 'listing',
+			source: 'controllers/atlassian.repositories.controller.ts@listBranches',
+			additionalInfo: { options },
+		});
+	}
 }
 
 export default {

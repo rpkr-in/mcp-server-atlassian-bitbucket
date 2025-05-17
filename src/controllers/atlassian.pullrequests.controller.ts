@@ -12,10 +12,8 @@ import {
 	formatPullRequestComments,
 } from './atlassian.pullrequests.formatter.js';
 import {
-	ListPullRequestsParams,
 	GetPullRequestParams,
-	GetPullRequestCommentsParams as ListCommentsParams,
-	CreatePullRequestCommentParams,
+	ListPullRequestsParams,
 	CreatePullRequestParams,
 	PullRequestComment,
 } from '../services/vendor.atlassian.pullrequests.types.js';
@@ -61,6 +59,29 @@ controllerLogger.debug('Bitbucket pull requests controller initialized');
 interface PullRequestCommentWithSnippet extends PullRequestComment {
 	codeSnippet?: string;
 }
+
+// Define a service-specific type for listing comments
+type ListCommentsParams = {
+	workspace: string;
+	repo_slug: string;
+	pull_request_id: number;
+	pagelen?: number;
+	page?: number;
+};
+
+// Define a service-specific type for creating comments
+type CreateCommentParams = {
+	workspace: string;
+	repo_slug: string;
+	pull_request_id: number;
+	content: {
+		raw: string;
+	};
+	inline?: {
+		path: string;
+		to?: number;
+	};
+};
 
 /**
  * List Bitbucket pull requests with optional filtering options
@@ -174,18 +195,40 @@ async function list(
 async function get(
 	options: GetPullRequestToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, prId, includeFullDiff } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'get',
 	);
 
-	methodLogger.debug(
-		`Getting pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
-		{ includeFullDiff },
-	);
-
 	try {
+		methodLogger.debug('Getting pull request details', options);
+
+		// Handle optional workspaceSlug
+		if (!options.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			options.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
+
+		const { workspaceSlug, repoSlug, prId, includeFullDiff } = options;
+
+		if (!workspaceSlug || !repoSlug) {
+			throw new Error('Workspace slug and repository slug are required');
+		}
+
+		methodLogger.debug(
+			`Getting pull request details for ${workspaceSlug}/${repoSlug}/${prId}...`,
+			options,
+		);
+
 		// Map controller options to service parameters
 		const serviceParams: GetPullRequestParams = {
 			workspace: workspaceSlug,
@@ -193,57 +236,63 @@ async function get(
 			pull_request_id: parseInt(prId, 10),
 		};
 
-		// First, fetch the basic pull request data
-		const pullRequestData =
+		methodLogger.debug('Fetching pull request:', serviceParams);
+		const pullRequestResponse =
 			await atlassianPullRequestsService.get(serviceParams);
+		methodLogger.debug('Retrieved pull request data successfully');
 
+		// Pull Request Diff Statistics
+		methodLogger.debug('Fetching PR diff statistics');
+		const diffStats = await atlassianPullRequestsService.getDiffstat({
+			workspace: workspaceSlug,
+			repo_slug: repoSlug,
+			pull_request_id: parseInt(prId, 10),
+		});
 		methodLogger.debug(
-			`Retrieved pull request: ${pullRequestData.title} (${pullRequestData.id})`,
+			`Retrieved ${diffStats.values?.length || 0} diff stats`,
 		);
 
-		// Check if we need to expand the diff details
-		let diffStats = null;
+		// Get the full diff if requested
 		let diffContent = null;
-
-		try {
-			// Get the diff statistics
-			diffStats =
-				await atlassianPullRequestsService.getDiffstat(serviceParams);
-			methodLogger.debug('Retrieved diff statistics');
-
-			// If full diff is requested, get the complete diff content
-			if (includeFullDiff) {
-				diffContent =
-					await atlassianPullRequestsService.getRawDiff(
-						serviceParams,
-					);
-				methodLogger.debug('Retrieved full diff content');
+		if (includeFullDiff) {
+			try {
+				methodLogger.debug('Fetching full diff content');
+				diffContent = await atlassianPullRequestsService.getRawDiff({
+					workspace: workspaceSlug,
+					repo_slug: repoSlug,
+					pull_request_id: parseInt(prId, 10),
+				});
+				methodLogger.debug(
+					`Retrieved diff content: ${
+						diffContent
+							? diffContent.substring(0, 100) + '...'
+							: 'none'
+					}`,
+				);
+			} catch (diffErr) {
+				methodLogger.warn('Failed to retrieve diff:', diffErr);
+				// Continue without diff
 			}
-		} catch (diffError) {
-			methodLogger.warn(
-				'Failed to retrieve diff information:',
-				diffError,
-			);
-			// Continue even if diff retrieval fails
 		}
 
-		// Format the pull request data for display
-		const formattedPullRequest = formatPullRequestDetails(
-			pullRequestData,
+		// Format the pull request data
+		const formattedPr = formatPullRequestDetails(
+			pullRequestResponse,
 			diffStats,
 			diffContent,
 		);
 
+		// Return controller response
 		return {
-			content: formattedPullRequest,
+			content: formattedPr,
 		};
 	} catch (error) {
-		// Use the standardized error handler
+		methodLogger.error('Failed to retrieve pull request:', error);
 		throw handleControllerError(error, {
 			entityType: 'Pull Request',
-			operation: 'retrieving',
+			operation: 'get',
 			source: 'controllers/atlassian.pullrequests.controller.ts@get',
-			additionalInfo: { workspaceSlug, repoSlug, prId },
+			additionalInfo: { ...options },
 		});
 	}
 }
@@ -256,18 +305,13 @@ async function get(
 async function listComments(
 	options: ListPullRequestCommentsToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, prId } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'listComments',
 	);
 
-	methodLogger.debug(
-		`Listing comments for pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
-		options,
-	);
-
 	try {
+		// Apply defaults
 		const defaults: Partial<ListPullRequestCommentsToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
 		};
@@ -276,6 +320,32 @@ async function listComments(
 				options,
 				defaults,
 			);
+
+		// Handle optional workspaceSlug
+		if (!mergedOptions.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			mergedOptions.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
+
+		const { workspaceSlug, repoSlug, prId } = mergedOptions;
+
+		if (!workspaceSlug || !repoSlug) {
+			throw new Error('Workspace slug and repository slug are required');
+		}
+
+		methodLogger.debug(
+			`Listing comments for pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
+			mergedOptions,
+		);
 
 		const serviceParams: ListCommentsParams = {
 			workspace: workspaceSlug,
@@ -364,21 +434,44 @@ async function listComments(
 async function addComment(
 	options: CreatePullRequestCommentToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, prId, content, inline } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'addComment',
 	);
 
-	methodLogger.debug(
-		`Creating comment on pull request ${workspaceSlug}/${repoSlug}/${prId}...`,
-		{ inline: !!inline },
-	);
-
 	try {
+		methodLogger.debug('Adding PR comment', {
+			...options,
+			content: `(content length: ${options.content.length})`,
+		});
+
+		// Handle optional workspaceSlug
+		if (!options.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			options.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
+
+		const { workspaceSlug, repoSlug, prId, content, inline } = options;
+
+		methodLogger.debug(
+			`Adding comment to PR ${workspaceSlug}/${repoSlug}/${prId}`,
+			{
+				contentLength: content.length,
+				hasInline: !!inline,
+			},
+		);
+
 		// Map controller options to service parameters
 		let inlineParam: { path: string; to?: number } | undefined = undefined;
-
 		if (inline) {
 			inlineParam = {
 				path: inline.path,
@@ -386,54 +479,43 @@ async function addComment(
 			};
 		}
 
-		// Optimize the markdown content for Bitbucket rendering
-		// This does NOT convert the format but fixes known rendering quirks
-		const optimizedContent = optimizeBitbucketMarkdown(content);
-		methodLogger.debug(
-			'Content has been optimized for Bitbucket rendering',
-		);
-
-		const serviceParams: CreatePullRequestCommentParams = {
+		// Create the comment parameters
+		const commentParams: CreateCommentParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
 			pull_request_id: parseInt(prId, 10),
 			content: {
-				raw: optimizedContent,
+				raw: content,
 			},
 			inline: inlineParam,
 		};
 
-		methodLogger.debug('Using service parameters:', {
-			...serviceParams,
-			content: '(content)',
+		methodLogger.debug('Creating comment with params:', {
+			...commentParams,
+			content: `(raw content length: ${commentParams.content.raw.length})`,
 		});
 
-		const commentData =
-			await atlassianPullRequestsService.createComment(serviceParams);
+		// Submit the comment through the service
+		const commentResponse =
+			await atlassianPullRequestsService.createComment(commentParams);
 
 		methodLogger.debug('Comment created successfully', {
-			id: commentData.id,
-			created_on: commentData.created_on,
+			id: commentResponse.id,
+			created_on: commentResponse.created_on,
 		});
 
-		// Create a simple confirmation message
-		const confirmationMessage = `Comment #${commentData.id} created successfully on pull request #${prId}.`;
+		// Format success message
+		const successMessage = `Comment #${commentResponse.id} created successfully on pull request #${prId}.`;
 
 		return {
-			content: confirmationMessage,
+			content: successMessage,
 		};
 	} catch (error) {
-		// Use the standardized error handler
 		throw handleControllerError(error, {
 			entityType: 'Pull Request Comment',
-			operation: 'creating',
+			operation: 'create',
 			source: 'controllers/atlassian.pullrequests.controller.ts@addComment',
-			additionalInfo: {
-				workspaceSlug,
-				repoSlug,
-				prId,
-				hasInline: !!inline,
-			},
+			additionalInfo: { ...options },
 		});
 	}
 }
@@ -446,49 +528,66 @@ async function addComment(
 async function add(
 	options: CreatePullRequestToolArgsType,
 ): Promise<ControllerResponse> {
-	const {
-		workspaceSlug,
-		repoSlug,
-		title,
-		sourceBranch,
-		destinationBranch,
-		description,
-		closeSourceBranch,
-	} = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'add',
 	);
 
-	methodLogger.debug(
-		`Creating pull request in ${workspaceSlug}/${repoSlug}...`,
-		{
+	try {
+		methodLogger.debug('Creating pull request', {
+			...options,
+			description: options.description
+				? '(description provided)'
+				: '(no description)',
+		});
+
+		// Handle optional workspaceSlug
+		if (!options.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			options.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
+		}
+
+		const {
+			workspaceSlug,
+			repoSlug,
 			title,
 			sourceBranch,
 			destinationBranch,
-			hasDescription: !!description,
+			description,
 			closeSourceBranch,
-		},
-	);
+		} = options;
 
-	try {
+		methodLogger.debug(
+			`Creating pull request in ${workspaceSlug}/${repoSlug}`,
+			{
+				title,
+				source: sourceBranch,
+				destination: destinationBranch || 'main',
+				description: description ? '(provided)' : '(none)',
+				closeSourceBranch,
+			},
+		);
+
 		// Optimize the description markdown for Bitbucket rendering
 		// Bitbucket natively accepts markdown format - this fixes rendering issues only
-		const optimizedDescription = description
+		const formattedDescription = description
 			? optimizeBitbucketMarkdown(description)
 			: '';
 
-		if (description) {
-			methodLogger.debug(
-				'Description has been optimized for Bitbucket rendering',
-			);
-		}
-
-		// Map controller options to service parameters
-		const serviceParams: CreatePullRequestParams = {
+		// Prepare the parameters for creating the pull request
+		const createParams: CreatePullRequestParams = {
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
-			title: title,
+			title,
 			source: {
 				branch: {
 					name: sourceBranch,
@@ -499,41 +598,38 @@ async function add(
 					name: destinationBranch || 'main', // Default to 'main' if not specified
 				},
 			},
-			description: optimizedDescription,
-			close_source_branch: closeSourceBranch || false,
+			description: formattedDescription,
+			close_source_branch: closeSourceBranch,
 		};
 
-		methodLogger.debug('Using service parameters:', {
-			...serviceParams,
-			description: description ? '(provided)' : '(empty)',
+		methodLogger.debug('Creating pull request with params', {
+			...createParams,
+			description: createParams.description
+				? `(${createParams.description.length} chars)`
+				: '(none)',
 		});
 
-		const pullRequestData =
-			await atlassianPullRequestsService.create(serviceParams);
+		// Create the pull request through the service
+		const prResponse =
+			await atlassianPullRequestsService.create(createParams);
 
 		methodLogger.debug('Pull request created successfully', {
-			id: pullRequestData.id,
-			title: pullRequestData.title,
+			id: prResponse.id,
+			links: prResponse.links,
 		});
 
-		// Format pull request details using the existing formatter
-		const formattedPullRequest = formatPullRequestDetails(pullRequestData);
+		// Format the created pull request details
+		const formattedPr = formatPullRequestDetails(prResponse);
 
 		return {
-			content: `Pull request #${pullRequestData.id} created successfully.\n\n${formattedPullRequest}`,
+			content: formattedPr,
 		};
 	} catch (error) {
-		// Use the standardized error handler
 		throw handleControllerError(error, {
 			entityType: 'Pull Request',
-			operation: 'creating',
+			operation: 'create',
 			source: 'controllers/atlassian.pullrequests.controller.ts@add',
-			additionalInfo: {
-				workspaceSlug,
-				repoSlug,
-				sourceBranch,
-				destinationBranch,
-			},
+			additionalInfo: { ...options },
 		});
 	}
 }

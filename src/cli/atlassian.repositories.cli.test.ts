@@ -376,7 +376,7 @@ describe('Atlassian Repositories CLI Commands', () => {
 		}, 30000); // Increased timeout for API calls
 
 		// Test with missing workspace parameter
-		it('should fail when workspace is not provided', async () => {
+		it('should use default workspace when workspace is not provided', async () => {
 			if (skipIfNoCredentials()) {
 				return;
 			}
@@ -388,11 +388,12 @@ describe('Atlassian Repositories CLI Commands', () => {
 				'some-repo',
 			]);
 
-			// Should fail with non-zero exit code
+			// Now that workspace is optional, we should get a different error
+			// (repository not found), but not a missing parameter error
 			expect(result.exitCode).not.toBe(0);
 
-			// Should indicate missing required option
-			expect(result.stderr).toContain('required option');
+			// Should NOT indicate missing required option for workspace
+			expect(result.stderr).not.toContain('workspace-slug');
 		}, 15000);
 
 		// Test with missing repository parameter

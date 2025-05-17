@@ -85,9 +85,9 @@ export const GetPullRequestToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 
 	/**
@@ -133,9 +133,9 @@ export const ListPullRequestCommentsToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 
 	/**
@@ -177,9 +177,9 @@ export const CreatePullRequestCommentToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 
 	/**
@@ -246,9 +246,9 @@ export const CreatePullRequestToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace. Example: "myteam"',
 		),
 
 	/**

@@ -282,7 +282,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				return;
 			}
 
-			// Test without workspace parameter
+			// Test without workspace parameter (now optional)
 			const missingWorkspace = await CliTestUtil.runCommand([
 				'get-pr',
 				'--repo-slug',
@@ -291,9 +291,10 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				'1',
 			]);
 
-			// Should fail with non-zero exit code
+			// Now that workspace is optional, we should get a different error
+			// (repository not found), but not a missing parameter error
 			expect(missingWorkspace.exitCode).not.toBe(0);
-			expect(missingWorkspace.stderr).toContain('required option');
+			expect(missingWorkspace.stderr).not.toContain('workspace-slug');
 
 			// Test without repository parameter
 			const missingRepo = await CliTestUtil.runCommand([
@@ -389,7 +390,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				return;
 			}
 
-			// Test without workspace parameter
+			// Test without workspace parameter (now optional)
 			const missingWorkspace = await CliTestUtil.runCommand([
 				'ls-pr-comments',
 				'--repo-slug',
@@ -398,9 +399,10 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 				'1',
 			]);
 
-			// Should fail with non-zero exit code
+			// Now that workspace is optional, we should get a different error
+			// (repository not found), but not a missing parameter error
 			expect(missingWorkspace.exitCode).not.toBe(0);
-			expect(missingWorkspace.stderr).toContain('required option');
+			expect(missingWorkspace.stderr).not.toContain('workspace-slug');
 
 			// Test without repository parameter
 			const missingRepo = await CliTestUtil.runCommand([
@@ -512,13 +514,6 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stdout).toContain('--line');
 		});
 
-		it('should require workspace-slug parameter', async () => {
-			const result = await CliTestUtil.runCommand(['add-pr-comment']);
-			expect(result.exitCode).not.toBe(0);
-			expect(result.stderr).toContain('required option');
-			expect(result.stderr).toContain('workspace-slug');
-		});
-
 		it('should require repo-slug parameter', async () => {
 			const result = await CliTestUtil.runCommand([
 				'add-pr-comment',
@@ -528,6 +523,15 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain('required option');
 			expect(result.stderr).toContain('repo-slug');
+		});
+
+		it('should use default workspace when workspace is not provided', async () => {
+			const result = await CliTestUtil.runCommand(['add-pr-comment']);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			// Should require repo-slug but not workspace-slug
+			expect(result.stderr).toContain('repo-slug');
+			expect(result.stderr).not.toContain('workspace-slug');
 		});
 
 		it('should require pr-id parameter', async () => {
@@ -597,13 +601,6 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.stdout).toContain('--close-source-branch');
 		});
 
-		it('should require workspace-slug parameter', async () => {
-			const result = await CliTestUtil.runCommand(['add-pr']);
-			expect(result.exitCode).not.toBe(0);
-			expect(result.stderr).toContain('required option');
-			expect(result.stderr).toContain('workspace-slug');
-		});
-
 		it('should require repo-slug parameter', async () => {
 			const result = await CliTestUtil.runCommand([
 				'add-pr',
@@ -613,6 +610,15 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain('required option');
 			expect(result.stderr).toContain('repo-slug');
+		});
+
+		it('should use default workspace when workspace is not provided', async () => {
+			const result = await CliTestUtil.runCommand(['add-pr']);
+			expect(result.exitCode).not.toBe(0);
+			expect(result.stderr).toContain('required option');
+			// Should require repo-slug but not workspace-slug
+			expect(result.stderr).toContain('repo-slug');
+			expect(result.stderr).not.toContain('workspace-slug');
 		});
 
 		it('should require title parameter', async () => {
