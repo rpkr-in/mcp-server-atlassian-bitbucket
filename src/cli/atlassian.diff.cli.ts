@@ -22,7 +22,9 @@ function register(program: Command) {
 	// Branch diff command
 	program
 		.command('diff-branches')
-		.description('Display differences between two branches in a repository')
+		.description(
+			'Display differences between two branches in a repository.\nIMPORTANT: The output shows changes as "destinationBranch → sourceBranch". For complete code changes (not just summary), try reversing the branch parameters if initial results show only summary.',
+		)
 		.option(
 			'-w, --workspace-slug <workspaceSlug>',
 			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account).',
@@ -33,11 +35,11 @@ function register(program: Command) {
 		)
 		.requiredOption(
 			'-s, --source-branch <sourceBranch>',
-			'Source branch for comparison (feature branch)',
+			"Source branch for comparison (usually the feature branch). NOTE: Parameter naming might be counterintuitive - try reversing parameters if results aren't as expected.",
 		)
 		.option(
 			'-d, --destination-branch <destinationBranch>',
-			'Destination branch for comparison (defaults to "main")',
+			'Destination branch for comparison (defaults to "main"). NOTE: Parameter naming might be counterintuitive - try reversing parameters if results aren\'t as expected.',
 		)
 		.option(
 			'-f, --full-diff',
@@ -90,7 +92,9 @@ function register(program: Command) {
 	// Commit diff command
 	program
 		.command('diff-commits')
-		.description('Display differences between two commits in a repository')
+		.description(
+			'Display differences between two commits in a repository.\nIMPORTANT: Parameter order is counterintuitive! For proper results, --since-commit should be the NEWER commit and --until-commit should be the OLDER commit. If you see "No changes detected", try reversing the commit order.',
+		)
 		.option(
 			'-w, --workspace-slug <workspaceSlug>',
 			'Workspace slug containing the repository. If not provided, the system will use your default workspace.',
@@ -101,11 +105,11 @@ function register(program: Command) {
 		)
 		.requiredOption(
 			'-s, --since-commit <sinceCommit>',
-			'Base commit hash or reference (starting point)',
+			'Base commit hash or reference (IMPORTANT: Should be the NEWER commit chronologically)',
 		)
 		.requiredOption(
 			'-u, --until-commit <untilCommit>',
-			'Target commit hash or reference (ending point)',
+			'Target commit hash or reference (IMPORTANT: Should be the OLDER commit chronologically)',
 		)
 		.option(
 			'-f, --full-diff',

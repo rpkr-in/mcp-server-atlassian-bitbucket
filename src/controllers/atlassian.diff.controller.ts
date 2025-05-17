@@ -90,6 +90,14 @@ async function branchDiff(
 		// NOTE: Bitbucket API expects the destination branch first, then the source branch
 		// This is the opposite of what some Git tools use (e.g., git diff source..destination)
 		// The diff shows changes that would need to be applied to destination to match source
+		//
+		// IMPORTANT: This behavior is counterintuitive in two ways:
+		// 1. The parameter names "sourceBranch" and "destinationBranch" suggest a certain direction,
+		//    but the output is displayed as "destinationBranch → sourceBranch"
+		// 2. When comparing branches with newer content in the feature branch (source), full diffs
+		//    might only show when using parameters in one order, and only summaries in the other order
+		//
+		// We document this behavior clearly in the CLI and Tool interfaces
 		const spec = `${params.destinationBranch}..${params.sourceBranch}`;
 
 		methodLogger.debug(`Using diff spec: ${spec}`);
@@ -213,6 +221,13 @@ async function commitDiff(
 		// Construct the spec (e.g., "a1b2c3d..e4f5g6h")
 		// NOTE: Bitbucket API expects the base/since commit first, then the target/until commit
 		// The diff shows changes that would need to be applied to base to match target
+		//
+		// IMPORTANT: The parameter names are counterintuitive to how they must be used:
+		// 1. For proper results with full code changes, sinceCommit should be the NEWER commit,
+		//    and untilCommit should be the OLDER commit (reverse chronological order)
+		// 2. If used with chronological order (older → newer), the result may show "No changes detected"
+		//
+		// We document this behavior clearly in the CLI and Tool interfaces
 		const spec = `${params.sinceCommit}..${params.untilCommit}`;
 
 		methodLogger.debug(`Using diff spec: ${spec}`);

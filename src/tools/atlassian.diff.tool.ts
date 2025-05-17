@@ -70,7 +70,15 @@ function registerTools(server: McpServer) {
 	// Register branch diff tool
 	server.tool(
 		'bb_diff_branches',
-		`Displays detailed differences between two branches in a repository, including code changes by default. Requires \`repoSlug\` and \`sourceBranch\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`destinationBranch\` (defaults to "main") and \`includeFullDiff\` (defaults to true). The diff shows changes that would need to be applied to the destination branch to match the source branch. Note: Both branches must exist in the repository. Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+		`Displays detailed differences between two branches in a repository, including code changes by default. Requires \`repoSlug\` and \`sourceBranch\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`destinationBranch\` (defaults to "main") and \`includeFullDiff\` (defaults to true). 
+
+**IMPORTANT PARAMETER ORDER NOTE:** 
+- The output displays changes as \`destinationBranch → sourceBranch\` regardless of parameter naming
+- For complete code changes (not just summary), try reversing the branch parameters if initial results show only summary
+- When \`sourceBranch\` contains newer changes, set \`sourceBranch\` to your feature branch and \`destinationBranch\` to main
+- When comparing branches where main contains newer changes than your branch, try reversing the parameters
+
+Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
 		BranchDiffArgsSchema.shape,
 		handleBranchDiff,
 	);
@@ -78,7 +86,17 @@ function registerTools(server: McpServer) {
 	// Register commit diff tool
 	server.tool(
 		'bb_diff_commits',
-		`Displays detailed differences between two commits in a repository, including code changes by default. Requires \`repoSlug\`, \`sinceCommit\`, and \`untilCommit\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`includeFullDiff\` (defaults to true). The diff shows changes that would need to be applied to the since commit to match the until commit. Note: Both commits must exist in the repository and be specified in the correct order. Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+		`Displays detailed differences between two commits in a repository, including code changes by default. Requires \`repoSlug\`, \`sinceCommit\`, and \`untilCommit\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`includeFullDiff\` (defaults to true).
+
+**IMPORTANT PARAMETER ORDER NOTE:**
+- The parameter names are counterintuitive to their actual ordering requirements
+- For proper results with full code changes, you must specify:
+  - \`sinceCommit\`: The NEWER commit (chronologically later in time)
+  - \`untilCommit\`: The OLDER commit (chronologically earlier in time)
+- If you see "No changes detected", try reversing the commit order
+- The diff result shows changes that would be needed to transform \`sinceCommit\` into \`untilCommit\`
+
+Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
 		CommitDiffArgsSchema.shape,
 		handleCommitDiff,
 	);

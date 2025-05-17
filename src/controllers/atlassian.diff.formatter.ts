@@ -35,14 +35,23 @@ export function formatDiffstat(
 		lines.push(
 			'*No changes detected in the diffstat response. This might occur when:*',
 		);
-		lines.push('- The commits are identical');
+		lines.push('- The commits or branches are identical');
 		lines.push(
 			'- The changes are purely structural (e.g., merge commits without content changes)',
 		);
-		lines.push('- The commits need to be specified in a different order');
-		lines.push('');
 		lines.push(
-			'Try specifying the commits in reverse order or use a different commit comparison method.',
+			'- The parameters need to be specified in a different order',
+		);
+		lines.push('');
+		lines.push('**Try the following:**');
+		lines.push(
+			'1. For branch comparisons: Reverse the source and destination branch parameters',
+		);
+		lines.push(
+			'2. For commit comparisons: Ensure newer commit is `sinceCommit` and older commit is `untilCommit`',
+		);
+		lines.push(
+			'3. Check that both references exist and you have access to them',
 		);
 		lines.push('');
 		lines.push(formatSeparator());
@@ -153,10 +162,14 @@ export function formatFullDiff(
 			lines.splice(
 				messageStartIndex,
 				6,
-				'*No file changes in diffstat but changes detected in raw diff. This often happens with:*',
-				'- Merge commits',
-				'- Rename-only changes',
-				'- Changes to file metadata without content changes',
+				'*No file changes in diffstat but raw diff content was found. This often happens with:*',
+				'- Merge commits or trivial merges',
+				'- Rename-only changes without content modifications',
+				'- Changes to file metadata or permissions without content changes',
+				'',
+				'If the diff content below is not what you expected, try reversing the parameter order:',
+				'- For branch comparisons: swap source and destination branch values',
+				'- For commit comparisons: swap sinceCommit and untilCommit values',
 			);
 		}
 

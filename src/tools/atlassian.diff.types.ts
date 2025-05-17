@@ -31,7 +31,7 @@ export const BranchDiffArgsSchema = z.object({
 		.string()
 		.min(1, 'Source branch is required')
 		.describe(
-			'Source branch for comparison (often the feature branch). Must be a valid branch in the repository. Example: "feature/login-redesign"',
+			'Source branch for comparison. IMPORTANT NOTE: The output displays as "destinationBranch → sourceBranch", and parameter naming can be counterintuitive. For full code diffs, try both parameter orders if initial results show only summary. Example: "feature/login-redesign"',
 		),
 
 	/**
@@ -41,7 +41,7 @@ export const BranchDiffArgsSchema = z.object({
 		.string()
 		.optional()
 		.describe(
-			'Destination branch for comparison (the target branch). If not specified, defaults to "main". Example: "develop"',
+			'Destination branch for comparison. IMPORTANT NOTE: The output displays as "destinationBranch → sourceBranch", and parameter naming can be counterintuitive. For full code diffs, try both parameter orders if initial results show only summary. If not specified, defaults to "main". Example: "develop"',
 		),
 
 	/**
@@ -94,11 +94,15 @@ export const CommitDiffArgsSchema = z.object({
 	sinceCommit: z
 		.string()
 		.min(1)
-		.describe('Base commit hash or reference (starting point)'),
+		.describe(
+			'Base commit hash or reference. IMPORTANT NOTE: For proper results with code changes, this should be the NEWER commit (chronologically later). If you see "No changes detected", try reversing commit order.',
+		),
 	untilCommit: z
 		.string()
 		.min(1)
-		.describe('Target commit hash or reference (ending point)'),
+		.describe(
+			'Target commit hash or reference. IMPORTANT NOTE: For proper results with code changes, this should be the OLDER commit (chronologically earlier). If you see "No changes detected", try reversing commit order.',
+		),
 	includeFullDiff: z
 		.boolean()
 		.optional()
