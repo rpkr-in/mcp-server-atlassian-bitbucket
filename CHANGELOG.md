@@ -1,3 +1,10 @@
+## [1.36.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.2...v1.36.3) (2025-05-17)
+
+
+### Bug Fixes
+
+* improve diff_commits tool to better handle cases with empty diffstat but existing changes ([736304b](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/736304b74b6a0f39644af55a972dde4ec9d9e041))
+
 ## [1.36.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.1...v1.36.2) (2025-05-17)
 
 
