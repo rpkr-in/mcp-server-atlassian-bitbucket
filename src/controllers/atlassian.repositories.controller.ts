@@ -5,6 +5,7 @@ import {
 	handleControllerError,
 	buildErrorContext,
 } from '../utils/error-handler.util.js';
+import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import {
 	extractPaginationInfo,
 	PaginationType,
@@ -29,11 +30,11 @@ import {
 	CreateBranchParams,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { formatBitbucketQuery } from '../utils/query.util.js';
-import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -56,18 +57,31 @@ controllerLogger.debug('Bitbucket repositories controller initialized');
 async function list(
 	options: ListRepositoriesToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'list',
 	);
-
-	methodLogger.debug(
-		`Listing repositories for workspace: ${workspaceSlug}...`,
-		options,
-	);
+	methodLogger.debug('Listing Bitbucket repositories...', options);
 
 	try {
+		// Get workspace slug from options or default
+		let workspaceSlug = options.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace slug provided, using default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No workspace slug provided and no default workspace could be determined. Please provide a workspace slug or configure a default workspace.',
+				);
+			}
+
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
 		// Create defaults object with proper typing
 		const defaults: Partial<ListRepositoriesToolArgsType> = {
 			limit: DEFAULT_PAGE_SIZE,
@@ -76,7 +90,7 @@ async function list(
 
 		// Apply defaults
 		const mergedOptions = applyDefaults<ListRepositoriesToolArgsType>(
-			options,
+			{ ...options, workspaceSlug },
 			defaults,
 		);
 

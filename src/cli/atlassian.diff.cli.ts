@@ -23,25 +23,25 @@ function register(program: Command) {
 	program
 		.command('diff-branches')
 		.description('Display differences between two branches in a repository')
-		.requiredOption(
-			'--workspace-slug <workspaceSlug>',
-			'Workspace slug containing the repository',
+		.option(
+			'-w, --workspace-slug <workspaceSlug>',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account).',
 		)
 		.requiredOption(
-			'--repo-slug <repoSlug>',
+			'-r, --repo-slug <repoSlug>',
 			'Repository slug to compare branches',
 		)
 		.requiredOption(
-			'--source-branch <sourceBranch>',
+			'-s, --source-branch <sourceBranch>',
 			'Source branch for comparison (feature branch)',
 		)
 		.option(
-			'--destination-branch <destinationBranch>',
+			'-d, --destination-branch <destinationBranch>',
 			'Destination branch for comparison (defaults to "main")',
 		)
 		.option(
-			'--full-diff',
-			'Include full code diff in the output (default: false)',
+			'-f, --full-diff',
+			'Include full code diff in the output (included by default, flag kept for backward compatibility)',
 		)
 		.option(
 			'--limit <limit>',
@@ -64,7 +64,9 @@ function register(program: Command) {
 					repoSlug: options.repoSlug,
 					sourceBranch: options.sourceBranch,
 					destinationBranch: options.destinationBranch,
-					includeFullDiff: Boolean(options.fullDiff),
+					...(options.fullDiff !== undefined && {
+						includeFullDiff: true,
+					}),
 					limit: options.limit,
 					cursor: options.cursor,
 				};
@@ -89,25 +91,25 @@ function register(program: Command) {
 	program
 		.command('diff-commits')
 		.description('Display differences between two commits in a repository')
-		.requiredOption(
-			'--workspace-slug <workspaceSlug>',
-			'Workspace slug containing the repository',
+		.option(
+			'-w, --workspace-slug <workspaceSlug>',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace.',
 		)
 		.requiredOption(
-			'--repo-slug <repoSlug>',
+			'-r, --repo-slug <repoSlug>',
 			'Repository slug to compare commits',
 		)
 		.requiredOption(
-			'--since-commit <sinceCommit>',
+			'-s, --since-commit <sinceCommit>',
 			'Base commit hash or reference (starting point)',
 		)
 		.requiredOption(
-			'--until-commit <untilCommit>',
+			'-u, --until-commit <untilCommit>',
 			'Target commit hash or reference (ending point)',
 		)
 		.option(
-			'--full-diff',
-			'Include full code diff in the output (default: false)',
+			'-f, --full-diff',
+			'Include full code diff in the output (included by default, flag kept for backward compatibility)',
 		)
 		.option(
 			'--limit <limit>',
@@ -130,7 +132,9 @@ function register(program: Command) {
 					repoSlug: options.repoSlug,
 					sinceCommit: options.sinceCommit,
 					untilCommit: options.untilCommit,
-					includeFullDiff: Boolean(options.fullDiff),
+					...(options.fullDiff !== undefined && {
+						includeFullDiff: true,
+					}),
 					limit: options.limit,
 					cursor: options.cursor,
 				};

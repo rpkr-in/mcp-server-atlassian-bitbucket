@@ -47,13 +47,13 @@ function registerListPullRequestsCommand(program: Command): void {
 		.description(
 			'List pull requests in a Bitbucket repository, with filtering and pagination.',
 		)
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repository. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
 		)
 		.requiredOption(
 			'-r, --repo-slug <slug>',
-			'Repository slug containing the pull requests. Must be a valid repository in the specified workspace. Example: "project-api"',
+			'Repository slug containing the pull requests. This must be a valid repository in the specified workspace. Example: "project-api"',
 		)
 		.option(
 			'-s, --state <state>',
@@ -151,8 +151,8 @@ function registerGetPullRequestCommand(program: Command): void {
 		)
 		.option(
 			'--include-full-diff',
-			'Retrieve the full diff content instead of just the summary. Default: false',
-			false,
+			'Retrieve the full diff content instead of just the summary. Default: true (rich output by default)',
+			true,
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(

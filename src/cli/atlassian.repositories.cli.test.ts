@@ -233,20 +233,32 @@ describe('Atlassian Repositories CLI Commands', () => {
 			}
 		}, 30000); // Increased timeout for API call
 
-		// Test without required parameter (workspace)
-		it('should fail when workspace is not provided', async () => {
+		// Test without workspace parameter (now optional)
+		it('should use default workspace when workspace is not provided', async () => {
 			if (skipIfNoCredentials()) {
 				return;
 			}
 
-			// Run command without required workspace parameter
+			// Run command without workspace parameter
 			const result = await CliTestUtil.runCommand(['ls-repos']);
 
-			// Should fail with non-zero exit code
-			expect(result.exitCode).not.toBe(0);
+			// Should succeed with exit code 0 (using default workspace)
+			expect(result.exitCode).toBe(0);
 
-			// Should indicate missing required option
-			expect(result.stderr).toContain('required option');
+			// Output should contain either repositories or "No repositories found"
+			const hasRepos = !result.stdout.includes('No repositories found');
+
+			if (hasRepos) {
+				// Validate expected Markdown structure if repos are found
+				CliTestUtil.validateOutputContains(result.stdout, [
+					'# Bitbucket Repositories',
+				]);
+			} else {
+				// No repositories were found but command should still succeed
+				CliTestUtil.validateOutputContains(result.stdout, [
+					'No repositories found',
+				]);
+			}
 		}, 15000);
 
 		// Test with invalid parameter value

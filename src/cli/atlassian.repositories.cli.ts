@@ -51,9 +51,9 @@ function registerListRepositoriesCommand(program: Command): void {
 		.description(
 			'List repositories in a Bitbucket workspace, with filtering and pagination.',
 		)
-		.requiredOption(
+		.option(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug containing the repositories. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repositories. If not provided, uses your default workspace (configured via BITBUCKET_DEFAULT_WORKSPACE or first workspace in your account). Example: "myteam"',
 		)
 		.option(
 			'-q, --query <string>',
@@ -80,25 +80,12 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Pagination cursor for retrieving the next set of results.',
 		)
 		.action(async (options) => {
-			const actionLogger = Logger.forContext(
-				'cli/atlassian.repositories.cli.ts',
-				'ls-repos',
-			);
+			const actionLogger = cliLogger.forMethod('ls-repos');
 			try {
-				actionLogger.debug('Processing command options:', options);
+				actionLogger.debug('CLI ls-repos called', options);
 
-				// Validate options
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
-				const filterOptions = {
+				// Map CLI options to controller options
+				const controllerOptions = {
 					workspaceSlug: options.workspaceSlug,
 					query: options.query,
 					projectKey: options.projectKey,
@@ -110,22 +97,20 @@ function registerListRepositoriesCommand(program: Command): void {
 					cursor: options.cursor,
 				};
 
-				actionLogger.debug(
-					'Fetching repositories with filters:',
-					filterOptions,
-				);
+				// Call controller
 				const result =
-					await atlassianRepositoriesController.list(filterOptions);
-				actionLogger.debug('Successfully retrieved repositories');
+					await atlassianRepositoriesController.list(
+						controllerOptions,
+					);
 
+				// Output result content
 				console.log(result.content);
 
-				// Display pagination information if available
+				// If pagination information exists, append it
 				if (result.pagination) {
 					console.log('\n' + formatPagination(result.pagination));
 				}
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});

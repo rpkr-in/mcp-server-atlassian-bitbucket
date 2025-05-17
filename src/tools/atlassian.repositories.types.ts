@@ -31,9 +31,9 @@ export const ListRepositoriesToolArgs = z.object({
 	 */
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repositories. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug containing the repositories. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
 		),
 
 	/**

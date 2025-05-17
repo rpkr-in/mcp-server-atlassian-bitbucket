@@ -8,6 +8,7 @@ import {
 } from '../utils/pagination.util.js';
 import * as diffService from '../services/vendor.atlassian.repositories.diff.service.js';
 import { formatDiffstat, formatFullDiff } from './atlassian.diff.formatter.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 const controllerLogger = Logger.forContext(
 	'controllers/atlassian.diff.controller.ts',
@@ -18,7 +19,7 @@ controllerLogger.debug('Bitbucket diff controller initialized');
  * Base interface that extends Record<string, unknown> for error handling compatibility
  */
 interface BaseDiffOptions extends Record<string, unknown> {
-	workspaceSlug: string;
+	workspaceSlug?: string;
 	repoSlug: string;
 	includeFullDiff?: boolean;
 	limit?: number;
@@ -59,7 +60,7 @@ async function branchDiff(
 		// Apply defaults
 		const defaults = {
 			limit: DEFAULT_PAGE_SIZE,
-			includeFullDiff: false,
+			includeFullDiff: true,
 			destinationBranch: 'main', // Default to main if not provided
 			topic: false, // Default to topic=false which shows all changes between branches
 		};
@@ -67,6 +68,23 @@ async function branchDiff(
 		// Explicitly cast the result of applyDefaults to preserve the original types
 		const params = applyDefaults(options, defaults) as typeof options &
 			typeof defaults;
+
+		// Handle optional workspaceSlug
+		if (!params.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'Could not determine a default workspace. Please provide a workspaceSlug.',
+				);
+			}
+			params.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(
+				`Using default workspace: ${params.workspaceSlug}`,
+			);
+		}
 
 		// Construct the spec (e.g., "main..feature")
 		// NOTE: Bitbucket API expects the destination branch first, then the source branch
@@ -167,13 +185,30 @@ async function commitDiff(
 		// Apply defaults
 		const defaults = {
 			limit: DEFAULT_PAGE_SIZE,
-			includeFullDiff: false,
+			includeFullDiff: true,
 			topic: false, // Default to topic=false which shows all changes between commits
 		};
 
 		// Explicitly cast the result of applyDefaults to preserve the original types
 		const params = applyDefaults(options, defaults) as typeof options &
 			typeof defaults;
+
+		// Handle optional workspaceSlug
+		if (!params.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'Could not determine a default workspace. Please provide a workspaceSlug.',
+				);
+			}
+			params.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(
+				`Using default workspace: ${params.workspaceSlug}`,
+			);
+		}
 
 		// Construct the spec (e.g., "a1b2c3d..e4f5g6h")
 		// NOTE: Bitbucket API expects the base/since commit first, then the target/until commit

@@ -29,6 +29,7 @@ import {
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { extractDiffSnippet } from '../utils/diff.util.js';
 import { optimizeBitbucketMarkdown } from '../utils/formatter.util.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -69,15 +70,9 @@ interface PullRequestCommentWithSnippet extends PullRequestComment {
 async function list(
 	options: ListPullRequestsToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.pullrequests.controller.ts',
 		'list',
-	);
-
-	methodLogger.debug(
-		`Listing pull requests for ${workspaceSlug}/${repoSlug}...`,
-		options,
 	);
 
 	try {
@@ -90,6 +85,34 @@ async function list(
 		const mergedOptions = applyDefaults<ListPullRequestsToolArgsType>(
 			options,
 			defaults,
+		);
+
+		// Handle optional workspaceSlug - get default if not provided
+		if (!mergedOptions.workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'Could not determine a default workspace. Please provide a workspaceSlug.',
+				);
+			}
+			mergedOptions.workspaceSlug = defaultWorkspace;
+			methodLogger.debug(
+				`Using default workspace: ${mergedOptions.workspaceSlug}`,
+			);
+		}
+
+		const { workspaceSlug, repoSlug } = mergedOptions;
+
+		if (!workspaceSlug || !repoSlug) {
+			throw new Error('Workspace slug and repository slug are required');
+		}
+
+		methodLogger.debug(
+			`Listing pull requests for ${workspaceSlug}/${repoSlug}...`,
+			mergedOptions,
 		);
 
 		// Format the query for Bitbucket API if provided - specifically target title/description
