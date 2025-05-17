@@ -491,6 +491,84 @@ describe('Atlassian Pull Requests Controller', () => {
 			expect(result).toHaveProperty('content');
 			expect(result.content).toContain(prInfo.prId);
 		}, 30000);
+
+		it('should include comments when includeComments is true', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const prInfo = await getPullRequestInfo();
+			if (!prInfo) {
+				console.warn('Skipping test: No pull request info found.');
+				return;
+			}
+
+			// Mock getComments to return a predefined set of comments
+			const mockComments = {
+				values: [
+					{
+						id: 1,
+						content: { raw: 'This is a test comment.' },
+						user: { display_name: 'Test User' },
+						created_on: new Date().toISOString(),
+						links: {},
+					},
+				],
+				page: 1,
+				pagelen: 1,
+				size: 1,
+			};
+			jest.spyOn(
+				atlassianPullRequestsService,
+				'getComments',
+			).mockResolvedValueOnce(mockComments as any);
+
+			const result = await atlassianPullRequestsController.get({
+				...prInfo,
+				includeFullDiff: false,
+				includeComments: true,
+			});
+
+			expect(result.content).toContain('## Comments');
+			expect(result.content).toContain('This is a test comment.');
+			expect(result.content).toContain('Comment by Test User');
+			// Ensure getComments was called
+			expect(
+				atlassianPullRequestsService.getComments,
+			).toHaveBeenCalledWith(
+				expect.objectContaining({
+					workspace: prInfo.workspaceSlug,
+					repo_slug: prInfo.repoSlug,
+					pull_request_id: parseInt(prInfo.prId, 10),
+				}),
+			);
+		}, 30000);
+
+		it('should handle error when fetching comments fails for includeComments true', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const prInfo = await getPullRequestInfo();
+			if (!prInfo) {
+				console.warn('Skipping test: No pull request info found.');
+				return;
+			}
+
+			// Mock getComments to throw an error
+			jest.spyOn(
+				atlassianPullRequestsService,
+				'getComments',
+			).mockRejectedValueOnce(new Error('Failed to fetch comments'));
+
+			const result = await atlassianPullRequestsController.get({
+				...prInfo,
+				includeFullDiff: false,
+				includeComments: true,
+			});
+
+			// Should still return main PR content
+			expect(result.content).toMatch(/^# Pull Request:/m);
+			// Should NOT include the Comments section header if comments failed to load
+			expect(result.content).not.toContain('## Comments');
+			// Should log a warning (this is harder to check directly in test output without custom logger spy)
+		}, 30000);
 	});
 
 	describe('listComments', () => {

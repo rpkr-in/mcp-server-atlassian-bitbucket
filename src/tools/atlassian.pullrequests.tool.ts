@@ -304,7 +304,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request tool
 	server.tool(
 		'bb_get_pr',
-		`Retrieves detailed information about a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Includes PR metadata, status, reviewers, and diff statistics. Set \`includeFullDiff\` to true (default) for the complete code changes. Returns rich information as formatted Markdown, including PR summary and code changes. Requires Bitbucket credentials to be configured.`,
+		`Retrieves detailed information about a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Includes PR metadata, status, reviewers, and diff statistics. Set \`includeFullDiff\` to true (default) for the complete code changes. Set \`includeComments\` to true to also retrieve comments (default: false; Note: Enabling this may increase response time for pull requests with many comments). Returns rich information as formatted Markdown, including PR summary, code changes, and optionally comments. Requires Bitbucket credentials to be configured.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);

@@ -156,7 +156,7 @@ function registerGetPullRequestCommand(program: Command): void {
 		)
 		.option(
 			'--include-comments',
-			'Retrieve comments for the pull request. Default: false',
+			'Retrieve comments for the pull request. Default: false. Note: Enabling this may increase response time for pull requests with many comments due to additional API calls',
 			false,
 		)
 		.action(async (options) => {
