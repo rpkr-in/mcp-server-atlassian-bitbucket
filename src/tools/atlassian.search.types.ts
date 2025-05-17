@@ -44,8 +44,10 @@ export const SearchToolArgsBase = z
 		 */
 		workspaceSlug: z
 			.string()
-			.min(1)
-			.describe('Workspace slug to search in. Example: "myteam"'),
+			.optional()
+			.describe(
+				'Workspace slug to search in. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+			),
 
 		/**
 		 * Optional: Repository slug to limit search scope. Required for `pullrequests` and `commits` scopes. Example: "project-api"

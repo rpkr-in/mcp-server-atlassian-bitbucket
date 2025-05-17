@@ -152,8 +152,10 @@ export type GetCommitHistoryToolArgsType = z.infer<
 export const CreateBranchToolArgsSchema = z.object({
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
-		.describe('Workspace slug containing the repository.'),
+		.optional()
+		.describe(
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+		),
 	repoSlug: z
 		.string()
 		.min(1, 'Repository slug is required')
@@ -178,9 +180,9 @@ export type CreateBranchToolArgsType = z.infer<
 export const CloneRepositoryToolArgs = z.object({
 	workspaceSlug: z
 		.string()
-		.min(1, 'Workspace slug is required')
+		.optional()
 		.describe(
-			'Workspace slug containing the repository. Example: "myteam"',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
 		),
 	repoSlug: z
 		.string()

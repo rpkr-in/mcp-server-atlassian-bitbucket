@@ -443,12 +443,25 @@ async function getCommitHistory(
 async function createBranch(
 	options: CreateBranchToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, newBranchName, sourceBranchOrCommit } =
-		options;
+	const { repoSlug, newBranchName, sourceBranchOrCommit } = options;
+	let { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'createBranch',
 	);
+
+	// Handle optional workspaceSlug
+	if (!workspaceSlug) {
+		methodLogger.debug('No workspace provided, fetching default workspace');
+		const defaultWorkspace = await getDefaultWorkspace();
+		if (!defaultWorkspace) {
+			throw new Error(
+				'No default workspace found. Please provide a workspace slug.',
+			);
+		}
+		workspaceSlug = defaultWorkspace;
+		methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+	}
 
 	methodLogger.debug(
 		`Attempting to create branch '${newBranchName}' from '${sourceBranchOrCommit}' in ${workspaceSlug}/${repoSlug}`,
@@ -495,11 +508,25 @@ async function createBranch(
 async function cloneRepository(
 	options: CloneRepositoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, targetPath } = options;
+	const { repoSlug, targetPath } = options;
+	let { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.repositories.controller.ts',
 		'cloneRepository',
 	);
+
+	// Handle optional workspaceSlug
+	if (!workspaceSlug) {
+		methodLogger.debug('No workspace provided, fetching default workspace');
+		const defaultWorkspace = await getDefaultWorkspace();
+		if (!defaultWorkspace) {
+			throw new Error(
+				'No default workspace found. Please provide a workspace slug.',
+			);
+		}
+		workspaceSlug = defaultWorkspace;
+		methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+	}
 
 	methodLogger.debug(
 		`Attempting to clone repository ${workspaceSlug}/${repoSlug} to ${targetPath}`,

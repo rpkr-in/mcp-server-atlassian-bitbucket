@@ -24,6 +24,7 @@ import {
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { ListPullRequestsParams } from '../services/vendor.atlassian.pullrequests.types.js';
 import { RepositoriesResponse } from '../services/vendor.atlassian.repositories.types.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -47,17 +48,12 @@ async function search(
 	options: SearchToolArgsType,
 ): Promise<ControllerResponse> {
 	// Remove language and extension from here, they are handled via mergedOptions
-	const { workspaceSlug, repoSlug, query, scope = 'all' } = options;
+	const { repoSlug, query, scope = 'all' } = options;
+	let { workspaceSlug } = options;
 	const methodLogger = Logger.forContext(
 		'controllers/atlassian.search.controller.ts',
 		'search',
 	);
-
-	methodLogger.debug(`Searching Bitbucket with query: ${query}`, {
-		workspace: workspaceSlug,
-		repository: repoSlug,
-		scope,
-	});
 
 	try {
 		// Create defaults object
@@ -72,12 +68,27 @@ async function search(
 			defaults,
 		);
 
-		// Validate that workspace slug is provided and not empty
+		// Handle optional workspaceSlug
 		if (!mergedOptions.workspaceSlug) {
-			throw new Error(
-				'The workspaceSlug parameter is required for search operations.',
+			methodLogger.debug(
+				'No workspace provided, fetching default workspace',
 			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				throw new Error(
+					'No default workspace found. Please provide a workspace slug.',
+				);
+			}
+			mergedOptions.workspaceSlug = defaultWorkspace;
+			workspaceSlug = defaultWorkspace; // Update local variable for logging
+			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
 		}
+
+		methodLogger.debug(`Searching Bitbucket with query: ${query}`, {
+			workspace: workspaceSlug,
+			repository: repoSlug,
+			scope,
+		});
 
 		// For scope-specific searches
 		let result: ControllerResponse;
@@ -162,7 +173,7 @@ async function search(
  * Handle search for code content (uses Bitbucket's Code Search API)
  */
 async function handleCodeSearch(
-	workspaceSlug?: string,
+	workspaceSlug: string,
 	repoSlug?: string,
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
@@ -175,13 +186,6 @@ async function handleCodeSearch(
 		'handleCodeSearch',
 	);
 	methodLogger.debug('Performing code search');
-
-	if (!workspaceSlug) {
-		return {
-			content:
-				'A workspace is required for code search. Please provide a workspace slug.',
-		};
-	}
 
 	if (!query) {
 		return {
@@ -328,7 +332,7 @@ async function handleCodeSearch(
  * Handle search for pull requests (uses PR API with query filter)
  */
 async function handlePullRequestSearch(
-	workspaceSlug?: string,
+	workspaceSlug: string,
 	repoSlug?: string,
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
@@ -339,13 +343,6 @@ async function handlePullRequestSearch(
 		'handlePullRequestSearch',
 	);
 	methodLogger.debug('Performing pull request search');
-
-	if (!workspaceSlug) {
-		return {
-			content:
-				'Workspace is required for pull request search. Please provide a workspace slug.',
-		};
-	}
 
 	if (!query) {
 		return {
@@ -393,7 +390,7 @@ async function handlePullRequestSearch(
  * Handle search for repositories (limited functionality in the API)
  */
 async function handleRepositorySearch(
-	workspaceSlug?: string,
+	workspaceSlug: string,
 	_repoSlug?: string, // Renamed to indicate it's intentionally unused
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
@@ -404,13 +401,6 @@ async function handleRepositorySearch(
 		'handleRepositorySearch',
 	);
 	methodLogger.debug('Performing repository search');
-
-	if (!workspaceSlug) {
-		return {
-			content:
-				'A workspace is required for repository search. Please provide a workspace slug.',
-		};
-	}
 
 	if (!query) {
 		return {
@@ -479,7 +469,7 @@ async function handleRepositorySearch(
  * Handle search for commits (needs repository context)
  */
 async function handleCommitSearch(
-	workspaceSlug?: string,
+	workspaceSlug: string,
 	repoSlug?: string,
 	query?: string,
 	limit: number = DEFAULT_PAGE_SIZE,
@@ -490,13 +480,6 @@ async function handleCommitSearch(
 		'handleCommitSearch',
 	);
 	methodLogger.debug('Performing commit search');
-
-	if (!workspaceSlug) {
-		return {
-			content:
-				'Workspace is required for commit search. Please provide a workspace slug.',
-		};
-	}
 
 	if (!query) {
 		return {

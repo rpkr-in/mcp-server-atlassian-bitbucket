@@ -241,18 +241,24 @@ describe('Atlassian Search Controller', () => {
 			}
 		}, 30000);
 
-		it('should throw an McpError for missing workspaceSlug', async () => {
+		it('should use default workspace when workspaceSlug is missing or empty', async () => {
 			if (skipIfNoCredentials()) return;
 
-			// Expect the controller call to reject due to missing workspaceSlug
-			await expect(
-				atlassianSearchController.search({
-					scope: 'repositories',
-					workspaceSlug: '',
-					query: 'test',
-				}),
-			).rejects.toThrow(/workspaceSlug.*required/i);
-		}, 10000);
+			// No longer expecting an error - we should get a valid response with default workspace
+			const result = await atlassianSearchController.search({
+				scope: 'repositories',
+				workspaceSlug: '', // Empty workspaceSlug should trigger default workspace lookup
+				query: 'test',
+			});
+
+			// Verify the response structure
+			expect(result).toHaveProperty('content');
+			expect(typeof result.content).toBe('string');
+			expect(result).toHaveProperty('pagination');
+
+			// Content should include the Repository Search Results
+			expect(result.content).toContain('# Repository Search Results');
+		}, 30000);
 
 		it('should work without a repoSlug when scope=repositories', async () => {
 			if (skipIfNoCredentials()) return;
