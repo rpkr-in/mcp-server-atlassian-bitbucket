@@ -1,3 +1,10 @@
+## [1.36.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.4...v1.36.5) (2025-05-17)
+
+
+### Bug Fixes
+
+* remove empty metadata objects from Bitbucket tool responses ([ab65f71](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/ab65f71c4eb62ea6a21323bf821650a1e9252c7a))
+
 ## [1.36.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.3...v1.36.4) (2025-05-17)
 
 
