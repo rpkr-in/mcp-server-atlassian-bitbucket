@@ -128,7 +128,7 @@ export const GetPullRequestToolArgs = z.object({
 		.boolean()
 		.optional()
 		.describe(
-			'Set to true to retrieve comments for the pull request. Default: false',
+			'Set to true to retrieve comments for the pull request. Default: false. Note: Enabling this may increase response time for pull requests with many comments due to additional API calls.',
 		)
 		.default(false),
 });
