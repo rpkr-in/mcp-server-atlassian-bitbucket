@@ -157,6 +157,17 @@ export function formatRepositoryDetails(
 				`*View all pull requests in Bitbucket: [${repositoryData.full_name}/pull-requests](${repoUrl}/pull-requests)*`,
 			);
 		}
+	} else {
+		// Add the section even if no PRs are available
+		lines.push('');
+		lines.push(formatHeading('Recent Pull Requests', 2));
+		lines.push('No open pull requests found for this repository.');
+
+		if (repoUrl) {
+			lines.push(
+				`*View all pull requests in Bitbucket: [${repositoryData.full_name}/pull-requests](${repoUrl}/pull-requests)*`,
+			);
+		}
 	}
 
 	// Add standard footer with timestamp

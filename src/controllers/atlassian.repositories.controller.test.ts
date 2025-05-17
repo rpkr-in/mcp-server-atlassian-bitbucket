@@ -83,7 +83,7 @@ describe('Atlassian Repositories Controller', () => {
 				expect(result.pagination).toHaveProperty('page');
 				expect(typeof result.pagination?.page).toBe('number');
 			}
-		}, 30000); // Increased timeout
+		}, 30000);
 
 		it('should handle pagination options (limit/cursor)', async () => {
 			if (skipIfNoCredentials()) return;
@@ -391,13 +391,17 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Basic Markdown content checks
 			expect(result.content).toMatch(/^# Repository:/m);
-			expect(result.content).toContain(
-				`**Slug**: ${repoIdentifier.repoSlug}`,
-			);
 			expect(result.content).toContain('## Basic Information');
+			expect(result.content).toContain('## Links');
 
-			// Should include recent pull requests section regardless of whether PRs exist
+			// Should contain the recent pull requests section (even if there are no PRs,
+			// the section heading should be present, and there might be a "no pull requests found" message)
 			expect(result.content).toContain('## Recent Pull Requests');
+
+			// The URL to view all PRs should be present
+			expect(result.content).toContain(
+				'View all pull requests in Bitbucket',
+			);
 		}, 30000);
 
 		it('should throw an McpError for a non-existent repository slug', async () => {

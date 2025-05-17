@@ -1,4 +1,5 @@
 import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
+import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
 import { handleControllerError } from '../utils/error-handler.util.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
@@ -334,14 +335,39 @@ async function get(
 			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
 		}
 
-		// Call the service
+		// Call the service to get repository details
 		const repoData = await atlassianRepositoriesService.get({
 			workspace: params.workspaceSlug,
 			repo_slug: params.repoSlug,
 		});
 
-		// Format the repository data
-		const content = formatRepositoryDetails(repoData);
+		// Fetch recent pull requests for this repository (most recently updated, limit to 5)
+		let pullRequestsData = null;
+		try {
+			methodLogger.debug(
+				'Fetching recent pull requests for the repository',
+			);
+			pullRequestsData = await atlassianPullRequestsService.list({
+				workspace: params.workspaceSlug,
+				repo_slug: params.repoSlug,
+				state: 'OPEN', // Focus on open PRs
+				sort: '-updated_on', // Sort by most recently updated
+				pagelen: 5, // Limit to 5 to keep the response concise
+			});
+			methodLogger.debug(
+				`Retrieved ${pullRequestsData.values?.length || 0} recent pull requests`,
+			);
+		} catch (error) {
+			// Log the error but continue - this is an enhancement, not critical
+			methodLogger.warn(
+				'Failed to fetch recent pull requests, continuing without them',
+				error,
+			);
+			// Do not fail the entire operation if pull requests cannot be fetched
+		}
+
+		// Format the repository data with optional pull requests
+		const content = formatRepositoryDetails(repoData, pullRequestsData);
 
 		return { content };
 	} catch (error) {
