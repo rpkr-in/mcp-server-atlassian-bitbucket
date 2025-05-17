@@ -20,6 +20,7 @@ import {
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
 import { getDefaultWorkspace } from '../utils/workspace.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.repositories.tool.ts');
@@ -64,15 +65,20 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 			},
 		);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content,
+					text: finalText,
 				},
 			],
 			metadata: {
-				pagination: result.pagination,
+				// pagination: result.pagination, // Removed pagination from metadata
 			},
 		};
 	} catch (error) {
@@ -155,10 +161,15 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 			},
 		);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
+			content: [{ type: 'text' as const, text: finalText }],
 			metadata: {
-				pagination: result.pagination,
+				// pagination: result.pagination, // Removed pagination from metadata
 			},
 		};
 	} catch (error) {
@@ -285,15 +296,20 @@ async function listBranches(args: ListBranchesToolArgsType) {
 			hasMore: result.pagination?.hasMore,
 		});
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content,
+					text: finalText,
 				},
 			],
 			metadata: {
-				pagination: result.pagination,
+				// pagination: result.pagination, // Removed pagination from metadata
 			},
 		};
 	} catch (error) {

@@ -7,6 +7,7 @@ import {
 } from './atlassian.search.types.js';
 
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
 
@@ -44,15 +45,20 @@ async function search(args: SearchToolArgsType) {
 			hasMore: result.pagination?.hasMore,
 		});
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: finalText, // Contains timestamp footer
 				},
 			],
 			metadata: {
-				pagination: result.pagination, // Pass pagination object
+				// pagination: result.pagination, // Pass pagination object // Removed
 			},
 		};
 	} catch (error) {

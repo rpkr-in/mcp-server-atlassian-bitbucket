@@ -15,6 +15,7 @@ import {
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.pullrequests.tool.ts');
@@ -58,15 +59,20 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 			},
 		);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: finalText, // Contains timestamp footer
 				},
 			],
 			metadata: {
-				pagination: result.pagination, // Pass pagination object
+				// pagination: result.pagination, // Pass pagination object // Removed
 			},
 		};
 	} catch (error) {
@@ -164,15 +170,20 @@ async function listPullRequestComments(
 			},
 		);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: finalText, // Contains timestamp footer
 				},
 			],
 			metadata: {
-				pagination: result.pagination, // Pass pagination object
+				// pagination: result.pagination, // Pass pagination object // Removed
 			},
 		};
 	} catch (error) {

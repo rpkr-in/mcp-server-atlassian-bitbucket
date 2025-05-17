@@ -8,6 +8,7 @@ import {
 	type BranchDiffArgsType,
 	type CommitDiffArgsType,
 } from './atlassian.diff.types.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.diff.tool.ts');
@@ -27,9 +28,16 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
 
 		const result = await diffController.branchDiff(args);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
-			metadata: { pagination: result.pagination },
+			content: [{ type: 'text' as const, text: finalText }],
+			metadata: {
+				/*pagination: result.pagination*/
+			}, // Removed pagination from metadata
 		};
 	} catch (error) {
 		methodLogger.error('Branch diff tool failed', error);
@@ -49,9 +57,16 @@ async function handleCommitDiff(args: CommitDiffArgsType) {
 
 		const result = await diffController.commitDiff(args);
 
+		let finalText = result.content;
+		if (result.pagination) {
+			finalText += '\n\n' + formatPagination(result.pagination);
+		}
+
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
-			metadata: { pagination: result.pagination },
+			content: [{ type: 'text' as const, text: finalText }],
+			metadata: {
+				/*pagination: result.pagination*/
+			}, // Removed pagination from metadata
 		};
 	} catch (error) {
 		methodLogger.error('Commit diff tool failed', error);
