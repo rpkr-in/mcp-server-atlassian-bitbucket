@@ -49,6 +49,7 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 		const result = await atlassianRepositoriesController.list({
 			workspaceSlug: args.workspaceSlug,
 			query: args.query,
+			projectKey: args.projectKey,
 			role: args.role,
 			sort: args.sort,
 			limit: args.limit,
