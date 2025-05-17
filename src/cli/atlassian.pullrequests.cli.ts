@@ -291,15 +291,15 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 			'Numeric ID of the pull request to add a comment to. Must be a valid pull request ID in the specified repository. Example: "42"',
 		)
 		.requiredOption(
-			'-c, --content <text>',
+			'-m, --content <text>',
 			'The content of the comment to add to the pull request. Can include markdown formatting.',
 		)
 		.option(
-			'--path <file-path>',
+			'-f, --path <file-path>',
 			'Optional: The file path to add an inline comment to.',
 		)
 		.option(
-			'--line <line-number>',
+			'-L, --line <line-number>',
 			'Optional: The line number to add the inline comment to.',
 			parseInt,
 		)
@@ -334,7 +334,7 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 					});
 				} else if (options.path || options.line) {
 					throw new Error(
-						'Both --path and --line are required for inline comments',
+						'Both -f/--path and -L/--line are required for inline comments',
 					);
 				}
 

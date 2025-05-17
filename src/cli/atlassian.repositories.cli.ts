@@ -60,7 +60,7 @@ function registerListRepositoriesCommand(program: Command): void {
 			'Filter repositories by this query string. Searches repository name and description.',
 		)
 		.option(
-			'-k, --project-key <key>',
+			'-p, --project-key <key>',
 			'Filter repositories belonging to the specified project key. Example: "PROJ"',
 		)
 		.option(
@@ -176,7 +176,7 @@ function registerGetCommitHistoryCommand(program: Command): void {
 			'Repository slug to get commit history from. Example: "project-api"',
 		)
 		.option(
-			'--revision <branch-or-tag>',
+			'-v, --revision <branch-or-tag>',
 			'Filter commits by a specific branch, tag, or commit hash.',
 		)
 		.option(
@@ -382,7 +382,7 @@ function registerGetFileCommand(program: Command): void {
 			'Path to the file in the repository. Example: "README.md" or "src/main.js"',
 		)
 		.option(
-			'--revision <branch-tag-or-commit>',
+			'-v, --revision <branch-tag-or-commit>',
 			'Branch name, tag, or commit hash to retrieve the file from. If omitted, the default branch is used.',
 		)
 		.action(async (options) => {

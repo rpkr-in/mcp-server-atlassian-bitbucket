@@ -578,7 +578,7 @@ describe('Atlassian Pull Requests CLI Commands', () => {
 			]);
 			expect(result.exitCode).not.toBe(0);
 			expect(result.stderr).toContain(
-				'Both --path and --line are required for inline comments',
+				'Both -f/--path and -L/--line are required for inline comments',
 			);
 		});
 

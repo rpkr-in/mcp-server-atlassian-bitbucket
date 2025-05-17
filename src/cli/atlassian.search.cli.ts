@@ -56,7 +56,7 @@ function register(program: Command) {
 			'Pagination cursor for retrieving the next set of results.',
 		)
 		.option(
-			'-p, --page <number>',
+			'--page <number>',
 			'Page number for code search results (alternative to cursor).',
 		)
 		.action(async (options) => {
