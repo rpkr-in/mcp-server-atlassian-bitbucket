@@ -32,7 +32,18 @@ export function formatDiffstat(
 	lines.push('');
 
 	if (files.length === 0) {
-		lines.push('*No differences found.*');
+		lines.push(
+			'*No changes detected in the diffstat response. This might occur when:*',
+		);
+		lines.push('- The commits are identical');
+		lines.push(
+			'- The changes are purely structural (e.g., merge commits without content changes)',
+		);
+		lines.push('- The commits need to be specified in a different order');
+		lines.push('');
+		lines.push(
+			'Try specifying the commits in reverse order or use a different commit comparison method.',
+		);
 		lines.push('');
 		lines.push(formatSeparator());
 		lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
@@ -124,6 +135,46 @@ export function formatFullDiff(
 		baseBranchOrCommit,
 		targetBranchOrCommit,
 	);
+
+	// If there's a raw diff but empty diffstat, we should still show the raw diff
+	// This can happen with structural changes like merges
+	if (
+		rawDiff &&
+		rawDiff.trim() !== '' &&
+		(diffstat.values || []).length === 0
+	) {
+		const lines = diffstatMd.split('\n');
+
+		// Replace the "No changes detected" message with a more accurate one
+		const messageStartIndex = lines.findIndex((line) =>
+			line.includes('*No changes detected'),
+		);
+		if (messageStartIndex >= 0) {
+			lines.splice(
+				messageStartIndex,
+				6,
+				'*No file changes in diffstat but changes detected in raw diff. This often happens with:*',
+				'- Merge commits',
+				'- Rename-only changes',
+				'- Changes to file metadata without content changes',
+			);
+		}
+
+		// Insert section heading for the raw diff before the footer
+		const separatorIndex = lines.findIndex((line) => line.includes('---'));
+		if (separatorIndex >= 0) {
+			lines.splice(
+				separatorIndex,
+				0,
+				'',
+				formatHeading('Raw Diff Content', 2),
+				'',
+			);
+			lines.splice(separatorIndex + 3, 0, formatDiff(rawDiff));
+		}
+
+		return lines.join('\n');
+	}
 
 	if (!rawDiff || rawDiff.trim() === '') {
 		return diffstatMd;
