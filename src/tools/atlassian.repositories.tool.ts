@@ -338,7 +338,7 @@ function registerTools(server: McpServer) {
 	// Register the get commit history tool
 	server.tool(
 		'bb_get_commit_history',
-		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (page number). Optionally filters history starting from a specific branch, tag, or hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message. Requires Bitbucket credentials to be configured.`,
+		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` (number of commits per page) and \`cursor\` (which acts as the page number for this endpoint). Optionally filters history starting from a specific branch, tag, or commit hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message. If more results are available beyond the current page, pagination details (like the next page/cursor) will be appended to the content. Requires Bitbucket credentials to be configured.`,
 		GetCommitHistoryToolArgs.shape,
 		handleGetCommitHistory,
 	);
