@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.5...v1.37.0) (2025-05-18)
+
+
+### Features
+
+* Refine ControllerResponse implementation ([dbe160f](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/dbe160f085ec89c6856b822f16be22271c0fce7f))
+
 ## [1.36.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.36.4...v1.36.5) (2025-05-17)
 
 
