@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
 
@@ -131,12 +130,8 @@ function register(program: Command) {
 					await atlassianSearchController.search(searchOptions);
 				actionLogger.debug('Search completed successfully');
 
+				// Display the content which now includes pagination information
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

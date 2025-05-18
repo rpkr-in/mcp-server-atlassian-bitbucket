@@ -7,6 +7,7 @@ import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListRepositoriesToolArgsType,
@@ -291,9 +292,20 @@ async function list(
 		// Format the repositories data for display using the formatter
 		const formattedRepositories = formatRepositoriesList(repositoriesData);
 
+		// Create the final content by combining the formatted repositories with pagination information
+		let finalContent = formattedRepositories;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedRepositories,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		// Use the standardized error handler
@@ -447,9 +459,20 @@ async function getCommitHistory(
 			path: params.path,
 		});
 
+		// Create the final content by combining the formatted commit history with pagination information
+		let finalContent = formattedHistory;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedHistory,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		throw handleControllerError(error, {
@@ -833,9 +856,20 @@ async function listBranches(
 		// Format branches (this would use a real formatter in actual implementation)
 		const formattedBranches = 'List of branches:\n- main (default branch)';
 
+		// Create the final content by combining the formatted branches with pagination information
+		let finalContent = formattedBranches;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedBranches,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		throw handleControllerError(error, {

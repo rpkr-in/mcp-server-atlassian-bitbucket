@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket repositories.
@@ -103,13 +102,8 @@ function registerListRepositoriesCommand(program: Command): void {
 						controllerOptions,
 					);
 
-				// Output result content
+				// Output result content (now includes pagination information)
 				console.log(result.content);
-
-				// If pagination information exists, append it
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				handleCliError(error);
 			}
@@ -150,8 +144,6 @@ function registerGetRepositoryCommand(program: Command): void {
 				});
 
 				console.log(result.content);
-
-				// No pagination footer needed for 'get' commands
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
@@ -232,11 +224,6 @@ function registerGetCommitHistoryCommand(program: Command): void {
 				actionLogger.debug('Successfully retrieved commit history');
 
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
@@ -352,7 +339,6 @@ function registerCloneRepositoryCommand(program: Command): void {
 				actionLogger.info('Clone operation initiated successfully.');
 
 				console.log(result.content);
-				// No pagination for clone command
 			} catch (error) {
 				actionLogger.error('Clone operation failed:', error);
 				handleCliError(error);
@@ -483,11 +469,6 @@ function registerListBranchesCommand(program: Command): void {
 				actionLogger.debug('Successfully retrieved branches');
 
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

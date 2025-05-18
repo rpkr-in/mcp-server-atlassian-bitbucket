@@ -8,7 +8,6 @@ import {
 	type BranchDiffArgsType,
 	type CommitDiffArgsType,
 } from './atlassian.diff.types.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.diff.tool.ts');
@@ -28,13 +27,8 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
 
 		const result = await diffController.branchDiff(args);
 
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
-
 		return {
-			content: [{ type: 'text' as const, text: finalText }],
+			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
 		methodLogger.error('Branch diff tool failed', error);
@@ -54,13 +48,8 @@ async function handleCommitDiff(args: CommitDiffArgsType) {
 
 		const result = await diffController.commitDiff(args);
 
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
-
 		return {
-			content: [{ type: 'text' as const, text: finalText }],
+			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
 		methodLogger.error('Commit diff tool failed', error);
@@ -87,7 +76,7 @@ function registerTools(server: McpServer) {
 - When \`sourceBranch\` contains newer changes, set \`sourceBranch\` to your feature branch and \`destinationBranch\` to main
 - When comparing branches where main contains newer changes than your branch, try reversing the parameters
 
-Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+Supports pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
 		BranchDiffArgsSchema.shape,
 		handleBranchDiff,
 	);
@@ -105,7 +94,7 @@ Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitb
 - If you see "No changes detected", try reversing the commit order
 - The diff result shows changes that would be needed to transform \`sinceCommit\` into \`untilCommit\`
 
-Supports pagination via \`limit\` and \`cursor\` (check metadata). Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+Supports pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
 		CommitDiffArgsSchema.shape,
 		handleCommitDiff,
 	);

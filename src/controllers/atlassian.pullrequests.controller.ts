@@ -5,6 +5,7 @@ import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	formatPullRequestsList,
@@ -220,9 +221,20 @@ async function list(
 		// Format the pull requests data for display using the formatter
 		const formattedPullRequests = formatPullRequestsList(pullRequestsData);
 
+		// Create the final content by combining the formatted pull requests with pagination information
+		let finalContent = formattedPullRequests;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedPullRequests,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		// Use the standardized error handler
@@ -470,9 +482,20 @@ async function listComments(
 			prId,
 		);
 
+		// Create the final content by combining the formatted comments with pagination information
+		let finalContent = formattedComments;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedComments,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		throw handleControllerError(error, {

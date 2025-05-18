@@ -6,6 +6,7 @@ import {
 	extractPaginationInfo,
 	PaginationType,
 } from '../utils/pagination.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 import * as diffService from '../services/vendor.atlassian.repositories.diff.service.js';
 import { formatDiffstat, formatFullDiff } from './atlassian.diff.formatter.js';
 import { getDefaultWorkspace } from '../utils/workspace.util.js';
@@ -130,7 +131,7 @@ async function branchDiff(
 			}
 
 			// Format the results
-			const content =
+			let content =
 				params.includeFullDiff && rawDiff
 					? formatFullDiff(
 							diffstat,
@@ -144,9 +145,17 @@ async function branchDiff(
 							params.sourceBranch,
 						);
 
+			// Add pagination information if available
+			if (
+				pagination &&
+				(pagination.hasMore || pagination.count !== undefined)
+			) {
+				const paginationString = formatPagination(pagination);
+				content += '\n\n' + paginationString;
+			}
+
 			return {
 				content,
-				pagination,
 			};
 		} catch (error) {
 			// Enhance error handling for common diff-specific errors
@@ -259,7 +268,7 @@ async function commitDiff(
 			}
 
 			// Format the results
-			const content =
+			let content =
 				params.includeFullDiff && rawDiff
 					? formatFullDiff(
 							diffstat,
@@ -273,9 +282,17 @@ async function commitDiff(
 							params.untilCommit,
 						);
 
+			// Add pagination information if available
+			if (
+				pagination &&
+				(pagination.hasMore || pagination.count !== undefined)
+			) {
+				const paginationString = formatPagination(pagination);
+				content += '\n\n' + paginationString;
+			}
+
 			return {
 				content,
-				pagination,
 			};
 		} catch (error) {
 			// Enhance error handling for common diff-specific errors

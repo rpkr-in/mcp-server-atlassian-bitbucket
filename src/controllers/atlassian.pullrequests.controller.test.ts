@@ -184,7 +184,6 @@ describe('Atlassian Pull Requests Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			if (result.content !== 'No pull requests found.') {
@@ -192,17 +191,9 @@ describe('Atlassian Pull Requests Controller', () => {
 				expect(result.content).toContain('**ID**');
 				expect(result.content).toContain('**Title**');
 				expect(result.content).toContain('**State**');
-			}
-
-			// Verify pagination structure
-			expect(result.pagination).toBeDefined();
-			expect(result.pagination).toHaveProperty('hasMore');
-			expect(typeof result.pagination?.hasMore).toBe('boolean');
-
-			// nextCursor might be undefined if hasMore is false
-			if (result.pagination?.hasMore) {
-				expect(result.pagination).toHaveProperty('nextCursor');
-				expect(typeof result.pagination?.nextCursor).toBe('string');
+				expect(result.content).toMatch(
+					/---\s*\*Showing \d+ items?\.\*/,
+				);
 			}
 		}, 30000);
 
@@ -222,28 +213,46 @@ describe('Atlassian Pull Requests Controller', () => {
 				limit: 1,
 			});
 
-			// Should have at most 1 result
-			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
+			// Extract pagination info from content
+			const countMatch1 = result1.content.match(
+				/\*Showing (\d+) items?\.\*/,
+			);
+			const count1 = countMatch1 ? parseInt(countMatch1[1], 10) : 0;
+			expect(count1).toBeLessThanOrEqual(1);
+
+			// Extract cursor from content
+			const cursorMatch1 = result1.content.match(
+				/\*Next cursor: `([^`]+)`\*/,
+			);
+			const nextCursor = cursorMatch1 ? cursorMatch1[1] : null;
+
+			// Check if pagination indicates more results
+			const hasMoreResults = result1.content.includes(
+				'More results are available.',
+			);
 
 			// If there's a next page, fetch it
-			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+			if (hasMoreResults && nextCursor) {
 				const result2 = await atlassianPullRequestsController.list({
 					workspaceSlug: repoInfo.workspaceSlug,
 					repoSlug: repoInfo.repoSlug,
 					limit: 1,
-					cursor: result1.pagination.nextCursor,
+					cursor: nextCursor,
 				});
 
-				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
+				// Extract count from result2
+				const countMatch2 = result2.content.match(
+					/\*Showing (\d+) items?\.\*/,
+				);
+				const count2 = countMatch2 ? parseInt(countMatch2[1], 10) : 0;
+				expect(count2).toBeLessThanOrEqual(1);
 
 				// Ensure content is different (or handle case where only 1 PR exists)
 				if (
 					result1.content !== 'No pull requests found.' &&
 					result2.content !== 'No pull requests found.' &&
-					result1.pagination?.count &&
-					result2.pagination?.count &&
-					result1.pagination.count > 0 &&
-					result2.pagination.count > 0
+					count1 > 0 &&
+					count2 > 0
 				) {
 					// Only compare if we actually have multiple PRs
 					expect(result1.content).not.toEqual(result2.content);
@@ -363,8 +372,6 @@ describe('Atlassian Pull Requests Controller', () => {
 
 			// Should return a specific "no results" message
 			expect(emptyResult.content).toBe('No pull requests found.');
-			expect(emptyResult.pagination).toHaveProperty('count', 0);
-			expect(emptyResult.pagination).toHaveProperty('hasMore', false);
 		}, 30000);
 
 		it('should throw an McpError for an invalid repository or workspace', async () => {
@@ -431,8 +438,6 @@ describe('Atlassian Pull Requests Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			// get() doesn't have pagination
-			expect(result).not.toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			expect(result.content).toMatch(/^# Pull Request:/m);
@@ -483,8 +488,6 @@ describe('Atlassian Pull Requests Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			// get() doesn't have pagination
-			expect(result).not.toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			expect(result.content).toMatch(/^# Pull Request:/m);
@@ -565,19 +568,16 @@ describe('Atlassian Pull Requests Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			if (result.content !== 'No comments found on this pull request.') {
 				expect(result.content).toMatch(/^# Comments on Pull Request/m);
 				expect(result.content).toContain('**Author**:');
 				expect(result.content).toContain('**Updated**:');
+				expect(result.content).toMatch(
+					/---\s*\*Showing \d+ items?\.\*/,
+				);
 			}
-
-			// Verify pagination structure
-			expect(result.pagination).toBeDefined();
-			expect(result.pagination).toHaveProperty('hasMore');
-			expect(typeof result.pagination?.hasMore).toBe('boolean');
 		}, 30000);
 
 		it('should handle pagination options (limit/cursor)', async () => {
@@ -597,21 +597,41 @@ describe('Atlassian Pull Requests Controller', () => {
 				limit: 1,
 			});
 
-			// Should have at most 1 result
-			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
+			// Extract pagination info from content
+			const countMatch1 = result1.content.match(
+				/\*Showing (\d+) items?\.\*/,
+			);
+			const count1 = countMatch1 ? parseInt(countMatch1[1], 10) : 0;
+			expect(count1).toBeLessThanOrEqual(1);
+
+			// Extract cursor from content
+			const cursorMatch1 = result1.content.match(
+				/\*Next cursor: `([^`]+)`\*/,
+			);
+			const nextCursor = cursorMatch1 ? cursorMatch1[1] : null;
+
+			// Check if pagination indicates more results
+			const hasMoreResults = result1.content.includes(
+				'More results are available.',
+			);
 
 			// If there's a next page, fetch it
-			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+			if (hasMoreResults && nextCursor) {
 				const result2 =
 					await atlassianPullRequestsController.listComments({
 						workspaceSlug: prInfo.workspaceSlug,
 						repoSlug: prInfo.repoSlug,
 						prId: prInfo.prId,
 						limit: 1,
-						cursor: result1.pagination.nextCursor,
+						cursor: nextCursor,
 					});
 
-				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
+				// Extract count from result2
+				const countMatch2 = result2.content.match(
+					/\*Showing (\d+) items?\.\*/,
+				);
+				const count2 = countMatch2 ? parseInt(countMatch2[1], 10) : 0;
+				expect(count2).toBeLessThanOrEqual(1);
 
 				// Ensure content is different (or handle case where only 1 comment exists)
 				if (
@@ -619,10 +639,8 @@ describe('Atlassian Pull Requests Controller', () => {
 						'No comments found on this pull request.' &&
 					result2.content !==
 						'No comments found on this pull request.' &&
-					result1.pagination?.count &&
-					result2.pagination?.count &&
-					result1.pagination.count > 0 &&
-					result2.pagination.count > 0
+					count1 > 0 &&
+					count2 > 0
 				) {
 					// Only compare if we actually have multiple comments
 					expect(result1.content).not.toEqual(result2.content);
@@ -653,48 +671,38 @@ describe('Atlassian Pull Requests Controller', () => {
 					limit: 1,
 				});
 
-				// If we can access repos, use a real PR and see if it has no comments
-				if (
-					repoResult.pagination?.count &&
-					repoResult.pagination.count > 0
-				) {
-					// Extract PR ID from the content
-					const prIdMatch =
-						repoResult.content.match(/\*\*ID\*\*:\s+(\d+)/);
-					if (prIdMatch && prIdMatch[1]) {
-						const prId = prIdMatch[1];
-
-						// Get comments for this PR
-						const commentsResult =
-							await atlassianPullRequestsController.listComments({
-								workspaceSlug: repoInfo.workspaceSlug,
-								repoSlug: repoInfo.repoSlug,
-								prId,
-							});
-
-						// Check if there are no comments
-						if (
-							commentsResult.content ===
-							'No comments found on this pull request.'
-						) {
-							// Verify the structure for empty results
-							expect(commentsResult.pagination).toHaveProperty(
-								'count',
-								0,
-							);
-							expect(commentsResult.pagination).toHaveProperty(
-								'hasMore',
-								false,
-							);
-						} else {
-							console.warn(
-								'Skipping empty result test: All PRs have comments.',
-							);
-						}
-					}
-				} else {
+				// Extract PR ID from the content if we have any PRs
+				const prIdMatch =
+					repoResult.content.match(/\*\*ID\*\*:\s+(\d+)/);
+				if (!prIdMatch || !prIdMatch[1]) {
 					console.warn(
 						'Skipping empty result test: No pull requests available.',
+					);
+					return;
+				}
+
+				const prId = prIdMatch[1];
+
+				// Get comments for this PR
+				const commentsResult =
+					await atlassianPullRequestsController.listComments({
+						workspaceSlug: repoInfo.workspaceSlug,
+						repoSlug: repoInfo.repoSlug,
+						prId,
+					});
+
+				// Check if there are no comments
+				if (
+					commentsResult.content ===
+					'No comments found on this pull request.'
+				) {
+					// Verify the expected message for empty results
+					expect(commentsResult.content).toBe(
+						'No comments found on this pull request.',
+					);
+				} else {
+					console.warn(
+						'Skipping empty result test: All PRs have comments.',
 					);
 				}
 			} catch (error) {

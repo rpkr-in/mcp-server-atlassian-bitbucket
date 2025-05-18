@@ -25,6 +25,7 @@ import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
 import { ListPullRequestsParams } from '../services/vendor.atlassian.pullrequests.types.js';
 import { RepositoriesResponse } from '../services/vendor.atlassian.repositories.types.js';
 import { getDefaultWorkspace } from '../utils/workspace.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -313,14 +314,18 @@ async function handleCodeSearch(
 			formattedCode = `${languageNote}\n\n${formattedCode}`;
 		}
 
+		// Add pagination information if available
+		let finalContent = formattedCode;
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedCode,
-			pagination,
-			metadata: language
-				? {
-						appliedLanguageFilter: language,
-					}
-				: undefined,
+			content: finalContent,
 		};
 	} catch (searchError) {
 		methodLogger.error('Error performing code search:', searchError);
@@ -376,9 +381,19 @@ async function handlePullRequestSearch(
 
 		// Format the search results
 		const formattedPrs = formatPullRequestsList(prData);
+		let finalContent = `# Pull Request Search Results\n\n${formattedPrs}`;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: `# Pull Request Search Results\n\n${formattedPrs}`,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		methodLogger.error('Error performing pull request search:', error);
@@ -454,10 +469,19 @@ async function handleRepositorySearch(
 
 		// Format the search results
 		const formattedRepos = formatRepositoriesList(searchData);
+		let finalContent = `# Repository Search Results\n\n${formattedRepos}`;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
 
 		return {
-			content: `# Repository Search Results\n\n${formattedRepos}`,
-			pagination,
+			content: finalContent,
 		};
 	} catch (searchError) {
 		methodLogger.error('Error performing repository search:', searchError);
@@ -524,9 +548,19 @@ async function handleCommitSearch(
 			workspaceSlug,
 		);
 
+		let finalContent = formattedResults;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedResults,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		methodLogger.error('Error performing commit search:', error);
@@ -626,7 +660,6 @@ async function handleDefaultSearch(
 					scope: 'repositories',
 					content,
 					count,
-					pagination: repoResults.pagination,
 				});
 
 				methodLogger.debug(`Found ${count} matching repositories`);
@@ -660,7 +693,6 @@ async function handleDefaultSearch(
 						scope: 'pull requests',
 						content,
 						count,
-						pagination: prResults.pagination,
 					});
 
 					methodLogger.debug(`Found ${count} matching pull requests`);
@@ -692,7 +724,6 @@ async function handleDefaultSearch(
 						scope: 'commits',
 						content,
 						count,
-						pagination: commitResults.pagination,
 					});
 
 					methodLogger.debug(`Found ${count} matching commits`);
@@ -729,7 +760,6 @@ async function handleDefaultSearch(
 					scope: 'code',
 					content,
 					count,
-					pagination: codeResults.pagination,
 				});
 
 				methodLogger.debug(`Found ${count} matching code files`);
@@ -835,16 +865,28 @@ async function handleDefaultSearch(
 		(r) => r.pagination?.hasMore,
 	);
 
+	// Create final content including pagination information if available
+	let finalContent = combinedContent;
+
+	// Add pagination information if available
+	if (
+		firstResultWithPagination?.pagination &&
+		(firstResultWithPagination.pagination.hasMore ||
+			firstResultWithPagination.pagination.count !== undefined)
+	) {
+		const paginationString = formatPagination(
+			firstResultWithPagination.pagination,
+		);
+		finalContent += '\n\n' + paginationString;
+	}
+
+	// Add metadata as part of the content if we have applied any language filtering
+	if (language) {
+		finalContent += `\n\n> **Additional information:** Applied language filter: '${language}'`;
+	}
+
 	return {
-		content: combinedContent,
-		pagination: firstResultWithPagination?.pagination,
-		metadata: {
-			totalScopes: results.length,
-			scopeResults: results.map((r) => ({
-				scope: r.scope,
-				count: r.count,
-			})),
-		},
+		content: finalContent,
 	};
 }
 

@@ -7,7 +7,6 @@ import {
 } from './atlassian.search.types.js';
 
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
 
@@ -18,7 +17,7 @@ const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
  * Returns a formatted markdown response with search results.
  *
  * @param {SearchToolArgsType} args - Tool arguments for the search query
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }>, metadata: { pagination: { count: number, hasMore: boolean } } }>} MCP response with formatted search results
+ * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted search results
  * @throws Will return error message if search fails
  */
 async function search(args: SearchToolArgsType) {
@@ -40,21 +39,13 @@ async function search(args: SearchToolArgsType) {
 		const result =
 			await atlassianSearchController.search(controllerOptions);
 
-		methodLogger.debug('Search completed successfully', {
-			count: result.pagination?.count,
-			hasMore: result.pagination?.hasMore,
-		});
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
+		methodLogger.debug('Search completed successfully');
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText, // Contains timestamp footer
+					text: result.content, // Now contains all information including pagination
 				},
 			],
 		};
@@ -79,7 +70,7 @@ function registerTools(server: McpServer) {
 	// Register the search tool
 	server.tool(
 		'bb_search',
-		`Searches Bitbucket content within a specified \`workspaceSlug\`. Requires a \`query\` string. Optionally scope the search using \`scope\` ('repositories', 'pullrequests', 'commits', 'code', or 'all' - default). The \`code\` scope supports filtering by \`language\` or \`extension\`. The 'pullrequests' and 'commits' scopes require \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope). Returns formatted Markdown results. The 'all' scope automatically tries different scopes and prefixes the output indicating which scope returned results. Requires Bitbucket credentials.`,
+		`Searches Bitbucket content within a specified \`workspaceSlug\`. Requires a \`query\` string. Optionally scope the search using \`scope\` ('repositories', 'pullrequests', 'commits', 'code', or 'all' - default). The \`code\` scope supports filtering by \`language\` or \`extension\`. The 'pullrequests' and 'commits' scopes require \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope). Pagination details (like next cursor or total items) are included at the end of the text content. Returns formatted Markdown results. The 'all' scope automatically tries different scopes and prefixes the output indicating which scope returned results. Requires Bitbucket credentials.`,
 		SearchToolArgsBase.shape,
 		search,
 	);

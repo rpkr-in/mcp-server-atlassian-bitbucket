@@ -9,7 +9,6 @@ import {
 } from './atlassian.workspaces.types.js';
 
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.workspaces.tool.ts');
@@ -41,25 +40,13 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 			cursor: args.cursor,
 		});
 
-		methodLogger.debug(
-			'Successfully retrieved workspaces from controller',
-			// Log count and hasMore for context
-			{
-				count: result.pagination?.count,
-				hasMore: result.pagination?.hasMore,
-			},
-		);
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
+		methodLogger.debug('Successfully retrieved workspaces from controller');
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText, // Contains timestamp footer
+					text: result.content, // Now contains everything including pagination info
 				},
 			],
 		};
@@ -102,10 +89,9 @@ async function getWorkspace(args: GetWorkspaceToolArgsType) {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: result.content,
 				},
 			],
-			// No pagination metadata needed for 'get'
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get workspace details', error);
@@ -131,7 +117,7 @@ function registerTools(server: McpServer) {
 	// Register the list workspaces tool
 	server.tool(
 		'bb_ls_workspaces',
-		`Lists Bitbucket workspaces accessible to the user. Supports pagination via \`limit\` and \`cursor\` (page number). Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools. Returns a formatted Markdown list of workspace memberships including name, slug, UUID, permission level, and dates. Requires Bitbucket credentials to be configured.`,
+		`Lists Bitbucket workspaces accessible to the user. Supports pagination via \`limit\` and \`cursor\` (page number). Pagination details (like next cursor or total items) are included at the end of the text content. Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools. Returns a formatted Markdown list of workspace memberships including name, slug, UUID, permission level, and dates. Requires Bitbucket credentials to be configured.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);

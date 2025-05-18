@@ -15,7 +15,6 @@ import {
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.pullrequests.tool.ts');
@@ -53,22 +52,13 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved pull requests from controller',
-			{
-				count: result.pagination?.count,
-				hasMore: result.pagination?.hasMore,
-			},
 		);
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText, // Contains timestamp footer
+					text: result.content,
 				},
 			],
 		};
@@ -116,7 +106,7 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: result.content,
 				},
 			],
 		};
@@ -160,22 +150,13 @@ async function listPullRequestComments(
 
 		methodLogger.debug(
 			'Successfully retrieved pull request comments from controller',
-			{
-				count: result.pagination?.count,
-				hasMore: result.pagination?.hasMore,
-			},
 		);
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText, // Contains timestamp footer
+					text: result.content,
 				},
 			],
 		};
@@ -223,7 +204,7 @@ async function addPullRequestComment(
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Simple confirmation message
+					text: result.content,
 				},
 			],
 		};
@@ -270,7 +251,7 @@ async function addPullRequest(args: CreatePullRequestToolArgsType) {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Contains timestamp footer
+					text: result.content,
 				},
 			],
 		};
@@ -298,7 +279,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull requests tool
 	server.tool(
 		'bb_ls_prs',
-		`Lists pull requests within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Filters by \`state\` (OPEN, MERGED, DECLINED, SUPERSEDED) and supports text search via \`query\`. Supports pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list with each PR's title, status, author, reviewers, and creation date. Requires Bitbucket credentials to be configured.`,
+		`Lists pull requests within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Filters by \`state\` (OPEN, MERGED, DECLINED, SUPERSEDED) and supports text search via \`query\`. Supports pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Returns a formatted Markdown list with each PR's title, status, author, reviewers, and creation date. Requires Bitbucket credentials to be configured.`,
 		ListPullRequestsToolArgs.shape,
 		listPullRequests,
 	);
@@ -306,7 +287,7 @@ function registerTools(server: McpServer) {
 	// Register the get pull request tool
 	server.tool(
 		'bb_get_pr',
-		`Retrieves detailed information about a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Includes PR metadata, status, reviewers, and diff statistics. Set \`includeFullDiff\` to true (default) for the complete code changes. Set \`includeComments\` to true to also retrieve comments (default: false; Note: Enabling this may increase response time for pull requests with many comments). Returns rich information as formatted Markdown, including PR summary, code changes, and optionally comments. Requires Bitbucket credentials to be configured.`,
+		`Retrieves detailed information about a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Includes PR details, status, reviewers, and diff statistics. Set \`includeFullDiff\` to true (default) for the complete code changes. Set \`includeComments\` to true to also retrieve comments (default: false; Note: Enabling this may increase response time for pull requests with many comments). Returns rich information as formatted Markdown, including PR summary, code changes, and optionally comments. Requires Bitbucket credentials to be configured.`,
 		GetPullRequestToolArgs.shape,
 		getPullRequest,
 	);
@@ -314,7 +295,7 @@ function registerTools(server: McpServer) {
 	// Register the list pull request comments tool
 	server.tool(
 		'bb_ls_pr_comments',
-		`Lists comments (general and inline) for a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Supports pagination via \`limit\` and \`cursor\` (page number). Returns a formatted Markdown list of comments including author, date, content, and file context for inline comments. Use this to view review feedback and discussion threads. Requires Bitbucket credentials to be configured.`,
+		`Lists comments (general and inline) for a specific pull request identified by \`prId\` within a repository (\`repoSlug\`). If \`workspaceSlug\` is not provided, the system will use your default workspace. Supports pagination via \`limit\` and \`cursor\` (page number). Pagination details are included at the end of the text content. Returns a formatted Markdown list of comments including author, date, content, and file context for inline comments. Use this to view review feedback and discussion threads. Requires Bitbucket credentials to be configured.`,
 		ListPullRequestCommentsToolArgs.shape,
 		listPullRequestComments,
 	);

@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianWorkspacesController from '../controllers/atlassian.workspaces.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket workspaces.
@@ -88,12 +87,8 @@ function registerListWorkspacesCommand(program: Command): void {
 					await atlassianWorkspacesController.list(filterOptions);
 				actionLogger.debug('Successfully retrieved workspaces');
 
+				// Display the complete content which now includes pagination information
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

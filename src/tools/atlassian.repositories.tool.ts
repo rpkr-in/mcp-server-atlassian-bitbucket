@@ -20,7 +20,6 @@ import {
 
 import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
 import { getDefaultWorkspace } from '../utils/workspace.util.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.repositories.tool.ts');
@@ -59,22 +58,13 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved repositories from controller',
-			{
-				count: result.pagination?.count,
-				hasMore: result.pagination?.hasMore,
-			},
 		);
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText,
+					text: result.content,
 				},
 			],
 		};
@@ -152,19 +142,10 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',
-			{
-				count: result.pagination?.count,
-				hasMore: result.pagination?.hasMore,
-			},
 		);
 
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
-
 		return {
-			content: [{ type: 'text' as const, text: finalText }],
+			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
 		methodLogger.error('Failed to get commit history', error);
@@ -185,7 +166,6 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 		const result = await atlassianRepositoriesController.createBranch(args);
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
-			// No specific metadata or pagination for create operations typically
 		};
 	} catch (error) {
 		methodLogger.error('Tool bb_add_branch failed', error);
@@ -207,7 +187,6 @@ async function handleCloneRepository(args: CloneRepositoryToolArgsType) {
 			await atlassianRepositoriesController.cloneRepository(args);
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
-			// No metadata or pagination for clone operations
 		};
 	} catch (error) {
 		methodLogger.error('Tool bb_clone_repo failed', error);
@@ -261,7 +240,7 @@ async function getFileContent(args: GetFileContentToolArgsType) {
  * Returns a formatted markdown response with branch details.
  *
  * @param args - Tool arguments for identifying the repository and filtering branches
- * @returns MCP response with formatted branches list and pagination
+ * @returns MCP response with formatted branches list
  * @throws Will return error message if branch listing fails
  */
 async function listBranches(args: ListBranchesToolArgsType) {
@@ -285,21 +264,13 @@ async function listBranches(args: ListBranchesToolArgsType) {
 			cursor: args.cursor,
 		});
 
-		methodLogger.debug('Successfully retrieved branches from controller', {
-			count: result.pagination?.count,
-			hasMore: result.pagination?.hasMore,
-		});
-
-		let finalText = result.content;
-		if (result.pagination) {
-			finalText += '\n\n' + formatPagination(result.pagination);
-		}
+		methodLogger.debug('Successfully retrieved branches from controller');
 
 		return {
 			content: [
 				{
 					type: 'text' as const,
-					text: finalText,
+					text: result.content,
 				},
 			],
 		};
@@ -322,7 +293,7 @@ function registerTools(server: McpServer) {
 	// Register the list repositories tool
 	server.tool(
 		'bb_ls_repos',
-		`Lists repositories within a workspace. If \`workspaceSlug\` is not provided, uses your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Filters repositories by the user\`s \`role\`, project key \`projectKey\`, or a \`query\` string (searches name/description). Supports sorting via \`sort\` and pagination via \`limit\` and \`cursor\`. Returns a formatted Markdown list with comprehensive details. Requires Bitbucket credentials.`,
+		`Lists repositories within a workspace. If \`workspaceSlug\` is not provided, uses your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Filters repositories by the user\`s \`role\`, project key \`projectKey\`, or a \`query\` string (searches name/description). Supports sorting via \`sort\` and pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Returns a formatted Markdown list with comprehensive details. Requires Bitbucket credentials.`,
 		ListRepositoriesToolArgs.shape,
 		listRepositories,
 	);
@@ -330,7 +301,7 @@ function registerTools(server: McpServer) {
 	// Register the get repository details tool
 	server.tool(
 		'bb_get_repo',
-		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository metadata as formatted Markdown, including owner, main branch, comment/task counts, recent pull requests, and relevant links. Requires Bitbucket credentials.`,
+		`Retrieves detailed information for a specific repository identified by \`workspaceSlug\` and \`repoSlug\`. Returns comprehensive repository details as formatted Markdown, including owner, main branch, comment/task counts, recent pull requests, and relevant links. Requires Bitbucket credentials.`,
 		GetRepositoryToolArgs.shape,
 		getRepository,
 	);
@@ -338,7 +309,7 @@ function registerTools(server: McpServer) {
 	// Register the get commit history tool
 	server.tool(
 		'bb_get_commit_history',
-		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` (number of commits per page) and \`cursor\` (which acts as the page number for this endpoint). Optionally filters history starting from a specific branch, tag, or commit hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message. If more results are available beyond the current page, pagination details (like the next page/cursor) will be appended to the content. Requires Bitbucket credentials to be configured.`,
+		`Retrieves the commit history for a repository identified by \`workspaceSlug\` and \`repoSlug\`. Supports pagination via \`limit\` (number of commits per page) and \`cursor\` (which acts as the page number for this endpoint). Optionally filters history starting from a specific branch, tag, or commit hash using \`revision\`, or shows only commits affecting a specific file using \`path\`. Returns the commit history as formatted Markdown, including commit hash, author, date, and message. Pagination details are included at the end of the text content. Requires Bitbucket credentials to be configured.`,
 		GetCommitHistoryToolArgs.shape,
 		handleGetCommitHistory,
 	);
@@ -370,7 +341,7 @@ function registerTools(server: McpServer) {
 	// Register the list branches tool
 	server.tool(
 		'bb_list_branches',
-		`Lists branches in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Filters branches by an optional text \`query\` and supports custom \`sort\` order. Provides pagination via \`limit\` and \`cursor\`. Returns branch details as Markdown with each branch's name, latest commit, and default merge strategy. Requires Bitbucket credentials.`,
+		`Lists branches in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Filters branches by an optional text \`query\` and supports custom \`sort\` order. Provides pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Returns branch details as Markdown with each branch's name, latest commit, and default merge strategy. Requires Bitbucket credentials.`,
 		ListBranchesToolArgs.shape,
 		listBranches,
 	);

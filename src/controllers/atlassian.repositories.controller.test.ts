@@ -64,7 +64,6 @@ describe('Atlassian Repositories Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			if (result.content !== 'No repositories found in this workspace.') {
@@ -74,15 +73,10 @@ describe('Atlassian Repositories Controller', () => {
 				expect(result.content).toContain('**Updated**');
 			}
 
-			// Verify pagination structure
-			expect(result.pagination).toBeDefined();
-			expect(result.pagination).toHaveProperty('hasMore');
-			expect(typeof result.pagination?.hasMore).toBe('boolean');
-			// For page-based pagination, we should check for 'page' property
-			if (result.pagination?.hasMore) {
-				expect(result.pagination).toHaveProperty('page');
-				expect(typeof result.pagination?.page).toBe('number');
-			}
+			// Check for pagination information in the content string
+			expect(result.content).toMatch(
+				/---[\s\S]*\*Showing \d+ (of \d+ total items|\S+ items?)[\s\S]*\*/,
+			);
 		}, 30000);
 
 		it('should handle pagination options (limit/cursor)', async () => {
@@ -100,17 +94,34 @@ describe('Atlassian Repositories Controller', () => {
 				limit: 1,
 			});
 
-			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
+			// Extract pagination info from content instead of accessing pagination object
+			const countMatch = result1.content.match(
+				/\*Showing (\d+) items?\.\*/,
+			);
+			const count = countMatch ? parseInt(countMatch[1], 10) : 0;
+			expect(count).toBeLessThanOrEqual(1);
+
+			// Extract cursor from content
+			const cursorMatch = result1.content.match(
+				/\*Next cursor: `([^`]+)`\*/,
+			);
+			const nextCursor = cursorMatch ? cursorMatch[1] : null;
+
+			// Check if pagination indicates more results
+			const hasMoreResults = result1.content.includes(
+				'More results are available.',
+			);
 
 			// If there's a next page, fetch it
-			if (result1.pagination?.hasMore && result1.pagination.page) {
-				const nextPage = (result1.pagination.page + 1).toString();
+			if (hasMoreResults && nextCursor) {
 				const result2 = await atlassianRepositoriesController.list({
 					workspaceSlug,
 					limit: 1,
-					cursor: nextPage,
+					cursor: nextCursor,
 				});
-				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
+				expect(result2.content).toMatch(
+					/---[\s\S]*\*Showing \d+ (of \d+ total items|\S+ items?)[\s\S]*\*/,
+				);
 
 				// Ensure content is different (or handle case where only 1 repo exists)
 				if (
@@ -118,10 +129,8 @@ describe('Atlassian Repositories Controller', () => {
 						'No repositories found in this workspace.' &&
 					result2.content !==
 						'No repositories found in this workspace.' &&
-					result1.pagination?.count &&
-					result2.pagination?.count &&
-					result1.pagination.count > 0 &&
-					result2.pagination.count > 0
+					count > 0 &&
+					count > 0
 				) {
 					// Only compare if we actually have multiple repositories
 					expect(result1.content).not.toEqual(result2.content);
@@ -277,11 +286,9 @@ describe('Atlassian Repositories Controller', () => {
 			});
 
 			// Should return a specific "no results" message
-			expect(emptyResult.content).toBe(
+			expect(emptyResult.content).toContain(
 				'No repositories found matching your criteria.',
 			);
-			expect(emptyResult.pagination).toHaveProperty('count', 0);
-			expect(emptyResult.pagination).toHaveProperty('hasMore', false);
 		}, 30000);
 
 		it('should throw an McpError for an invalid workspace slug', async () => {
@@ -386,8 +393,6 @@ describe('Atlassian Repositories Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			// get() doesn't have pagination
-			expect(result).not.toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			expect(result.content).toMatch(/^# Repository:/m);

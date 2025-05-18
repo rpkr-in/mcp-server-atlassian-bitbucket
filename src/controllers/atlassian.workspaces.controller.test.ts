@@ -27,7 +27,6 @@ describe('Atlassian Workspaces Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Basic Markdown content checks
 			if (result.content !== 'No Bitbucket workspaces found.') {
@@ -35,16 +34,11 @@ describe('Atlassian Workspaces Controller', () => {
 				expect(result.content).toContain('**UUID**');
 				expect(result.content).toContain('**Slug**');
 				expect(result.content).toContain('**Permission Level**');
-			}
 
-			// Verify pagination structure
-			expect(result.pagination).toBeDefined();
-			expect(result.pagination).toHaveProperty('hasMore');
-			expect(typeof result.pagination?.hasMore).toBe('boolean');
-			// nextCursor might be undefined if hasMore is false
-			if (result.pagination?.hasMore) {
-				expect(result.pagination).toHaveProperty('nextCursor');
-				expect(typeof result.pagination?.nextCursor).toBe('string');
+				// Check for pagination information in the content string
+				expect(result.content).toMatch(
+					/---\s*[\s\S]*\*Showing \d+ (of \d+ total items|\S+ items?)[\s\S]*\*/,
+				);
 			}
 		}, 30000); // Increased timeout
 
@@ -56,15 +50,31 @@ describe('Atlassian Workspaces Controller', () => {
 				limit: 1,
 			});
 
-			expect(result1.pagination?.count).toBeLessThanOrEqual(1);
+			// Extract pagination info from content
+			const countMatch1 = result1.content.match(
+				/\*Showing (\d+) items?\.\*/,
+			);
+			const count1 = countMatch1 ? parseInt(countMatch1[1], 10) : 0;
+			expect(count1).toBeLessThanOrEqual(1);
+
+			// Extract cursor from content
+			const cursorMatch1 = result1.content.match(
+				/\*Next cursor: `(\d+)`\*/,
+			);
+			const nextCursor = cursorMatch1 ? cursorMatch1[1] : null;
+
+			// Check if pagination indicates more results
+			const hasMoreResults = result1.content.includes(
+				'More results are available.',
+			);
 
 			// If there's a next page, fetch it
-			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+			if (hasMoreResults && nextCursor) {
 				const result2 = await atlassianWorkspacesController.list({
 					limit: 1,
-					cursor: result1.pagination.nextCursor,
+					cursor: nextCursor,
 				});
-				expect(result2.pagination?.count).toBeLessThanOrEqual(1);
+
 				// Ensure content is different (or handle case where only 1 item exists)
 				if (
 					result1.content !== 'No Bitbucket workspaces found.' &&
@@ -123,7 +133,6 @@ describe('Atlassian Workspaces Controller', () => {
 			// Verify the ControllerResponse structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).not.toHaveProperty('pagination'); // 'get' shouldn't have pagination
 
 			// Verify Markdown content
 			expect(result.content).toMatch(/^# Workspace:/m);

@@ -16,6 +16,7 @@ import {
 } from './atlassian.workspaces.formatter.js';
 import { ListWorkspacesParams } from '../services/vendor.atlassian.workspaces.types.js';
 import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
+import { formatPagination } from '../utils/formatter.util.js';
 
 // Create a contextualized logger for this file
 const controllerLogger = Logger.forContext(
@@ -35,7 +36,7 @@ controllerLogger.debug('Bitbucket workspaces controller initialized');
  * @param options - Options for listing workspaces
  * @param options.limit - Maximum number of workspaces to return
  * @param options.cursor - Pagination cursor for retrieving the next set of results
- * @returns Promise with formatted workspace list content and pagination information
+ * @returns Promise with formatted workspace list content including pagination information
  */
 async function list(
 	options: ListWorkspacesToolArgsType,
@@ -86,9 +87,20 @@ async function list(
 		// Format the workspaces data for display using the formatter
 		const formattedWorkspaces = formatWorkspacesList(workspacesData);
 
+		// Create the final content by combining the formatted workspaces with pagination information
+		let finalContent = formattedWorkspaces;
+
+		// Add pagination information if available
+		if (
+			pagination &&
+			(pagination.hasMore || pagination.count !== undefined)
+		) {
+			const paginationString = formatPagination(pagination);
+			finalContent += '\n\n' + paginationString;
+		}
+
 		return {
-			content: formattedWorkspaces,
-			pagination,
+			content: finalContent,
 		};
 	} catch (error) {
 		// Use the standardized error handler

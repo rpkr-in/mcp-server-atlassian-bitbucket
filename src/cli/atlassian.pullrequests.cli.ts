@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
-import { formatPagination } from '../utils/formatter.util.js';
 
 /**
  * CLI module for managing Bitbucket pull requests.
@@ -114,12 +113,8 @@ function registerListPullRequestsCommand(program: Command): void {
 					await atlassianPullRequestsController.list(filterOptions);
 				actionLogger.debug('Successfully retrieved pull requests');
 
+				// Display the content which now includes pagination information
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
@@ -182,8 +177,6 @@ function registerGetPullRequestCommand(program: Command): void {
 				actionLogger.debug('Successfully retrieved pull request');
 
 				console.log(result.content);
-
-				// No pagination footer needed for 'get' commands
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
@@ -257,12 +250,8 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 					'Successfully retrieved pull request comments',
 				);
 
+				// Display the content which now includes pagination information
 				console.log(result.content);
-
-				// Display pagination information if available
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
 				handleCliError(error);

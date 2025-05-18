@@ -95,7 +95,6 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Should include both repository and PR sections
 			expect(result.content).toContain('# Repository Search Results');
@@ -127,7 +126,6 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Should include only repository section
 			expect(result.content).toContain('# Repository Search Results');
@@ -158,7 +156,6 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Should include only PR section
 			expect(result.content).not.toContain('# Repository Search Results');
@@ -194,7 +191,8 @@ describe('Atlassian Search Controller', () => {
 			);
 
 			// If results are found, content should include the query term
-			if (result.pagination?.count && result.pagination.count > 0) {
+			const resultsFound = !result.content.includes('No results found');
+			if (resultsFound) {
 				expect(result.content.toLowerCase()).toContain(
 					repoInfo.repoSlug.toLowerCase(),
 				);
@@ -218,19 +216,27 @@ describe('Atlassian Search Controller', () => {
 				query: repoInfo.repoSlug,
 			});
 
+			// Extract pagination information from content
+			const hasMoreResults = result1.content.includes(
+				'More results are available.',
+			);
+			const cursorMatch = result1.content.match(
+				/\*Next cursor: `([^`]+)`\*/,
+			);
+			const nextCursor = cursorMatch ? cursorMatch[1] : null;
+
 			// If pagination is possible, test cursor-based pagination
-			if (result1.pagination?.hasMore && result1.pagination.nextCursor) {
+			if (hasMoreResults && nextCursor) {
 				const result2 = await atlassianSearchController.search({
 					workspaceSlug: repoInfo.workspaceSlug,
 					scope: 'repositories',
 					limit: 1,
-					cursor: result1.pagination.nextCursor,
+					cursor: nextCursor,
 					query: repoInfo.repoSlug,
 				});
 
 				// Both responses should have proper structure
 				expect(result2).toHaveProperty('content');
-				expect(result2).toHaveProperty('pagination');
 
 				// The content should be different
 				expect(result1.content).not.toEqual(result2.content);
@@ -254,7 +260,6 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Content should include the Repository Search Results
 			expect(result.content).toContain('# Repository Search Results');
@@ -279,7 +284,6 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 		}, 30000);
 
 		it('should require repoSlug when scope=pullrequests', async () => {
@@ -328,12 +332,9 @@ describe('Atlassian Search Controller', () => {
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-			expect(result).toHaveProperty('pagination');
 
 			// Content should show no results
 			expect(result.content).toContain('Found 0 results');
-			expect(result.pagination?.count).toBe(0);
-			expect(result.pagination?.hasMore).toBe(false);
 		}, 30000);
 
 		it('should handle errors in underlying controllers', async () => {

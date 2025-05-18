@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
-import { formatPagination } from '../utils/formatter.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import diffController from '../controllers/atlassian.diff.controller.js';
 import { ControllerResponse } from '../types/common.types.js';
@@ -77,13 +76,8 @@ function register(program: Command) {
 				const result: ControllerResponse =
 					await diffController.branchDiff(controllerOptions);
 
-				// Output result content
+				// Output result content, which now includes pagination information
 				console.log(result.content);
-
-				// If pagination information exists, append it
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				handleCliError(error);
 			}
@@ -147,13 +141,8 @@ function register(program: Command) {
 				const result: ControllerResponse =
 					await diffController.commitDiff(controllerOptions);
 
-				// Output result content
+				// Output result content, which now includes pagination information
 				console.log(result.content);
-
-				// If pagination information exists, append it
-				if (result.pagination) {
-					console.log('\n' + formatPagination(result.pagination));
-				}
 			} catch (error) {
 				handleCliError(error);
 			}
