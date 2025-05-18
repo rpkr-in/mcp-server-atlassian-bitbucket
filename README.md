@@ -293,7 +293,7 @@ Create a new pull request.
 
 ---
 
-## `bb_create_branch`
+## `bb_add_branch`
 
 Create a new branch from a source branch or commit.
 
@@ -418,6 +418,33 @@ Compares two commits in a repository and shows the diff. Provides a full diff by
 
 ---
 
+## `bb_list_branches`
+
+Lists branches in a repository with optional filtering.
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app"
+}
+```
+
+_or (with filtering):_
+
+```json
+{
+	"workspaceSlug": "acme-corp",
+	"repoSlug": "frontend-app",
+	"query": "feature/",
+	"sort": "name"
+}
+```
+
+> "Show me all branches in the 'frontend-app' repository."
+> "List branches with 'feature/' in their name, sorted alphabetically."
+
+---
+
 # Command-Line Interface (CLI)
 
 The CLI uses kebab-case for commands (e.g., `ls-workspaces`) and options (e.g., `--workspace-slug`).
@@ -442,7 +469,7 @@ npx -y @aashari/mcp-server-atlassian-bitbucket get-commit-history \
   --workspace-slug acme-corp \
   --repo-slug backend-api \
   --revision develop
-npx -y @aashari/mcp-server-atlassian-bitbucket create-branch \
+npx -y @aashari/mcp-server-atlassian-bitbucket add-branch \
   --workspace-slug acme-corp \
   --repo-slug frontend-app \
   --new-branch-name feature/new-stuff \
@@ -464,6 +491,11 @@ npx -y @aashari/mcp-server-atlassian-bitbucket diff-commits \
   --repo-slug "web-app" \
   --source-commit "a1b2c3d" \
   --target-commit "e4f5g6h"
+npx -y @aashari/mcp-server-atlassian-bitbucket list-branches \
+  --workspace-slug acme-corp \
+  --repo-slug frontend-app \
+  --query "feature/" \
+  --sort "name"
 ```
 
 ## Install Globally
@@ -501,7 +533,8 @@ mcp-atlassian-bitbucket create-pr-comment --help
 mcp-atlassian-bitbucket create-pr --help
 mcp-atlassian-bitbucket search --help
 mcp-atlassian-bitbucket get-commit-history --help
-mcp-atlassian-bitbucket create-branch --help
+mcp-atlassian-bitbucket add-branch --help
+mcp-atlassian-bitbucket list-branches --help
 mcp-atlassian-bitbucket clone --help
 mcp-atlassian-bitbucket get-file --help
 mcp-atlassian-bitbucket diff-branches --help
