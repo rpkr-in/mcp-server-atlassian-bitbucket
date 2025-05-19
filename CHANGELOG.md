@@ -1,3 +1,10 @@
+## [1.38.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.1...v1.38.2) (2025-05-19)
+
+
+### Bug Fixes
+
+* remove unused code and exports to improve maintainability ([e419c07](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/e419c07f43128d334094fba50ff90b2a76bc0229))
+
 ## [1.38.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.0...v1.38.1) (2025-05-19)
 
 
