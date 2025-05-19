@@ -1,13 +1,4 @@
-import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
-import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
 import { Logger } from '../utils/logger.util.js';
-import { handleControllerError } from '../utils/error-handler.util.js';
-import { DEFAULT_PAGE_SIZE, applyDefaults } from '../utils/defaults.util.js';
-import {
-	extractPaginationInfo,
-	PaginationType,
-} from '../utils/pagination.util.js';
-import { formatPagination } from '../utils/formatter.util.js';
 import { ControllerResponse } from '../types/common.types.js';
 import {
 	ListRepositoriesToolArgsType,
@@ -17,22 +8,19 @@ import {
 	CloneRepositoryToolArgsType,
 	ListBranchesToolArgsType,
 } from '../tools/atlassian.repositories.types.js';
+
+// Import handlers from specialized controllers
+import { handleRepositoriesList } from './atlassian.repositories.list.controller.js';
+import { handleRepositoryDetails } from './atlassian.repositories.details.controller.js';
+import { handleCommitHistory } from './atlassian.repositories.commit.controller.js';
 import {
-	formatRepositoriesList,
-	formatRepositoryDetails,
-	formatCommitHistory,
-} from './atlassian.repositories.formatter.js';
+	handleCreateBranch,
+	handleListBranches,
+} from './atlassian.repositories.branch.controller.js';
 import {
-	ListCommitsParams,
-	ListRepositoriesParams,
-	BranchRef,
-	CreateBranchParams,
-} from '../services/vendor.atlassian.repositories.types.js';
-import { getDefaultWorkspace } from '../utils/workspace.util.js';
-import { formatBitbucketQuery } from '../utils/query.util.js';
-import { executeShellCommand } from '../utils/shell.util.js';
-import * as path from 'path';
-import * as fs from 'fs/promises';
+	handleCloneRepository,
+	handleGetFileContent,
+} from './atlassian.repositories.content.controller.js';
 
 /**
  * Controller for managing Bitbucket repositories.
@@ -48,278 +36,21 @@ const controllerLogger = Logger.forContext(
 controllerLogger.debug('Bitbucket repositories controller initialized');
 
 /**
- * Lists repositories for a specific workspace with pagination and filtering options
+ * Lists repositories for a specific workspace with pagination and filtering options.
+ * Delegates to the specialized list controller.
+ *
  * @param options - Options for listing repositories including workspaceSlug
  * @returns Formatted list of repositories with pagination information
  */
 async function list(
 	options: ListRepositoriesToolArgsType,
 ): Promise<ControllerResponse> {
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'list',
-	);
-	methodLogger.debug('Listing Bitbucket repositories...', options);
-
-	try {
-		// Get workspace slug from options or default
-		let workspaceSlug = options.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace slug provided, using default workspace',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-
-			if (!defaultWorkspace) {
-				throw new Error(
-					'No workspace slug provided and no default workspace could be determined. Please provide a workspace slug or configure a default workspace.',
-				);
-			}
-
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		// Create defaults object with proper typing
-		const defaults: Partial<ListRepositoriesToolArgsType> = {
-			limit: DEFAULT_PAGE_SIZE,
-			sort: '-updated_on',
-		};
-
-		// Apply defaults
-		const mergedOptions = applyDefaults<ListRepositoriesToolArgsType>(
-			{ ...options, workspaceSlug },
-			defaults,
-		);
-
-		// Format the query for Bitbucket API if provided
-		// Combine query and projectKey if both are present
-		const queryParts: string[] = [];
-		if (mergedOptions.query) {
-			// Assuming formatBitbucketQuery handles basic name/description search
-			queryParts.push(formatBitbucketQuery(mergedOptions.query));
-		}
-		if (mergedOptions.projectKey) {
-			queryParts.push(`project.key = "${mergedOptions.projectKey}"`);
-		}
-		const combinedQuery = queryParts.join(' AND '); // Combine with AND
-
-		// Map controller options to service parameters
-		const serviceParams: ListRepositoriesParams = {
-			// Required workspace
-			workspace: workspaceSlug,
-			// Handle limit with default value
-			pagelen: mergedOptions.limit,
-			// Map cursor to page for page-based pagination
-			page: mergedOptions.cursor
-				? parseInt(mergedOptions.cursor, 10)
-				: undefined,
-			// Set default sort to updated_on descending if not specified
-			sort: mergedOptions.sort,
-			// Optional filter parameters
-			...(combinedQuery && { q: combinedQuery }), // <-- Use combined query
-			...(mergedOptions.role && { role: mergedOptions.role }),
-		};
-
-		methodLogger.debug('Using service parameters:', serviceParams);
-
-		const repositoriesData =
-			await atlassianRepositoriesService.list(serviceParams);
-		// Log only the count of repositories returned instead of the entire response
-		methodLogger.debug(
-			`Retrieved ${repositoriesData.values?.length || 0} repositories`,
-		);
-
-		// Post-filter by project key if provided and Bitbucket API returned extra results
-		if (mergedOptions.projectKey && repositoriesData.values) {
-			const originalCount = repositoriesData.values.length;
-
-			// Only keep repositories with exact project key match
-			// NOTE: This filtering is done client-side since Bitbucket API doesn't directly support
-			// filtering by project key in its query parameters. This means all repositories are first
-			// fetched and then filtered locally, which may result in fewer results than expected
-			// if the limit parameter is also used.
-			repositoriesData.values = repositoriesData.values.filter(
-				(repo) => repo.project?.key === mergedOptions.projectKey,
-			);
-
-			const filteredCount = repositoriesData.values.length;
-
-			// Log filtering results to help with debugging
-			if (filteredCount !== originalCount) {
-				methodLogger.debug(
-					`Post-filtered repositories by projectKey=${mergedOptions.projectKey}: ${filteredCount} of ${originalCount} matched.`,
-				);
-
-				// Adjust the size to reflect the actual filtered count (matters for pagination)
-				if (repositoriesData.size) {
-					// Adjust total size proportionally based on how many were filtered out
-					const filterRatio = filteredCount / originalCount;
-					const estimatedTotalSize = Math.ceil(
-						repositoriesData.size * filterRatio,
-					);
-					repositoriesData.size = Math.max(
-						filteredCount,
-						estimatedTotalSize,
-					);
-
-					methodLogger.debug(
-						`Adjusted size from ${repositoriesData.size} to ${estimatedTotalSize} based on filtering ratio`,
-					);
-				}
-
-				// If this is the first page and we have fewer results than requested, try to fetch more
-				if (
-					filteredCount <
-						(serviceParams.pagelen || DEFAULT_PAGE_SIZE) &&
-					repositoriesData.next
-				) {
-					methodLogger.debug(
-						`After filtering, only ${filteredCount} items remain. Fetching more pages to supplement...`,
-					);
-
-					// Keep fetching next pages until we have enough items or no more pages
-					let nextPageUrl: string | undefined = repositoriesData.next;
-					let totalItemsNeeded =
-						(serviceParams.pagelen || DEFAULT_PAGE_SIZE) -
-						filteredCount;
-
-					while (nextPageUrl && totalItemsNeeded > 0) {
-						try {
-							// Extract the next page number
-							let nextPage: number | undefined;
-							try {
-								const nextUrl = new URL(nextPageUrl);
-								const pageParam =
-									nextUrl.searchParams.get('page');
-								if (pageParam) {
-									nextPage = parseInt(pageParam, 10);
-								}
-							} catch (e) {
-								methodLogger.warn(
-									`Could not extract next page from URL: ${nextPageUrl}`,
-									e,
-								);
-								break;
-							}
-
-							if (!nextPage) break;
-
-							// Fetch the next page
-							const nextPageParams = {
-								...serviceParams,
-								page: nextPage,
-							};
-
-							const nextPageData =
-								await atlassianRepositoriesService.list(
-									nextPageParams,
-								);
-
-							// Filter the next page results
-							if (nextPageData.values) {
-								const nextPageFiltered =
-									nextPageData.values.filter(
-										(repo) =>
-											repo.project?.key ===
-											mergedOptions.projectKey,
-									);
-
-								// Add items to reach the requested limit
-								const itemsToAdd = nextPageFiltered.slice(
-									0,
-									totalItemsNeeded,
-								);
-
-								if (itemsToAdd.length > 0) {
-									repositoriesData.values = [
-										...repositoriesData.values,
-										...itemsToAdd,
-									];
-
-									totalItemsNeeded -= itemsToAdd.length;
-
-									methodLogger.debug(
-										`Added ${itemsToAdd.length} items from page ${nextPage} to reach requested limit. ${totalItemsNeeded} more needed.`,
-									);
-								}
-
-								// Update next page URL for the loop
-								nextPageUrl = nextPageData.next || undefined;
-
-								// If we've fetched all filtered items from this page but there are more pages
-								// and we still need more items, continue to the next page
-								if (
-									nextPageFiltered.length <=
-										itemsToAdd.length &&
-									totalItemsNeeded > 0
-								) {
-									continue;
-								}
-
-								// If we got all the items we need, update pagination accordingly
-								if (totalItemsNeeded <= 0) {
-									// We have enough items now, but there are more available
-									if (nextPageData.next) {
-										repositoriesData.next =
-											nextPageData.next;
-									}
-									break;
-								}
-							} else {
-								// No values in the response, stop fetching
-								nextPageUrl = undefined;
-							}
-						} catch (fetchError) {
-							// Log the error but continue with what we have
-							methodLogger.warn(
-								`Error fetching page to supplement filtered results:`,
-								fetchError,
-							);
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Extract pagination information using the utility
-		const pagination = extractPaginationInfo(
-			repositoriesData,
-			PaginationType.PAGE,
-		);
-
-		// Format the repositories data for display using the formatter
-		const formattedRepositories = formatRepositoriesList(repositoriesData);
-
-		// Create the final content by combining the formatted repositories with pagination information
-		let finalContent = formattedRepositories;
-
-		// Add pagination information if available
-		if (
-			pagination &&
-			(pagination.hasMore || pagination.count !== undefined)
-		) {
-			const paginationString = formatPagination(pagination);
-			finalContent += '\n\n' + paginationString;
-		}
-
-		return {
-			content: finalContent,
-		};
-	} catch (error) {
-		// Use the standardized error handler
-		throw handleControllerError(error, {
-			entityType: 'Repositories',
-			operation: 'listing',
-			source: 'controllers/atlassian.repositories.controller.ts@list',
-			additionalInfo: { options },
-		});
-	}
+	return handleRepositoriesList(options);
 }
 
 /**
- * Get details of a specific repository
+ * Get details of a specific repository.
+ * Delegates to the specialized details controller.
  *
  * @param params - Parameters containing workspaceSlug and repoSlug
  * @returns Promise with formatted repository details content
@@ -327,73 +58,12 @@ async function list(
 async function get(
 	params: GetRepositoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const methodLogger = controllerLogger.forMethod('get');
-
-	try {
-		methodLogger.debug('Getting repository details', params);
-
-		// Handle optional workspaceSlug
-		if (!params.workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, fetching default workspace',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				throw new Error(
-					'No default workspace found. Please provide a workspace slug.',
-				);
-			}
-			params.workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
-		}
-
-		// Call the service to get repository details
-		const repoData = await atlassianRepositoriesService.get({
-			workspace: params.workspaceSlug,
-			repo_slug: params.repoSlug,
-		});
-
-		// Fetch recent pull requests for this repository (most recently updated, limit to 5)
-		let pullRequestsData = null;
-		try {
-			methodLogger.debug(
-				'Fetching recent pull requests for the repository',
-			);
-			pullRequestsData = await atlassianPullRequestsService.list({
-				workspace: params.workspaceSlug,
-				repo_slug: params.repoSlug,
-				state: 'OPEN', // Focus on open PRs
-				sort: '-updated_on', // Sort by most recently updated
-				pagelen: 5, // Limit to 5 to keep the response concise
-			});
-			methodLogger.debug(
-				`Retrieved ${pullRequestsData.values?.length || 0} recent pull requests`,
-			);
-		} catch (error) {
-			// Log the error but continue - this is an enhancement, not critical
-			methodLogger.warn(
-				'Failed to fetch recent pull requests, continuing without them',
-				error,
-			);
-			// Do not fail the entire operation if pull requests cannot be fetched
-		}
-
-		// Format the repository data with optional pull requests
-		const content = formatRepositoryDetails(repoData, pullRequestsData);
-
-		return { content };
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'Repository',
-			operation: 'get',
-			source: 'controllers/atlassian.repositories.controller.js@get',
-			additionalInfo: params,
-		});
-	}
+	return handleRepositoryDetails(params);
 }
 
 /**
- * Get commit history for a repository
+ * Get commit history for a repository.
+ * Delegates to the specialized commit controller.
  *
  * @param options - Options containing repository identifiers and filters
  * @returns Promise with formatted commit history content and pagination info
@@ -401,346 +71,41 @@ async function get(
 async function getCommitHistory(
 	options: GetCommitHistoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const methodLogger = controllerLogger.forMethod('getCommitHistory');
-
-	try {
-		methodLogger.debug('Getting commit history', options);
-
-		// Apply defaults
-		const defaults = {
-			limit: DEFAULT_PAGE_SIZE,
-		};
-		const params = applyDefaults(
-			options,
-			defaults,
-		) as GetCommitHistoryToolArgsType & {
-			limit: number;
-		};
-
-		// Handle optional workspaceSlug
-		if (!params.workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, fetching default workspace',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				throw new Error(
-					'No default workspace found. Please provide a workspace slug.',
-				);
-			}
-			params.workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
-		}
-
-		const serviceParams: ListCommitsParams = {
-			workspace: params.workspaceSlug,
-			repo_slug: params.repoSlug,
-			include: params.revision,
-			path: params.path,
-			pagelen: params.limit,
-			page: params.cursor ? parseInt(params.cursor, 10) : undefined,
-		};
-
-		methodLogger.debug('Fetching commits with params:', serviceParams);
-		const commitsData =
-			await atlassianRepositoriesService.listCommits(serviceParams);
-		methodLogger.debug(
-			`Retrieved ${commitsData.values?.length || 0} commits`,
-		);
-
-		// Extract pagination info before formatting
-		const pagination = extractPaginationInfo(
-			commitsData,
-			PaginationType.PAGE,
-		);
-
-		const formattedHistory = formatCommitHistory(commitsData, {
-			revision: params.revision,
-			path: params.path,
-		});
-
-		// Create the final content by combining the formatted commit history with pagination information
-		let finalContent = formattedHistory;
-
-		// Add pagination information if available
-		if (
-			pagination &&
-			(pagination.hasMore || pagination.count !== undefined)
-		) {
-			const paginationString = formatPagination(pagination);
-			finalContent += '\n\n' + paginationString;
-		}
-
-		return {
-			content: finalContent,
-		};
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'Commit History',
-			operation: 'retrieving',
-			source: 'controllers/atlassian.repositories.controller.ts@getCommitHistory',
-			additionalInfo: { options },
-		});
-	}
+	return handleCommitHistory(options);
 }
 
 /**
  * Creates a new branch in a repository.
+ * Delegates to the specialized branch controller.
+ *
  * @param options Options including workspace, repo, new branch name, and source target.
  * @returns Confirmation message.
  */
 async function createBranch(
 	options: CreateBranchToolArgsType,
 ): Promise<ControllerResponse> {
-	const { repoSlug, newBranchName, sourceBranchOrCommit } = options;
-	let { workspaceSlug } = options;
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'createBranch',
-	);
-
-	// Handle optional workspaceSlug
-	if (!workspaceSlug) {
-		methodLogger.debug('No workspace provided, fetching default workspace');
-		const defaultWorkspace = await getDefaultWorkspace();
-		if (!defaultWorkspace) {
-			throw new Error(
-				'No default workspace found. Please provide a workspace slug.',
-			);
-		}
-		workspaceSlug = defaultWorkspace;
-		methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-	}
-
-	methodLogger.debug(
-		`Attempting to create branch '${newBranchName}' from '${sourceBranchOrCommit}' in ${workspaceSlug}/${repoSlug}`,
-	);
-
-	try {
-		const serviceParams: CreateBranchParams = {
-			workspace: workspaceSlug,
-			repo_slug: repoSlug,
-			name: newBranchName,
-			target: {
-				hash: sourceBranchOrCommit,
-			},
-		};
-
-		methodLogger.debug('Calling service to create branch:', serviceParams);
-
-		const createdBranchRef: BranchRef =
-			await atlassianRepositoriesService.createBranch(serviceParams);
-
-		methodLogger.debug('Branch created successfully:', createdBranchRef);
-
-		// Format a simple success message
-		const successMessage = `Successfully created branch \`${createdBranchRef.name}\` from target \`${sourceBranchOrCommit}\` (commit: ${createdBranchRef.target.hash.substring(0, 7)}).`;
-
-		return {
-			content: successMessage,
-		};
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'Branch',
-			operation: 'creating',
-			source: 'controllers/atlassian.repositories.controller.ts@createBranch',
-			additionalInfo: { options },
-		});
-	}
+	return handleCreateBranch(options);
 }
 
 /**
- * Clones a Bitbucket repository to a specified target path.
- * @param options Options including workspaceSlug, repoSlug, and targetPath.
- * @returns Confirmation message.
+ * Clones a Bitbucket repository to the local filesystem.
+ * Delegates to the specialized content controller.
+ *
+ * @param options Options including repository identifiers and target path
+ * @returns Information about the cloned repository
  */
 async function cloneRepository(
 	options: CloneRepositoryToolArgsType,
 ): Promise<ControllerResponse> {
-	const { repoSlug, targetPath } = options;
-	let { workspaceSlug } = options;
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'cloneRepository',
-	);
-
-	// Handle optional workspaceSlug
-	if (!workspaceSlug) {
-		methodLogger.debug('No workspace provided, fetching default workspace');
-		const defaultWorkspace = await getDefaultWorkspace();
-		if (!defaultWorkspace) {
-			throw new Error(
-				'No default workspace found. Please provide a workspace slug.',
-			);
-		}
-		workspaceSlug = defaultWorkspace;
-		methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-	}
-
-	methodLogger.debug(
-		`Attempting to clone repository ${workspaceSlug}/${repoSlug} to ${targetPath}`,
-		options,
-	);
-
-	try {
-		// 1. Get repository details to find the clone URL
-		const repoDetails = await atlassianRepositoriesService.get({
-			workspace: workspaceSlug,
-			repo_slug: repoSlug,
-		});
-
-		// 2. Prefer SSH clone URL for environments with configured SSH keys; fallback to HTTPS if SSH is unavailable
-		let cloneUrl: string | undefined;
-		if (repoDetails.links?.clone) {
-			const sshLink = repoDetails.links.clone.find(
-				(link) => link.name === 'ssh',
-			);
-			const httpsLink = repoDetails.links.clone.find(
-				(link) => link.name === 'https',
-			);
-
-			if (sshLink) {
-				cloneUrl = sshLink.href;
-				methodLogger.info(`Using SSH clone URL: ${cloneUrl}`);
-			} else if (httpsLink) {
-				cloneUrl = httpsLink.href;
-				methodLogger.info(
-					`SSH clone URL not found. Falling back to HTTPS: ${cloneUrl}`,
-				);
-			}
-		}
-
-		if (!cloneUrl) {
-			throw new Error(
-				`Could not determine clone URL for ${workspaceSlug}/${repoSlug}`,
-			);
-		}
-		methodLogger.info(`Resolved clone URL: ${cloneUrl}`);
-
-		// 3. Construct and execute the git clone command
-		let command;
-		let operationDescSuffix;
-		let finalTargetPathForMessage = targetPath;
-
-		const repoDirName = repoSlug; // The directory name for the repo itself
-
-		if (targetPath === '.') {
-			// If targetPath is '.', clone into a new directory named after the repo in the current path.
-			// Git will create repoDirName in the current directory.
-			command = `git clone ${cloneUrl} ${repoDirName}`;
-			operationDescSuffix = `into ./${repoDirName}`;
-			finalTargetPathForMessage = `./${repoDirName}`;
-		} else {
-			// Resolve the absolute path for the directory that will contain the cloned repo
-			const parentDir = path.resolve(targetPath);
-
-			try {
-				// Check if parent directory exists first
-				try {
-					await fs.access(path.dirname(parentDir));
-				} catch (accessError: unknown) {
-					// If the check fails, provide a detailed error
-					const errorMessage =
-						accessError instanceof Error
-							? accessError.message
-							: String(accessError);
-
-					throw new Error(
-						`Cannot access parent directory of '${parentDir}'. Either the directory doesn't exist or you don't have permissions to access it. Error: ${errorMessage}`,
-					);
-				}
-
-				// Ensure the parent directory exists
-				try {
-					await fs.mkdir(parentDir, { recursive: true });
-				} catch (mkdirError: unknown) {
-					// Provide a detailed error message for directory creation failures
-					const errorMessage =
-						mkdirError instanceof Error
-							? mkdirError.message
-							: String(mkdirError);
-
-					throw new Error(
-						`Failed to create directory '${parentDir}'. This may be due to permission issues or the parent directory doesn't exist. Error: ${errorMessage}`,
-					);
-				}
-
-				// The final path where the repo will be cloned (e.g., /path/to/targetPath/repoSlug)
-				const cloneDestination = path.join(parentDir, repoDirName);
-
-				// Verify the target directory can be created
-				try {
-					// Test if we can write to the parent directory by creating and removing a temporary file
-					const testFile = path.join(
-						parentDir,
-						'.write-test-' + Date.now(),
-					);
-					await fs.writeFile(testFile, '');
-					await fs.unlink(testFile);
-				} catch (writeError: unknown) {
-					const errorMessage =
-						writeError instanceof Error
-							? writeError.message
-							: String(writeError);
-
-					throw new Error(
-						`Cannot write to directory '${parentDir}'. You may not have write permissions. Error: ${errorMessage}`,
-					);
-				}
-
-				// Quote if it contains spaces, though path.resolve and path.join usually handle this well
-				// for command execution, explicit quoting is safer for the final string.
-				const safeCloneDestination = cloneDestination.includes(' ')
-					? `"${cloneDestination}"`
-					: cloneDestination;
-
-				command = `git clone ${cloneUrl} ${safeCloneDestination}`;
-				operationDescSuffix = `to ${cloneDestination}`;
-
-				// Continue with the rest of the function...
-			} catch (pathError) {
-				throw handleControllerError(pathError, {
-					entityType: 'Path',
-					operation: 'resolving',
-					source: 'controllers/atlassian.repositories.controller.ts@cloneRepository',
-					additionalInfo: { options },
-				});
-			}
-		}
-
-		// Execute the command
-		methodLogger.debug(`Executing command: ${command}`);
-		const result = await executeShellCommand(
-			command,
-			operationDescSuffix || 'cloning repository',
-		);
-
-		methodLogger.debug(`Command executed successfully`, {
-			result,
-			operationDescSuffix,
-			finalTargetPathForMessage,
-		});
-
-		// Format a success message
-		const successMessage = `Successfully cloned repository ${workspaceSlug}/${repoSlug} to ${finalTargetPathForMessage}.`;
-
-		return {
-			content: successMessage,
-		};
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'Repository',
-			operation: 'cloning',
-			source: 'controllers/atlassian.repositories.controller.ts@cloneRepository',
-			additionalInfo: { options },
-		});
-	}
+	return handleCloneRepository(options);
 }
 
 /**
- * Get file content from a repository.
- * @param options Options including workspaceSlug, repoSlug, path, and optional ref.
- * @returns File content as a ControllerResponse.
+ * Retrieves file content from a repository.
+ * Delegates to the specialized content controller.
+ *
+ * @param options Options including repository identifiers and file path
+ * @returns The file content as text
  */
 async function getFileContent(options: {
 	workspaceSlug: string;
@@ -748,137 +113,20 @@ async function getFileContent(options: {
 	path: string;
 	ref?: string;
 }): Promise<ControllerResponse> {
-	const { workspaceSlug, repoSlug, path, ref } = options;
-	const methodLogger = Logger.forContext(
-		'controllers/atlassian.repositories.controller.ts',
-		'getFileContent',
-	);
-
-	methodLogger.debug(
-		`Getting file content from ${workspaceSlug}/${repoSlug}/${path}${
-			ref ? ` at ${ref}` : ''
-		}`,
-	);
-
-	try {
-		// Map controller parameters to service parameters
-		const serviceParams = {
-			workspace: workspaceSlug,
-			repo_slug: repoSlug,
-			commit: ref || 'main', // Default to 'main' if no ref is provided
-			path,
-		};
-
-		methodLogger.debug('Using service parameters:', serviceParams);
-
-		// Call the service to get the file content
-		const fileContent =
-			await atlassianRepositoriesService.getFileContent(serviceParams);
-
-		methodLogger.debug(
-			`Retrieved file content (${fileContent.length} characters)`,
-		);
-
-		// Return the file content as is, since it's already formatted
-		return {
-			content: fileContent,
-		};
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'File content',
-			operation: 'retrieving',
-			source: 'controllers/atlassian.repositories.controller.ts@getFileContent',
-			additionalInfo: { options },
-		});
-	}
+	return handleGetFileContent(options);
 }
 
 /**
- * List branches in a repository
+ * Lists branches in a repository with optional filtering.
+ * Delegates to the specialized branch controller.
  *
- * @param options - Options containing repository identifiers and filters
- * @returns Promise with formatted branch list content and pagination info
+ * @param options - Options containing workspaceSlug, repoSlug, and filters
+ * @returns Formatted list of branches and pagination information
  */
 async function listBranches(
 	options: ListBranchesToolArgsType,
 ): Promise<ControllerResponse> {
-	const methodLogger = controllerLogger.forMethod('listBranches');
-
-	try {
-		methodLogger.debug('Listing branches', options);
-
-		// Apply defaults
-		const defaults = {
-			limit: DEFAULT_PAGE_SIZE,
-		};
-		const params = applyDefaults(
-			options,
-			defaults,
-		) as ListBranchesToolArgsType & {
-			limit: number;
-		};
-
-		// Handle optional workspaceSlug
-		if (!params.workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, fetching default workspace',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				throw new Error(
-					'No default workspace found. Please provide a workspace slug.',
-				);
-			}
-			params.workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${defaultWorkspace}`);
-		}
-
-		// Implement the actual method (this is just a stub implementation)
-		// The actual implementation would fetch branches from the repository
-		const mockBranches = {
-			values: [
-				{
-					name: 'main',
-					target: { date: new Date().toISOString() },
-				},
-			],
-			pagelen: 1,
-			size: 1,
-			page: 1,
-		};
-
-		// Extract pagination info
-		const pagination = extractPaginationInfo(
-			mockBranches,
-			PaginationType.PAGE,
-		);
-
-		// Format branches (this would use a real formatter in actual implementation)
-		const formattedBranches = 'List of branches:\n- main (default branch)';
-
-		// Create the final content by combining the formatted branches with pagination information
-		let finalContent = formattedBranches;
-
-		// Add pagination information if available
-		if (
-			pagination &&
-			(pagination.hasMore || pagination.count !== undefined)
-		) {
-			const paginationString = formatPagination(pagination);
-			finalContent += '\n\n' + paginationString;
-		}
-
-		return {
-			content: finalContent,
-		};
-	} catch (error) {
-		throw handleControllerError(error, {
-			entityType: 'Branches',
-			operation: 'listing',
-			source: 'controllers/atlassian.repositories.controller.ts@listBranches',
-			additionalInfo: { options },
-		});
-	}
+	return handleListBranches(options);
 }
 
 export default {
