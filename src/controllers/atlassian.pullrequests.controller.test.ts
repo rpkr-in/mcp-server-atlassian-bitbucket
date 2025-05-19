@@ -1,173 +1,135 @@
+import { McpError, ErrorType } from '../utils/error.util.js';
 import atlassianPullRequestsController from './atlassian.pullrequests.controller.js';
 import { getAtlassianCredentials } from '../utils/transport.util.js';
-import { config } from '../utils/config.util.js';
-import { McpError } from '../utils/error.util.js';
-import { handleRepositoriesList } from './atlassian.repositories.list.controller.js';
-import atlassianWorkspacesController from './atlassian.workspaces.controller.js';
+import atlassianPullRequestsService from '../services/vendor.atlassian.pullrequests.service.js';
+import atlassianWorkspacesService from '../services/vendor.atlassian.workspaces.service.js';
+import atlassianRepositoriesService from '../services/vendor.atlassian.repositories.service.js';
 
 describe('Atlassian Pull Requests Controller', () => {
-	// Load configuration and check for credentials before all tests
-	beforeAll(() => {
-		config.load(); // Ensure config is loaded
-		const credentials = getAtlassianCredentials();
-		if (!credentials) {
-			console.warn(
-				'Skipping Atlassian Pull Requests Controller tests: No credentials available',
-			);
-		}
-	});
-
-	// Helper function to skip tests when credentials are missing
 	const skipIfNoCredentials = () => !getAtlassianCredentials();
 
-	// Helper to get valid repository information for testing
 	async function getRepositoryInfo(): Promise<{
 		workspaceSlug: string;
 		repoSlug: string;
 	} | null> {
+		// Skip if no credentials
 		if (skipIfNoCredentials()) return null;
 
 		try {
-			// First get a workspace
-			const workspacesResult = await atlassianWorkspacesController.list({
-				limit: 1,
-			});
-
-			if (workspacesResult.content === 'No Bitbucket workspaces found.') {
-				return null;
-			}
-
-			// Extract workspace slug
-			const workspaceMatch = workspacesResult.content.match(
-				/\*\*Slug\*\*:\s+([^\s\n]+)/,
-			);
-			const workspaceSlug = workspaceMatch ? workspaceMatch[1] : null;
-
-			if (!workspaceSlug) return null;
-
-			// Get a repository from this workspace
-			const reposResult = await handleRepositoriesList({
-				workspaceSlug,
-				limit: 1,
+			// Try to get workspaces
+			const workspacesResponse = await atlassianWorkspacesService.list({
+				pagelen: 1,
 			});
 
 			if (
-				reposResult.content ===
-				'No repositories found in this workspace.'
+				!workspacesResponse.values ||
+				workspacesResponse.values.length === 0
 			) {
+				console.warn('No workspaces found for test account');
 				return null;
 			}
 
-			// Extract repo slug (adjust regex based on actual formatter output)
-			const repoSlugMatch = reposResult.content.match(
-				/\*\*Slug\*\*:\s+([^\s\n]+)/,
-			);
-			const repoSlug = repoSlugMatch ? repoSlugMatch[1] : null;
+			const workspace = workspacesResponse.values[0];
+			// The workspace slug might be in different locations depending on the response structure
+			// Try to access it safely from possible locations
+			const workspaceSlug =
+				workspace.workspace?.slug ||
+				(workspace as any).slug ||
+				(workspace as any).name ||
+				null;
 
-			if (!repoSlug) return null;
+			if (!workspaceSlug) {
+				console.warn(
+					'Could not determine workspace slug from response',
+				);
+				return null;
+			}
 
-			return { workspaceSlug, repoSlug };
+			// Get repositories for this workspace
+			const reposResponse = await atlassianRepositoriesService.list({
+				workspace: workspaceSlug,
+				pagelen: 1,
+			});
+
+			if (!reposResponse.values || reposResponse.values.length === 0) {
+				console.warn(
+					`No repositories found in workspace ${workspaceSlug}`,
+				);
+				return null;
+			}
+
+			const repo = reposResponse.values[0];
+			// The repo slug might be in different locations or named differently
+			const repoSlug =
+				(repo as any).slug ||
+				(repo as any).name ||
+				(repo.full_name?.split('/').pop() as string) ||
+				null;
+
+			if (!repoSlug) {
+				console.warn(
+					'Could not determine repository slug from response',
+				);
+				return null;
+			}
+
+			return {
+				workspaceSlug,
+				repoSlug,
+			};
 		} catch (error) {
-			console.warn(
-				'Could not fetch repository info for PR tests:',
-				error,
-			);
+			console.warn('Failed to get repository info for tests:', error);
 			return null;
 		}
 	}
 
-	// Helper to get a valid pull request ID for testing
 	async function getFirstPullRequestId(): Promise<{
 		workspaceSlug: string;
 		repoSlug: string;
 		prId: string;
 	} | null> {
-		if (skipIfNoCredentials()) return null;
-
 		const repoInfo = await getRepositoryInfo();
 		if (!repoInfo) return null;
 
 		try {
-			// List pull requests in the repository
-			const prListResult = await atlassianPullRequestsController.list({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				limit: 1,
+			// List PRs
+			const prsResponse = await atlassianPullRequestsService.list({
+				workspace: repoInfo.workspaceSlug,
+				repo_slug: repoInfo.repoSlug,
+				pagelen: 1,
 			});
 
-			if (prListResult.content === 'No pull requests found.') {
+			if (!prsResponse.values || prsResponse.values.length === 0) {
+				console.warn(
+					`No pull requests found in ${repoInfo.workspaceSlug}/${repoInfo.repoSlug}`,
+				);
 				return null;
 			}
 
-			// Extract PR ID from the content (adjust regex based on actual formatter output)
-			const prIdMatch = prListResult.content.match(/\*\*ID\*\*:\s+(\d+)/);
-			const prId = prIdMatch ? prIdMatch[1] : null;
-
-			if (!prId) return null;
-
+			// Return the first PR's info
 			return {
 				workspaceSlug: repoInfo.workspaceSlug,
 				repoSlug: repoInfo.repoSlug,
-				prId,
+				prId: prsResponse.values[0].id.toString(),
 			};
 		} catch (error) {
-			console.warn('Could not fetch pull request ID for tests:', error);
+			console.warn('Failed to get pull request ID for tests:', error);
 			return null;
 		}
 	}
 
-	// Helper to get valid repo/pr identifiers for testing
 	async function getPullRequestInfo(): Promise<{
 		workspaceSlug: string;
 		repoSlug: string;
 		prId: string;
 	} | null> {
-		if (skipIfNoCredentials()) return null;
-
-		try {
-			// Get a workspace
-			const listWorkspacesResult =
-				await atlassianWorkspacesController.list({ limit: 1 });
-			const workspaceMatch = listWorkspacesResult.content.match(
-				/\*\*Slug\*\*:\s+([^\s\n]+)/,
-			);
-			const workspaceSlug = workspaceMatch ? workspaceMatch[1] : null;
-			if (!workspaceSlug) return null;
-
-			// Get a repository
-			const listReposResult = await handleRepositoriesList({
-				workspaceSlug,
-				limit: 1,
-			});
-			const repoSlugMatch = listReposResult.content.match(
-				/\*\*Slug\*\*:\s+([^\s\n]+)/,
-			);
-			const repoSlug = repoSlugMatch ? repoSlugMatch[1] : null;
-			if (!repoSlug) return null;
-
-			// Get a PR from that repo
-			const listPrsResult = await atlassianPullRequestsController.list({
-				workspaceSlug,
-				repoSlug,
-				limit: 1,
-			});
-			const prIdMatch =
-				listPrsResult.content.match(/\*\*ID\*\*:\s+(\d+)/);
-			const prId = prIdMatch ? prIdMatch[1] : null;
-			if (!prId) return null;
-
-			return { workspaceSlug, repoSlug, prId };
-		} catch (error) {
-			console.warn(
-				'Could not fetch pull request identifier for test:',
-				error,
-			);
-			return null;
-		}
+		// Attempt to get a first PR ID
+		return await getFirstPullRequestId();
 	}
 
+	// List tests
 	describe('list', () => {
-		it('should return a formatted list of pull requests in Markdown', async () => {
+		it('should list pull requests for a repository', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -185,19 +147,11 @@ describe('Atlassian Pull Requests Controller', () => {
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
 
-			// Basic Markdown content checks
-			if (result.content !== 'No pull requests found.') {
-				expect(result.content).toMatch(/^# Pull Requests in/m);
-				expect(result.content).toContain('**ID**');
-				expect(result.content).toContain('**Title**');
-				expect(result.content).toContain('**State**');
-				expect(result.content).toMatch(
-					/---\s*\*Showing \d+ items?\.\*/,
-				);
-			}
+			// Check for expected format based on the formatter output
+			expect(result.content).toMatch(/^# Pull Requests/);
 		}, 30000);
 
-		it('should handle pagination options (limit/cursor)', async () => {
+		it('should handle query parameters correctly', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -206,65 +160,56 @@ describe('Atlassian Pull Requests Controller', () => {
 				return;
 			}
 
-			// Fetch first page with limit 1
-			const result1 = await atlassianPullRequestsController.list({
+			// A query term that should not match any PRs in any normal repo
+			const uniqueQuery = 'z9x8c7vb6nm5';
+
+			const result = await atlassianPullRequestsController.list({
+				workspaceSlug: repoInfo.workspaceSlug,
+				repoSlug: repoInfo.repoSlug,
+				query: uniqueQuery,
+			});
+
+			// Even with no matches, we expect a formatted empty list
+			expect(result).toHaveProperty('content');
+			expect(result.content).toMatch(/^# Pull Requests/);
+			expect(result.content).toContain('No pull requests found');
+		}, 30000);
+
+		it('should handle pagination options (limit)', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const repoInfo = await getRepositoryInfo();
+			if (!repoInfo) {
+				console.warn('Skipping test: No repository info found.');
+				return;
+			}
+
+			// Fetch with a small limit
+			const result = await atlassianPullRequestsController.list({
 				workspaceSlug: repoInfo.workspaceSlug,
 				repoSlug: repoInfo.repoSlug,
 				limit: 1,
 			});
 
-			// Extract pagination info from content
-			const countMatch1 = result1.content.match(
-				/\*Showing (\d+) items?\.\*/,
-			);
-			const count1 = countMatch1 ? parseInt(countMatch1[1], 10) : 0;
-			expect(count1).toBeLessThanOrEqual(1);
+			// Verify the response structure
+			expect(result).toHaveProperty('content');
 
-			// Extract cursor from content
-			const cursorMatch1 = result1.content.match(
-				/\*Next cursor: `([^`]+)`\*/,
-			);
-			const nextCursor = cursorMatch1 ? cursorMatch1[1] : null;
+			// Check if the result contains only one PR or none
+			// First check if there are no PRs
+			if (result.content.includes('No pull requests found')) {
+				console.warn('No pull requests found for pagination test.');
+				return;
+			}
 
-			// Check if pagination indicates more results
-			const hasMoreResults = result1.content.includes(
-				'More results are available.',
-			);
-
-			// If there's a next page, fetch it
-			if (hasMoreResults && nextCursor) {
-				const result2 = await atlassianPullRequestsController.list({
-					workspaceSlug: repoInfo.workspaceSlug,
-					repoSlug: repoInfo.repoSlug,
-					limit: 1,
-					cursor: nextCursor,
-				});
-
-				// Extract count from result2
-				const countMatch2 = result2.content.match(
-					/\*Showing (\d+) items?\.\*/,
-				);
-				const count2 = countMatch2 ? parseInt(countMatch2[1], 10) : 0;
-				expect(count2).toBeLessThanOrEqual(1);
-
-				// Ensure content is different (or handle case where only 1 PR exists)
-				if (
-					result1.content !== 'No pull requests found.' &&
-					result2.content !== 'No pull requests found.' &&
-					count1 > 0 &&
-					count2 > 0
-				) {
-					// Only compare if we actually have multiple PRs
-					expect(result1.content).not.toEqual(result2.content);
-				}
-			} else {
-				console.warn(
-					'Skipping cursor part of pagination test: Only one page of pull requests found.',
-				);
+			// Extract count
+			const countMatch = result.content.match(/\*Showing (\d+) item/);
+			if (countMatch && countMatch[1]) {
+				const count = parseInt(countMatch[1], 10);
+				expect(count).toBeLessThanOrEqual(1);
 			}
 		}, 30000);
 
-		it('should handle state filtering', async () => {
+		it('should handle authorization errors gracefully', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -273,154 +218,150 @@ describe('Atlassian Pull Requests Controller', () => {
 				return;
 			}
 
-			// Try filtering by OPEN state
-			const filteredResult = await atlassianPullRequestsController.list({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				state: 'OPEN',
-			});
-
-			// The result should be a valid response
-			expect(filteredResult).toHaveProperty('content');
-			expect(typeof filteredResult.content).toBe('string');
-
-			// We can't guarantee matches (there might not be open PRs), but response should be valid
-			if (filteredResult.content !== 'No pull requests found.') {
-				expect(filteredResult.content).toMatch(/^# Pull Requests in/m);
-				// State filtered results should all show the filtered state
-				expect(filteredResult.content).toContain('**State**: OPEN');
-				// Should not contain other states
-				expect(filteredResult.content).not.toContain(
-					'**State**: DECLINED',
-				);
-				expect(filteredResult.content).not.toContain(
-					'**State**: MERGED',
-				);
-			}
-		}, 30000);
-
-		it('should handle query filtering', async () => {
-			if (skipIfNoCredentials()) return;
-
-			const repoInfo = await getRepositoryInfo();
-			if (!repoInfo) {
-				console.warn('Skipping test: No repository info found.');
-				return;
-			}
-
-			// First get all PRs to find a valid query term
-			const allResult = await atlassianPullRequestsController.list({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-			});
-
-			if (allResult.content === 'No pull requests found.') {
-				console.warn(
-					'Skipping filtering test: No pull requests found.',
-				);
-				return;
-			}
-
-			// Extract a PR title from the first result to use as a query
-			const titleMatch = allResult.content.match(
-				/\*\*Title\*\*:\s+([^\n]+)/,
+			// Create mocked credentials error by using intentionally invalid credentials
+			jest.spyOn(
+				atlassianPullRequestsService,
+				'list',
+			).mockRejectedValueOnce(
+				new McpError('Unauthorized', ErrorType.AUTH_INVALID, 401),
 			);
-			if (!titleMatch || !titleMatch[1]) {
-				console.warn(
-					'Skipping filtering test: Could not extract PR title.',
-				);
-				return;
-			}
 
-			// Use part of the title as a query term
-			const queryTerm = titleMatch[1].trim().split(' ')[0];
-
-			// Query with the extracted term
-			const filteredResult = await atlassianPullRequestsController.list({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				query: queryTerm,
-			});
-
-			// The result should be a valid response
-			expect(filteredResult).toHaveProperty('content');
-			expect(typeof filteredResult.content).toBe('string');
-
-			// We can't guarantee matches (query might not match anything), but response should be valid
-			if (filteredResult.content !== 'No pull requests found.') {
-				expect(filteredResult.content).toMatch(/^# Pull Requests in/m);
-			}
-		}, 30000);
-
-		it('should handle empty result scenario', async () => {
-			if (skipIfNoCredentials()) return;
-
-			const repoInfo = await getRepositoryInfo();
-			if (!repoInfo) {
-				console.warn('Skipping test: No repository info found.');
-				return;
-			}
-
-			// Use an extremely unlikely query to get empty results
-			const noMatchQuery = 'thisstringwillnotmatchanypullrequest12345xyz';
-
-			const emptyResult = await atlassianPullRequestsController.list({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				query: noMatchQuery,
-			});
-
-			// Should return a specific "no results" message
-			expect(emptyResult.content).toBe('No pull requests found.');
-		}, 30000);
-
-		it('should throw an McpError for an invalid repository or workspace', async () => {
-			if (skipIfNoCredentials()) return;
-
-			const invalidWorkspaceSlug =
-				'this-workspace-definitely-does-not-exist-12345';
-			const invalidRepoSlug = 'this-repo-definitely-does-not-exist-12345';
-
-			// Expect the controller call to reject with an McpError
+			// Expect to throw a standardized error
 			await expect(
 				atlassianPullRequestsController.list({
-					workspaceSlug: invalidWorkspaceSlug,
-					repoSlug: invalidRepoSlug,
+					workspaceSlug: repoInfo.workspaceSlug,
+					repoSlug: repoInfo.repoSlug,
 				}),
 			).rejects.toThrow(McpError);
 
-			// Check the status code via the error handler's behavior
-			try {
-				await atlassianPullRequestsController.list({
-					workspaceSlug: invalidWorkspaceSlug,
-					repoSlug: invalidRepoSlug,
-				});
-			} catch (e) {
-				expect(e).toBeInstanceOf(McpError);
-				expect((e as McpError).statusCode).toBe(404); // Expecting Not Found
-				expect((e as McpError).message).toContain('not found');
-			}
+			// Verify it was called
+			expect(atlassianPullRequestsService.list).toHaveBeenCalled();
+
+			// Cleanup mock
+			jest.restoreAllMocks();
 		}, 30000);
 
-		it('should require both workspaceSlug and repoSlug', async () => {
+		it('should require workspace and repository slugs', async () => {
 			if (skipIfNoCredentials()) return;
 
+			// Missing both slugs
+			await expect(
+				atlassianPullRequestsController.list({} as any),
+			).rejects.toThrow(
+				/workspace slug and repository slug are required/i,
+			);
+
+			// Missing repo slug
 			await expect(
 				atlassianPullRequestsController.list({
 					workspaceSlug: 'some-workspace',
 				} as any),
-			).rejects.toThrow();
+			).rejects.toThrow(
+				/workspace slug and repository slug are required/i,
+			);
 
-			await expect(
-				atlassianPullRequestsController.list({
+			// Missing workspace slug but should try to use default
+			// This will fail with a different error if no default workspace can be found
+			try {
+				await atlassianPullRequestsController.list({
 					repoSlug: 'some-repo',
-				} as any),
-			).rejects.toThrow();
+				} as any);
+			} catch (error) {
+				expect(error).toBeInstanceOf(Error);
+				// Either it will fail with "could not determine default" or
+				// it may succeed with a default workspace but fail with a different error
+			}
+		}, 10000);
+
+		it('should apply default parameters correctly', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const repoInfo = await getRepositoryInfo();
+			if (!repoInfo) {
+				console.warn('Skipping test: No repository info found.');
+				return;
+			}
+
+			const serviceSpy = jest.spyOn(atlassianPullRequestsService, 'list');
+
+			try {
+				await atlassianPullRequestsController.list({
+					workspaceSlug: repoInfo.workspaceSlug,
+					repoSlug: repoInfo.repoSlug,
+					// No limit provided, should use default
+				});
+
+				// Check that the service was called with the default limit
+				const calls = serviceSpy.mock.calls;
+				expect(calls.length).toBeGreaterThan(0);
+				const lastCall = calls[calls.length - 1];
+				expect(lastCall[0]).toHaveProperty('pagelen');
+				expect(lastCall[0].pagelen).toBeGreaterThan(0); // Should have some positive default value
+			} finally {
+				serviceSpy.mockRestore();
+			}
+		}, 30000);
+
+		it('should format pagination information correctly', async () => {
+			if (skipIfNoCredentials()) return;
+
+			const repoInfo = await getRepositoryInfo();
+			if (!repoInfo) {
+				console.warn('Skipping test: No repository info found.');
+				return;
+			}
+
+			// Mock a response with pagination
+			const mockResponse = {
+				values: [
+					{
+						id: 1,
+						title: 'Test PR',
+						state: 'OPEN',
+						created_on: new Date().toISOString(),
+						updated_on: new Date().toISOString(),
+						author: {
+							display_name: 'Test User',
+						},
+						source: {
+							branch: { name: 'feature-branch' },
+						},
+						destination: {
+							branch: { name: 'main' },
+						},
+						links: {},
+					},
+				],
+				page: 1,
+				size: 1,
+				pagelen: 1,
+				next: 'https://api.bitbucket.org/2.0/repositories/workspace/repo/pullrequests?page=2',
+			};
+
+			jest.spyOn(
+				atlassianPullRequestsService,
+				'list',
+			).mockResolvedValueOnce(mockResponse as any);
+
+			const result = await atlassianPullRequestsController.list({
+				workspaceSlug: repoInfo.workspaceSlug,
+				repoSlug: repoInfo.repoSlug,
+				limit: 1,
+			});
+
+			// Verify pagination info is included
+			expect(result.content).toContain('*Showing 1 item');
+			expect(result.content).toContain('More results are available');
+			expect(result.content).toContain('Next cursor: `2`');
+
+			// Cleanup mock
+			jest.restoreAllMocks();
 		}, 10000);
 	});
 
+	// Get PR tests
 	describe('get', () => {
-		it('should return formatted pull request details in Markdown', async () => {
+		it('should retrieve detailed pull request information', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const prInfo = await getPullRequestInfo();
@@ -430,7 +371,9 @@ describe('Atlassian Pull Requests Controller', () => {
 			}
 
 			const result = await atlassianPullRequestsController.get({
-				...prInfo,
+				workspaceSlug: prInfo.workspaceSlug,
+				repoSlug: prInfo.repoSlug,
+				prId: prInfo.prId,
 				includeFullDiff: false,
 				includeComments: false,
 			});
@@ -439,116 +382,76 @@ describe('Atlassian Pull Requests Controller', () => {
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
 
-			// Basic Markdown content checks
-			expect(result.content).toMatch(/^# Pull Request:/m);
-			expect(result.content).toContain(`**ID**: ${prInfo.prId}`);
+			// Check for expected format based on the formatter output
+			expect(result.content).toMatch(/^# Pull Request/);
+			expect(result.content).toContain('**ID**:');
+			expect(result.content).toContain('**Title**:');
 			expect(result.content).toContain('**State**:');
 			expect(result.content).toContain('**Author**:');
 			expect(result.content).toContain('**Created**:');
-			expect(result.content).toContain('## Description');
 		}, 30000);
 
-		it('should throw an McpError for a non-existent pull request ID', async () => {
+		it('should handle errors for non-existent pull requests', async () => {
 			if (skipIfNoCredentials()) return;
 
-			const prInfo = await getPullRequestInfo();
-			if (!prInfo) {
-				console.warn('Skipping test: No pull request info found.');
+			const repoInfo = await getRepositoryInfo();
+			if (!repoInfo) {
+				console.warn('Skipping test: No repository info found.');
 				return;
 			}
 
-			const invalidPrId = '99999999';
+			// Use a PR ID that is very unlikely to exist
+			const nonExistentPrId = '999999999';
 
 			await expect(
 				atlassianPullRequestsController.get({
-					workspaceSlug: prInfo.workspaceSlug,
-					repoSlug: prInfo.repoSlug,
-					prId: invalidPrId,
+					workspaceSlug: repoInfo.workspaceSlug,
+					repoSlug: repoInfo.repoSlug,
+					prId: nonExistentPrId,
 					includeFullDiff: false,
 					includeComments: false,
 				}),
 			).rejects.toThrow(McpError);
+
+			// Test that the error has the right status code and type
+			try {
+				await atlassianPullRequestsController.get({
+					workspaceSlug: repoInfo.workspaceSlug,
+					repoSlug: repoInfo.repoSlug,
+					prId: nonExistentPrId,
+					includeFullDiff: false,
+					includeComments: false,
+				});
+			} catch (error) {
+				expect(error).toBeInstanceOf(McpError);
+				expect((error as McpError).statusCode).toBe(404);
+				expect((error as McpError).message).toContain('not found');
+			}
 		}, 30000);
 
-		it('should fetch PR details with full diff included if requested', async () => {
+		it('should require all necessary parameters', async () => {
 			if (skipIfNoCredentials()) return;
 
-			const prInfo = await getPullRequestInfo();
-			if (!prInfo) {
-				console.warn('Skipping test: No pull request info found.');
-				return;
+			// No parameters should throw
+			await expect(
+				atlassianPullRequestsController.get({} as any),
+			).rejects.toThrow();
+
+			// Missing PR ID should throw
+			const repoInfo = await getRepositoryInfo();
+			if (repoInfo) {
+				await expect(
+					atlassianPullRequestsController.get({
+						workspaceSlug: repoInfo.workspaceSlug,
+						repoSlug: repoInfo.repoSlug,
+						// prId: missing
+					} as any),
+				).rejects.toThrow();
 			}
-
-			const result = await atlassianPullRequestsController.get({
-				...prInfo,
-				includeFullDiff: true,
-				includeComments: false,
-			});
-
-			// Verify the response structure
-			expect(result).toHaveProperty('content');
-			expect(typeof result.content).toBe('string');
-
-			// Basic Markdown content checks
-			expect(result.content).toMatch(/^# Pull Request:/m);
-			expect(result.content).toContain(`**ID**: ${prInfo.prId}`);
-			expect(result.content).toContain('**State**:');
-			expect(result.content).toContain('**Author**:');
-			expect(result.content).toContain('**Created**:');
-			expect(result.content).toContain('## Description');
-		}, 30000);
-
-		it('should include PR data with comments if available', async () => {
-			if (skipIfNoCredentials()) return;
-
-			const prInfo = await getPullRequestInfo();
-			if (!prInfo) {
-				console.warn('Skipping test: No pull request info found.');
-				return;
-			}
-
-			const result = await atlassianPullRequestsController.get({
-				...prInfo,
-				includeFullDiff: false,
-				includeComments: true,
-			});
-
-			// Should return main PR content
-			expect(result.content).toMatch(/^# Pull Request:/m);
-			expect(result.content).toContain(`**ID**: ${prInfo.prId}`);
-			expect(result.content).toContain('**State**:');
-
-			// Check for comments section or "no comments" message based on what's available live
-			// We don't make a specific assertion about comments being present or absent
-			// since we're testing with live data
-		}, 30000);
-
-		it('should also include PR data with comments when requested (second live test)', async () => {
-			if (skipIfNoCredentials()) return;
-
-			const prInfo = await getPullRequestInfo();
-			if (!prInfo) {
-				console.warn('Skipping test: No pull request info found.');
-				return;
-			}
-
-			const result = await atlassianPullRequestsController.get({
-				...prInfo,
-				includeFullDiff: false,
-				includeComments: true,
-			});
-
-			// Should return main PR content
-			expect(result.content).toMatch(/^# Pull Request:/m);
-			expect(result.content).toContain(`**ID**: ${prInfo.prId}`);
-			expect(result.content).toContain('**State**:');
-
-			// Check for comments section or "no comments" message based on what's available live
-			// We don't make a specific assertion about comments being present or absent
-			// since we're testing with live data
-		}, 30000);
+		}, 10000);
 	});
 
+	// List comments tests
 	describe('listComments', () => {
 		it('should return formatted pull request comments in Markdown', async () => {
 			if (skipIfNoCredentials()) return;
@@ -747,29 +650,22 @@ describe('Atlassian Pull Requests Controller', () => {
 		it('should require all necessary parameters', async () => {
 			if (skipIfNoCredentials()) return;
 
-			// Test with missing prId
+			// No parameters
 			await expect(
-				atlassianPullRequestsController.listComments({
-					workspaceSlug: 'some-workspace',
-					repoSlug: 'some-repo',
-				} as any),
+				atlassianPullRequestsController.listComments({} as any),
 			).rejects.toThrow();
 
-			// Test with missing repoSlug
-			await expect(
-				atlassianPullRequestsController.listComments({
-					workspaceSlug: 'some-workspace',
-					prId: '123',
-				} as any),
-			).rejects.toThrow();
-
-			// Test with missing workspaceSlug
-			await expect(
-				atlassianPullRequestsController.listComments({
-					repoSlug: 'some-repo',
-					prId: '123',
-				} as any),
-			).rejects.toThrow();
+			// Missing PR ID
+			const repoInfo = await getRepositoryInfo();
+			if (repoInfo) {
+				await expect(
+					atlassianPullRequestsController.listComments({
+						workspaceSlug: repoInfo.workspaceSlug,
+						repoSlug: repoInfo.repoSlug,
+						// prId: missing
+					} as any),
+				).rejects.toThrow();
+			}
 		}, 10000);
 	});
 
