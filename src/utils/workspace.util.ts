@@ -12,14 +12,6 @@ let cachedDefaultWorkspace: string | null = null;
 let cachedWorkspaces: WorkspaceMembership[] | null = null;
 
 /**
- * Reset the workspace cache (useful for testing)
- */
-export function resetWorkspaceCache(): void {
-	cachedDefaultWorkspace = null;
-	cachedWorkspaces = null;
-}
-
-/**
  * Get the default workspace slug
  *
  * This function follows this priority:

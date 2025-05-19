@@ -3,7 +3,6 @@ import {
 	RepositoriesResponse,
 	PaginatedCommits,
 	Commit,
-	BranchesResponse,
 } from '../services/vendor.atlassian.repositories.types.js';
 import { PullRequestsResponse } from '../services/vendor.atlassian.pullrequests.types.js';
 import {
@@ -13,8 +12,6 @@ import {
 	formatSeparator,
 	formatNumberedList,
 	formatDate,
-	formatTable,
-	formatLink,
 } from '../utils/formatter.util.js';
 
 /**
@@ -240,69 +237,4 @@ export function formatCommitHistory(
 	lines.push(`*Information retrieved at: ${formatDate(new Date())}*`);
 
 	return lines.join('\n');
-}
-
-/**
- * Formats a list of branches from a repository into a markdown string.
- *
- * @param branchesData The branch data response from the API
- * @param context Additional context information (workspace and repo slugs)
- * @returns Formatted markdown string representing the branches
- */
-export function formatBranchesList(
-	branchesData: BranchesResponse,
-	context: { workspaceSlug: string; repoSlug: string },
-): string {
-	const { workspaceSlug, repoSlug } = context;
-
-	// Handle empty results
-	if (!branchesData.values || branchesData.values.length === 0) {
-		return 'No branches found in this repository.';
-	}
-
-	const sections = [];
-
-	// Add header with repository info
-	sections.push(`# Branches in ${workspaceSlug}/${repoSlug}`);
-
-	// Create a table for the branches
-	const tableHeaders = ['Branch Name', 'Latest Commit', 'Merge Strategy'];
-	const rows = branchesData.values.map((branch) => {
-		const commitHash = branch.target?.hash
-			? branch.target.hash.substring(0, 7)
-			: 'N/A';
-
-		// Type guard to check if links.html has href property
-		const hasLink =
-			branch.links?.html &&
-			typeof branch.links.html === 'object' &&
-			branch.links.html !== null &&
-			'href' in branch.links.html &&
-			typeof branch.links.html.href === 'string';
-
-		return [
-			// Branch name with link if available
-			hasLink
-				? formatLink(
-						branch.name,
-						(branch.links?.html as { href: string }).href,
-					)
-				: branch.name,
-			// Commit hash truncated
-			commitHash,
-			// Default merge strategy
-			branch.default_merge_strategy || 'Standard',
-		];
-	});
-
-	// Add the table to the sections
-	sections.push(formatTable(tableHeaders, rows));
-
-	// Add count information
-	sections.push(
-		`Found ${branchesData.values.length} branch${branchesData.values.length !== 1 ? 'es' : ''}.`,
-	);
-
-	// Join all sections with double newlines
-	return sections.join('\n\n');
 }

@@ -46,8 +46,6 @@ export const DiffstatFileChangeSchema = z.object({
 	lines_removed: z.number().optional(),
 });
 
-export type DiffstatFileChange = z.infer<typeof DiffstatFileChangeSchema>;
-
 /**
  * Schema for diffstat API response (paginated)
  */

@@ -309,7 +309,6 @@ export const BranchSchema = z.object({
 	default_merge_strategy: z.string().optional(),
 	links: z.record(z.string(), z.unknown()).optional(),
 });
-export type Branch = z.infer<typeof BranchSchema>;
 
 /**
  * Parameters for listing branches in a repository.

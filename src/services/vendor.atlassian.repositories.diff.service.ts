@@ -137,5 +137,3 @@ export async function getRawDiff(params: GetRawDiffParams): Promise<string> {
 		);
 	}
 }
-
-export default { getDiffstat, getRawDiff };
