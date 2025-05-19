@@ -1,3 +1,10 @@
+## [1.38.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.0...v1.38.1) (2025-05-19)
+
+
+### Bug Fixes
+
+* correct code block formatting with tabs for nested code blocks ([2c19c16](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/2c19c161247723fb04611701420d30f93d1e2cac))
+
 # [1.38.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.37.0...v1.38.0) (2025-05-19)
 
 
