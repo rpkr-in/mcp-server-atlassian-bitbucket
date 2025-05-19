@@ -18,7 +18,18 @@ import {
 	ListBranchesToolArgsType,
 } from './atlassian.repositories.types.js';
 
-import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
+// Import directly from specialized controllers instead of the mediator
+import { handleRepositoriesList } from '../controllers/atlassian.repositories.list.controller.js';
+import { handleRepositoryDetails } from '../controllers/atlassian.repositories.details.controller.js';
+import { handleCommitHistory } from '../controllers/atlassian.repositories.commit.controller.js';
+import {
+	handleCreateBranch,
+	handleListBranches,
+} from '../controllers/atlassian.repositories.branch.controller.js';
+import {
+	handleCloneRepository,
+	handleGetFileContent,
+} from '../controllers/atlassian.repositories.content.controller.js';
 import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
@@ -45,8 +56,8 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 	methodLogger.debug('Listing Bitbucket repositories with filters:', args);
 
 	try {
-		// Pass the options to the controller
-		const result = await atlassianRepositoriesController.list({
+		// Pass the options directly to the specialized controller
+		const result = await handleRepositoriesList({
 			workspaceSlug: args.workspaceSlug,
 			query: args.query,
 			projectKey: args.projectKey,
@@ -96,7 +107,7 @@ async function getRepository(args: GetRepositoryToolArgsType) {
 	);
 
 	try {
-		const result = await atlassianRepositoriesController.get({
+		const result = await handleRepositoryDetails({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 		});
@@ -136,9 +147,8 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 	methodLogger.debug('Getting commit history with args:', args);
 
 	try {
-		// Pass all parameters directly to controller
-		const result =
-			await atlassianRepositoriesController.getCommitHistory(args);
+		// Pass all parameters directly to specialized controller
+		const result = await handleCommitHistory(args);
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',
@@ -163,7 +173,7 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 	);
 	try {
 		methodLogger.debug('Tool bb_add_branch called', args);
-		const result = await atlassianRepositoriesController.createBranch(args);
+		const result = await handleCreateBranch(args);
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
@@ -176,15 +186,14 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 /**
  * Handler for cloning a repository.
  */
-async function handleCloneRepository(args: CloneRepositoryToolArgsType) {
+async function handleRepoClone(args: CloneRepositoryToolArgsType) {
 	const methodLogger = Logger.forContext(
 		'tools/atlassian.repositories.tool.ts',
-		'handleCloneRepository',
+		'handleRepoClone',
 	);
 	try {
 		methodLogger.debug('Tool bb_clone_repo called', args);
-		const result =
-			await atlassianRepositoriesController.cloneRepository(args);
+		const result = await handleCloneRepository(args);
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
@@ -216,8 +225,8 @@ async function getFileContent(args: GetFileContentToolArgsType) {
 			args.workspaceSlug = defaultWorkspace;
 		}
 
-		// Now we can safely pass the parameters to the controller
-		const result = await atlassianRepositoriesController.getFileContent({
+		// Now we can safely pass the parameters to the specialized controller
+		const result = await handleGetFileContent({
 			workspaceSlug: args.workspaceSlug as string, // Type assertion since we've handled the undefined case
 			repoSlug: args.repoSlug,
 			path: args.filePath,
@@ -254,8 +263,8 @@ async function listBranches(args: ListBranchesToolArgsType) {
 	);
 
 	try {
-		// Pass the options to the controller
-		const result = await atlassianRepositoriesController.listBranches({
+		// Pass the options directly to the specialized controller
+		const result = await handleListBranches({
 			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			query: args.query,
@@ -327,7 +336,7 @@ function registerTools(server: McpServer) {
 		'bb_clone_repo',
 		`Clones a Bitbucket repository identified by \`workspaceSlug\` and \`repoSlug\`. The \`targetPath\` argument specifies the parent directory where the repository will be cloned. IMPORTANT: \`targetPath\` MUST be an absolute path (e.g., \`/Users/me/projects\`). The repository will be cloned into a subdirectory named after the repository slug under this \`targetPath\`. Requires Bitbucket credentials to fetch the repository clone URL. Returns a success message upon successful clone operation.`,
 		CloneRepositoryToolArgs.shape,
-		handleCloneRepository,
+		handleRepoClone,
 	);
 
 	// Register the get file content tool

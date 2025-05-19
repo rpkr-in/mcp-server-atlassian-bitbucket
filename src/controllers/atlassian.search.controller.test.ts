@@ -1,7 +1,7 @@
 import atlassianSearchController from './atlassian.search.controller.js';
 import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
-import atlassianRepositoriesController from './atlassian.repositories.controller.js';
+import { handleRepositoriesList } from './atlassian.repositories.list.controller.js';
 import atlassianWorkspacesController from './atlassian.workspaces.controller.js';
 
 describe('Atlassian Search Controller', () => {
@@ -45,7 +45,7 @@ describe('Atlassian Search Controller', () => {
 			if (!workspaceSlug) return null;
 
 			// Get a repository from this workspace
-			const reposResult = await atlassianRepositoriesController.list({
+			const reposResult = await handleRepositoriesList({
 				workspaceSlug,
 				limit: 1,
 			});

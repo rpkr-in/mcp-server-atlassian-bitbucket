@@ -1,4 +1,5 @@
-import atlassianRepositoriesController from './atlassian.repositories.controller.js';
+import { handleRepositoriesList } from './atlassian.repositories.list.controller.js';
+import { handleRepositoryDetails } from './atlassian.repositories.details.controller.js';
 import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
@@ -57,7 +58,7 @@ describe('Atlassian Repositories Controller', () => {
 				return;
 			}
 
-			const result = await atlassianRepositoriesController.list({
+			const result = await handleRepositoriesList({
 				workspaceSlug,
 			});
 
@@ -89,7 +90,7 @@ describe('Atlassian Repositories Controller', () => {
 			}
 
 			// Fetch first page with limit 1
-			const result1 = await atlassianRepositoriesController.list({
+			const result1 = await handleRepositoriesList({
 				workspaceSlug,
 				limit: 1,
 			});
@@ -114,7 +115,7 @@ describe('Atlassian Repositories Controller', () => {
 
 			// If there's a next page, fetch it
 			if (hasMoreResults && nextCursor) {
-				const result2 = await atlassianRepositoriesController.list({
+				const result2 = await handleRepositoriesList({
 					workspaceSlug,
 					limit: 1,
 					cursor: nextCursor,
@@ -152,7 +153,7 @@ describe('Atlassian Repositories Controller', () => {
 			}
 
 			// First get all repositories to find a valid query term
-			const allResult = await atlassianRepositoriesController.list({
+			const allResult = await handleRepositoriesList({
 				workspaceSlug,
 			});
 
@@ -178,7 +179,7 @@ describe('Atlassian Repositories Controller', () => {
 			const queryTerm = repoNameMatch[1].trim().split(' ')[0];
 
 			// Query with the extracted term
-			const filteredResult = await atlassianRepositoriesController.list({
+			const filteredResult = await handleRepositoriesList({
 				workspaceSlug,
 				query: queryTerm,
 			});
@@ -208,7 +209,7 @@ describe('Atlassian Repositories Controller', () => {
 			}
 
 			// Request with explicit sort by name
-			const sortedResult = await atlassianRepositoriesController.list({
+			const sortedResult = await handleRepositoriesList({
 				workspaceSlug,
 				sort: 'name',
 			});
@@ -240,11 +241,10 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Try filtering by role
 			try {
-				const filteredResult =
-					await atlassianRepositoriesController.list({
-						workspaceSlug,
-						role: 'owner', // Most likely role to have some results
-					});
+				const filteredResult = await handleRepositoriesList({
+					workspaceSlug,
+					role: 'owner', // Most likely role to have some results
+				});
 
 				// The result should be a valid response
 				expect(filteredResult).toHaveProperty('content');
@@ -280,7 +280,7 @@ describe('Atlassian Repositories Controller', () => {
 			// Use an extremely unlikely query to get empty results
 			const noMatchQuery = 'thisstringwillnotmatchanyrepository12345xyz';
 
-			const emptyResult = await atlassianRepositoriesController.list({
+			const emptyResult = await handleRepositoriesList({
 				workspaceSlug,
 				query: noMatchQuery,
 			});
@@ -299,14 +299,14 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Expect the controller call to reject with an McpError
 			await expect(
-				atlassianRepositoriesController.list({
+				handleRepositoriesList({
 					workspaceSlug: invalidWorkspaceSlug,
 				}),
 			).rejects.toThrow(McpError);
 
 			// Check the status code via the error handler's behavior
 			try {
-				await atlassianRepositoriesController.list({
+				await handleRepositoriesList({
 					workspaceSlug: invalidWorkspaceSlug,
 				});
 			} catch (e) {
@@ -347,11 +347,10 @@ describe('Atlassian Repositories Controller', () => {
 				if (!workspaceSlug) return null;
 
 				// Get a repository from this workspace
-				const listReposResult =
-					await atlassianRepositoriesController.list({
-						workspaceSlug,
-						limit: 1,
-					});
+				const listReposResult = await handleRepositoriesList({
+					workspaceSlug,
+					limit: 1,
+				});
 
 				if (
 					listReposResult.content ===
@@ -387,8 +386,7 @@ describe('Atlassian Repositories Controller', () => {
 				return;
 			}
 
-			const result =
-				await atlassianRepositoriesController.get(repoIdentifier);
+			const result = await handleRepositoryDetails(repoIdentifier);
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
@@ -443,7 +441,7 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Expect the controller call to reject with an McpError
 			await expect(
-				atlassianRepositoriesController.get({
+				handleRepositoryDetails({
 					workspaceSlug,
 					repoSlug: invalidRepoSlug,
 				}),
@@ -451,7 +449,7 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Check the status code via the error handler's behavior
 			try {
-				await atlassianRepositoriesController.get({
+				await handleRepositoryDetails({
 					workspaceSlug,
 					repoSlug: invalidRepoSlug,
 				});
@@ -471,7 +469,7 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Expect the controller call to reject with an McpError
 			await expect(
-				atlassianRepositoriesController.get({
+				handleRepositoryDetails({
 					workspaceSlug: invalidWorkspaceSlug,
 					repoSlug: someRepoSlug,
 				}),
@@ -479,7 +477,7 @@ describe('Atlassian Repositories Controller', () => {
 
 			// Check the status code via the error handler's behavior
 			try {
-				await atlassianRepositoriesController.get({
+				await handleRepositoryDetails({
 					workspaceSlug: invalidWorkspaceSlug,
 					repoSlug: someRepoSlug,
 				});

@@ -1,7 +1,18 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
-import atlassianRepositoriesController from '../controllers/atlassian.repositories.controller.js';
+// Import directly from specialized controllers
+import { handleRepositoriesList } from '../controllers/atlassian.repositories.list.controller.js';
+import { handleRepositoryDetails } from '../controllers/atlassian.repositories.details.controller.js';
+import { handleCommitHistory } from '../controllers/atlassian.repositories.commit.controller.js';
+import {
+	handleCreateBranch,
+	handleListBranches,
+} from '../controllers/atlassian.repositories.branch.controller.js';
+import {
+	handleCloneRepository,
+	handleGetFileContent,
+} from '../controllers/atlassian.repositories.content.controller.js';
 
 /**
  * CLI module for managing Bitbucket repositories.
@@ -96,11 +107,8 @@ function registerListRepositoriesCommand(program: Command): void {
 					cursor: options.cursor,
 				};
 
-				// Call controller
-				const result =
-					await atlassianRepositoriesController.list(
-						controllerOptions,
-					);
+				// Call controller directly
+				const result = await handleRepositoriesList(controllerOptions);
 
 				// Output result content (now includes pagination information)
 				console.log(result.content);
@@ -138,7 +146,7 @@ function registerGetRepositoryCommand(program: Command): void {
 					`Fetching repository: ${options.workspaceSlug}/${options.repoSlug}`,
 				);
 
-				const result = await atlassianRepositoriesController.get({
+				const result = await handleRepositoryDetails({
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 				});
@@ -217,10 +225,7 @@ function registerGetCommitHistoryCommand(program: Command): void {
 					'Fetching commit history with options:',
 					requestOptions,
 				);
-				const result =
-					await atlassianRepositoriesController.getCommitHistory(
-						requestOptions,
-					);
+				const result = await handleCommitHistory(requestOptions);
 				actionLogger.debug('Successfully retrieved commit history');
 
 				console.log(result.content);
@@ -275,10 +280,7 @@ function registerAddBranchCommand(program: Command): void {
 					'Creating branch with options:',
 					requestOptions,
 				);
-				const result =
-					await atlassianRepositoriesController.createBranch(
-						requestOptions,
-					);
+				const result = await handleCreateBranch(requestOptions);
 				actionLogger.debug('Successfully created branch');
 
 				console.log(result.content);
@@ -332,10 +334,7 @@ function registerCloneRepositoryCommand(program: Command): void {
 					'Initiating repository clone with options:',
 					controllerOptions,
 				);
-				const result =
-					await atlassianRepositoriesController.cloneRepository(
-						controllerOptions,
-					);
+				const result = await handleCloneRepository(controllerOptions);
 				actionLogger.info('Clone operation initiated successfully.');
 
 				console.log(result.content);
@@ -382,13 +381,12 @@ function registerGetFileCommand(program: Command): void {
 					options.revision ? { revision: options.revision } : {},
 				);
 
-				const result =
-					await atlassianRepositoriesController.getFileContent({
-						workspaceSlug: options.workspaceSlug,
-						repoSlug: options.repoSlug,
-						path: options.filePath,
-						ref: options.revision,
-					});
+				const result = await handleGetFileContent({
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					path: options.filePath,
+					ref: options.revision,
+				});
 
 				console.log(result.content);
 			} catch (error) {
@@ -464,8 +462,7 @@ function registerListBranchesCommand(program: Command): void {
 					'Fetching branches with parameters:',
 					params,
 				);
-				const result =
-					await atlassianRepositoriesController.listBranches(params);
+				const result = await handleListBranches(params);
 				actionLogger.debug('Successfully retrieved branches');
 
 				console.log(result.content);

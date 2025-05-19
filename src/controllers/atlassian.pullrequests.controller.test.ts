@@ -2,7 +2,7 @@ import atlassianPullRequestsController from './atlassian.pullrequests.controller
 import { getAtlassianCredentials } from '../utils/transport.util.js';
 import { config } from '../utils/config.util.js';
 import { McpError } from '../utils/error.util.js';
-import atlassianRepositoriesController from './atlassian.repositories.controller.js';
+import { handleRepositoriesList } from './atlassian.repositories.list.controller.js';
 import atlassianWorkspacesController from './atlassian.workspaces.controller.js';
 
 describe('Atlassian Pull Requests Controller', () => {
@@ -46,7 +46,7 @@ describe('Atlassian Pull Requests Controller', () => {
 			if (!workspaceSlug) return null;
 
 			// Get a repository from this workspace
-			const reposResult = await atlassianRepositoriesController.list({
+			const reposResult = await handleRepositoriesList({
 				workspaceSlug,
 				limit: 1,
 			});
@@ -135,7 +135,7 @@ describe('Atlassian Pull Requests Controller', () => {
 			if (!workspaceSlug) return null;
 
 			// Get a repository
-			const listReposResult = await atlassianRepositoriesController.list({
+			const listReposResult = await handleRepositoriesList({
 				workspaceSlug,
 				limit: 1,
 			});
