@@ -110,12 +110,6 @@ export type WorkspaceDetailed = z.infer<typeof WorkspaceDetailedSchema>;
  * Parameters for listing workspaces
  */
 export const ListWorkspacesParamsSchema = z.object({
-	/**
-	 * Sort parameter
-	 * @deprecated The /2.0/user/permissions/workspaces endpoint does not support sorting,
-	 * despite this parameter being included in the type. Any value provided will be ignored.
-	 */
-	sort: z.string().optional(),
 	q: z.string().optional(),
 	page: z.number().optional(),
 	pagelen: z.number().optional(),

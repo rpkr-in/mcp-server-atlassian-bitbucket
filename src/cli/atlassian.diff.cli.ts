@@ -41,10 +41,6 @@ function register(program: Command) {
 			'Destination branch for comparison (defaults to "main"). NOTE: Parameter naming might be counterintuitive - try reversing parameters if results aren\'t as expected.',
 		)
 		.option(
-			'-f, --full-diff',
-			'Include full code diff in the output (included by default, flag kept for backward compatibility)',
-		)
-		.option(
 			'--limit <limit>',
 			'Maximum number of files to show in results',
 			(value) => parseInt(value, 10),
@@ -65,9 +61,6 @@ function register(program: Command) {
 					repoSlug: options.repoSlug,
 					sourceBranch: options.sourceBranch,
 					destinationBranch: options.destinationBranch,
-					...(options.fullDiff !== undefined && {
-						includeFullDiff: true,
-					}),
 					limit: options.limit,
 					cursor: options.cursor,
 				};
@@ -106,10 +99,6 @@ function register(program: Command) {
 			'Target commit hash or reference (IMPORTANT: Should be the OLDER commit chronologically)',
 		)
 		.option(
-			'-f, --full-diff',
-			'Include full code diff in the output (included by default, flag kept for backward compatibility)',
-		)
-		.option(
 			'--limit <limit>',
 			'Maximum number of files to show in results',
 			(value) => parseInt(value, 10),
@@ -130,9 +119,6 @@ function register(program: Command) {
 					repoSlug: options.repoSlug,
 					sinceCommit: options.sinceCommit,
 					untilCommit: options.untilCommit,
-					...(options.fullDiff !== undefined && {
-						includeFullDiff: true,
-					}),
 					limit: options.limit,
 					cursor: options.cursor,
 				};
