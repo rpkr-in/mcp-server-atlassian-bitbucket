@@ -1,3 +1,11 @@
+## [1.38.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.2...v1.38.3) (2025-05-19)
+
+
+### Bug Fixes
+
+* refactor repositories controller into separate controllers for better maintainability ([3461d8a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/3461d8a32c18ba05be483ae7f24758f51e2b8f55))
+* refactor search controller into separate controllers by search type ([38a7d35](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/38a7d35bf4dae83846dbaf316555cfb81cc394ab))
+
 ## [1.38.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.1...v1.38.2) (2025-05-19)
 
 
