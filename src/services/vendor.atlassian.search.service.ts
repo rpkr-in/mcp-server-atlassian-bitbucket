@@ -2,6 +2,10 @@ import { fetchAtlassian } from '../utils/transport.util.js';
 import { Logger } from '../utils/logger.util.js';
 import { URLSearchParams } from 'url';
 import { getAtlassianCredentials } from '../utils/transport.util.js';
+import {
+	ContentSearchParams,
+	ContentSearchResponse,
+} from './vendor.atlassian.search.types.js';
 
 const logger = Logger.forContext('services/vendor.atlassian.search.service.ts');
 
@@ -267,7 +271,69 @@ export async function searchCode(
 	return fetchAtlassian(credentials, path);
 }
 
+/**
+ * Search for content in Bitbucket
+ *
+ * @param params Search parameters
+ * @returns Content search response
+ */
+async function searchContent(
+	params: ContentSearchParams,
+): Promise<ContentSearchResponse> {
+	const logger = Logger.forContext(
+		'services/vendor.atlassian.search.service.ts',
+		'searchContent',
+	);
+
+	try {
+		const credentials = getAtlassianCredentials();
+		if (!credentials) {
+			throw new Error(
+				'Atlassian credentials are required for content search',
+			);
+		}
+
+		// Build query parameters
+		const queryParams = new URLSearchParams();
+
+		// Format the query
+		queryParams.set('q', params.query);
+
+		// Add pagination parameters
+		queryParams.set('pagelen', String(params.limit || 25));
+		queryParams.set('page', String(params.page || 1));
+
+		// Add content type filter if specified
+		if (params.contentType) {
+			queryParams.set('content_type', params.contentType);
+		}
+
+		// Construct URL based on whether a repository is specified
+		let url = `/2.0/search/${params.workspaceSlug}`;
+		if (params.repoSlug) {
+			url = `/2.0/search/${params.workspaceSlug}/${params.repoSlug}`;
+		}
+
+		// Add query parameters
+		url += `?${queryParams.toString()}`;
+
+		logger.debug(`Content search request URL: ${url}`);
+
+		// Make the request
+		const response = await fetchAtlassian<ContentSearchResponse>(
+			credentials,
+			url,
+		);
+
+		return response;
+	} catch (error) {
+		logger.error('Content search failed:', error);
+		throw error;
+	}
+}
+
 export default {
 	searchCode,
 	searchCommits,
+	searchContent,
 };

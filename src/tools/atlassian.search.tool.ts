@@ -1,81 +1,69 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '../utils/logger.util.js';
-import { formatErrorForMcpTool } from '../utils/error.util.js';
 import {
+	SearchToolArgsSchema,
 	SearchToolArgsType,
-	SearchToolArgsBase,
 } from './atlassian.search.types.js';
-
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
+import { formatErrorForMcpTool } from '../utils/error.util.js';
 
-const toolLogger = Logger.forContext('tools/atlassian.search.tool.ts');
+// Set up logger
+const logger = Logger.forContext('tools/atlassian.search.tool.ts');
 
 /**
- * MCP Tool: Search Bitbucket
- *
- * Searches Bitbucket content across repositories and pull requests.
- * Returns a formatted markdown response with search results.
- *
- * @param {SearchToolArgsType} args - Tool arguments for the search query
- * @returns {Promise<{ content: Array<{ type: 'text', text: string }> }>} MCP response with formatted search results
- * @throws Will return error message if search fails
+ * Handle search command in MCP
  */
-async function search(args: SearchToolArgsType) {
-	const methodLogger = toolLogger.forMethod('search');
-	methodLogger.debug('Searching Bitbucket with query:', args);
+async function handleSearch(args: SearchToolArgsType) {
+	// Create a method-scoped logger
+	const methodLogger = logger.forMethod('handleSearch');
 
 	try {
-		// Map args to controller options
+		methodLogger.debug('Search tool called with args:', args);
+
+		// Map tool args to controller options
 		const controllerOptions = {
-			workspaceSlug: args.workspaceSlug,
-			repoSlug: args.repoSlug,
+			workspace: args.workspaceSlug,
+			repo: args.repoSlug,
 			query: args.query,
-			scope: args.scope || 'all',
+			type: args.scope,
+			contentType: args.contentType,
+			language: args.language,
+			extension: args.extension,
 			limit: args.limit,
-			cursor: args.cursor, // Controller handles mapping cursor to page if needed
+			cursor: args.cursor,
 		};
 
-		// Call the controller search method
+		// Call the controller
 		const result =
 			await atlassianSearchController.search(controllerOptions);
 
-		methodLogger.debug('Search completed successfully');
-
+		// Return the result content in MCP format with required structuredContent
 		return {
-			content: [
-				{
-					type: 'text' as const,
-					text: result.content, // Now contains all information including pagination
-				},
-			],
+			structuredContent: {},
+			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
-		methodLogger.error('Failed to search Bitbucket', error);
+		// Log the error
+		methodLogger.error('Search tool failed:', error);
+
+		// Format the error for MCP response
 		return formatErrorForMcpTool(error);
 	}
 }
 
 /**
- * Register Atlassian Search MCP Tools
- *
- * Registers the search-related tools with the MCP server.
- * Each tool is registered with its schema, description, and handler function.
- *
- * @param server - The MCP server instance to register tools with
+ * Register the search tools with the MCP server
  */
 function registerTools(server: McpServer) {
-	const methodLogger = toolLogger.forMethod('registerTools');
-	methodLogger.debug('Registering Atlassian Search tools...');
-
-	// Register the search tool
+	// Register the search tool using the schema shape
 	server.tool(
-		'bb_search',
-		`Searches Bitbucket content within a specified \`workspaceSlug\`. Requires a \`query\` string. Optionally scope the search using \`scope\` ('repositories', 'pullrequests', 'commits', 'code', or 'all' - default). The \`code\` scope supports filtering by \`language\` or \`extension\`. The 'pullrequests' and 'commits' scopes require \`repoSlug\`. Supports pagination via \`limit\` and \`cursor\` (or \`page\` for code scope). Pagination details (like next cursor or total items) are included at the end of the text content. Returns formatted Markdown results. The 'all' scope automatically tries different scopes and prefixes the output indicating which scope returned results. Requires Bitbucket credentials.`,
-		SearchToolArgsBase.shape,
-		search,
+		'atlassian_search',
+		'Searches Bitbucket for content matching the provided query. Use this tool to find repositories, code, pull requests, or other content in Bitbucket. Specify `scope` to narrow your search ("code", "repositories", "pullrequests", or "content"). Filter code searches by `language` or `extension`. Filter content searches by `contentType`. Only searches within the specified `workspaceSlug` and optionally within a specific `repoSlug`. Supports pagination via `limit` and `cursor`. Requires Atlassian Bitbucket credentials configured. Returns search results as Markdown.',
+		SearchToolArgsSchema.shape,
+		handleSearch,
 	);
 
-	methodLogger.debug('Successfully registered Atlassian Search tools');
+	logger.debug('Successfully registered Atlassian search tools');
 }
 
 export default { registerTools };

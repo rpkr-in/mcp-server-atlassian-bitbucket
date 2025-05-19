@@ -34,8 +34,7 @@ const PaginationArgs = z.object({
 });
 
 /**
- * Bitbucket search tool arguments base schema
- * This defines the shape without the conditional validation
+ * Bitbucket search tool arguments schema base
  */
 export const SearchToolArgsBase = z
 	.object({
@@ -46,17 +45,17 @@ export const SearchToolArgsBase = z
 			.string()
 			.optional()
 			.describe(
-				'Workspace slug to search in. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+				'Workspace slug to search in. If not provided, the system will use your default workspace. Example: "myteam"',
 			),
 
 		/**
-		 * Optional: Repository slug to limit search scope. Required for `pullrequests` and `commits` scopes. Example: "project-api"
+		 * Optional: Repository slug to limit search scope. Required for `pullrequests` scope. Example: "project-api"
 		 */
 		repoSlug: z
 			.string()
 			.optional()
 			.describe(
-				'Optional: Repository slug to limit search scope. Required for `pullrequests` and `commits` scopes. Example: "project-api"',
+				'Optional: Repository slug to limit search scope. Required for `pullrequests` scope. Example: "project-api"',
 			),
 
 		/**
@@ -70,14 +69,24 @@ export const SearchToolArgsBase = z
 			),
 
 		/**
-		 * Search scope: "repositories", "pullrequests", "commits", "code", or "all". Default: "all"
+		 * Search scope: "code", "content", "repositories", "pullrequests". Default: "code"
 		 */
 		scope: z
-			.enum(['repositories', 'pullrequests', 'commits', 'code', 'all'])
+			.enum(['code', 'content', 'repositories', 'pullrequests'])
 			.optional()
-			.default('all')
+			.default('code')
 			.describe(
-				'Search scope: "repositories", "pullrequests", "commits", "code", or "all". Default: "all"',
+				'Search scope: "code", "content", "repositories", "pullrequests". Default: "code"',
+			),
+
+		/**
+		 * Content type for content search (e.g., "wiki", "issue")
+		 */
+		contentType: z
+			.string()
+			.optional()
+			.describe(
+				'Content type for content search (e.g., "wiki", "issue")',
 			),
 
 		/**
@@ -99,22 +108,20 @@ export const SearchToolArgsBase = z
 	.merge(PaginationArgs);
 
 /**
- * Bitbucket search tool arguments
- * Specifies what to search for and how to filter results
- * and implements conditional validation
+ * Bitbucket search tool arguments schema with validation
  */
 export const SearchToolArgs = SearchToolArgsBase.superRefine((data, ctx) => {
-	// Make repoSlug required when scope is 'pullrequests' or 'commits'
-	if (
-		(data.scope === 'pullrequests' || data.scope === 'commits') &&
-		!data.repoSlug
-	) {
+	// Make repoSlug required when scope is 'pullrequests'
+	if (data.scope === 'pullrequests' && !data.repoSlug) {
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
-			message: `repoSlug is required when scope is "${data.scope}"`,
-			path: ['repoSlug'], // Specify the path of the error
+			message: 'repoSlug is required when scope is "pullrequests"',
+			path: ['repoSlug'],
 		});
 	}
 });
+
+// Export both the schema and its shape for use with the MCP server
+export const SearchToolArgsSchema = SearchToolArgsBase;
 
 export type SearchToolArgsType = z.infer<typeof SearchToolArgs>;

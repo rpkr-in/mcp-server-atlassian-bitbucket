@@ -2,6 +2,17 @@ import { Logger } from './logger.util.js';
 import { formatSeparator } from './formatter.util.js';
 
 /**
+ * Error types for MCP errors
+ */
+export type McpErrorType =
+	| 'AUTHENTICATION_REQUIRED'
+	| 'NOT_FOUND'
+	| 'VALIDATION_ERROR'
+	| 'RATE_LIMIT_EXCEEDED'
+	| 'API_ERROR'
+	| 'UNEXPECTED_ERROR';
+
+/**
  * Error types for classification
  */
 export enum ErrorType {
@@ -16,6 +27,7 @@ export enum ErrorType {
  */
 export class McpError extends Error {
 	type: ErrorType;
+	errorType?: McpErrorType; // Add errorType property used by error-handler.util.ts
 	statusCode?: number;
 	originalError?: unknown;
 
@@ -30,6 +42,26 @@ export class McpError extends Error {
 		this.type = type;
 		this.statusCode = statusCode;
 		this.originalError = originalError;
+
+		// Set errorType based on type
+		switch (type) {
+			case ErrorType.AUTH_MISSING:
+			case ErrorType.AUTH_INVALID:
+				this.errorType = 'AUTHENTICATION_REQUIRED';
+				break;
+			case ErrorType.API_ERROR:
+				this.errorType =
+					statusCode === 404
+						? 'NOT_FOUND'
+						: statusCode === 429
+							? 'RATE_LIMIT_EXCEEDED'
+							: 'API_ERROR';
+				break;
+			case ErrorType.UNEXPECTED_ERROR:
+			default:
+				this.errorType = 'UNEXPECTED_ERROR';
+				break;
+		}
 	}
 }
 

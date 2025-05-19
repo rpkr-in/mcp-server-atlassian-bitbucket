@@ -76,7 +76,7 @@ describe('Atlassian Search Controller', () => {
 	}
 
 	describe('search', () => {
-		it('should search across all scopes when scope=all', async () => {
+		it('should search across all scopes when type=code', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -86,9 +86,9 @@ describe('Atlassian Search Controller', () => {
 			}
 
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				scope: 'all',
+				workspace: repoInfo.workspaceSlug,
+				repo: repoInfo.repoSlug,
+				type: 'code',
 				query: 'initial commit',
 			});
 
@@ -96,19 +96,11 @@ describe('Atlassian Search Controller', () => {
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
 
-			// Should include both repository and PR sections
-			expect(result.content).toContain('# Repository Search Results');
-			expect(result.content).toContain('# Pull Request Search Results');
-
-			// Should have a summary section
-			expect(result.content).toContain('## Search Summary');
-			expect(result.content).toContain(`Found `);
-			expect(result.content).toContain(
-				`in workspace "${repoInfo.workspaceSlug}"`,
-			);
+			// Should include code search results header
+			expect(result.content).toContain('Code Search Results');
 		}, 30000);
 
-		it('should search only repositories when scope=repositories', async () => {
+		it('should search only repositories when type=repositories', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -118,8 +110,8 @@ describe('Atlassian Search Controller', () => {
 			}
 
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				scope: 'repositories',
+				workspace: repoInfo.workspaceSlug,
+				type: 'repositories',
 				query: repoInfo.repoSlug,
 			});
 
@@ -128,16 +120,11 @@ describe('Atlassian Search Controller', () => {
 			expect(typeof result.content).toBe('string');
 
 			// Should include only repository section
-			expect(result.content).toContain('# Repository Search Results');
-			expect(result.content).not.toContain(
-				'# Pull Request Search Results',
-			);
-
-			// Should have a summary section
-			expect(result.content).toContain('## Search Summary');
+			expect(result.content).toContain('Repository Search Results');
+			expect(result.content).not.toContain('Pull Request Search Results');
 		}, 30000);
 
-		it('should search only pull requests when scope=pullrequests', async () => {
+		it('should search only pull requests when type=pullrequests', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -147,9 +134,9 @@ describe('Atlassian Search Controller', () => {
 			}
 
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				repoSlug: repoInfo.repoSlug,
-				scope: 'pullrequests',
+				workspace: repoInfo.workspaceSlug,
+				repo: repoInfo.repoSlug,
+				type: 'pullrequests',
 				query: 'test',
 			});
 
@@ -158,11 +145,8 @@ describe('Atlassian Search Controller', () => {
 			expect(typeof result.content).toBe('string');
 
 			// Should include only PR section
-			expect(result.content).not.toContain('# Repository Search Results');
-			expect(result.content).toContain('# Pull Request Search Results');
-
-			// Should have a summary section
-			expect(result.content).toContain('## Search Summary');
+			expect(result.content).not.toContain('Repository Search Results');
+			expect(result.content).toContain('Pull Request Search Results');
 		}, 30000);
 
 		it('should filter results with query parameter', async () => {
@@ -176,19 +160,14 @@ describe('Atlassian Search Controller', () => {
 
 			// Use a query that might match something (repository name itself often works)
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
+				workspace: repoInfo.workspaceSlug,
 				query: repoInfo.repoSlug,
-				scope: 'repositories',
+				type: 'repositories',
 			});
 
 			// Verify the response structure
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
-
-			// Should mention the query in the summary
-			expect(result.content).toContain(
-				`for query "${repoInfo.repoSlug}"`,
-			);
 
 			// If results are found, content should include the query term
 			const resultsFound = !result.content.includes('No results found');
@@ -210,8 +189,8 @@ describe('Atlassian Search Controller', () => {
 
 			// Fetch first page with limit 1
 			const result1 = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				scope: 'repositories',
+				workspace: repoInfo.workspaceSlug,
+				type: 'repositories',
 				limit: 1,
 				query: repoInfo.repoSlug,
 			});
@@ -228,8 +207,8 @@ describe('Atlassian Search Controller', () => {
 			// If pagination is possible, test cursor-based pagination
 			if (hasMoreResults && nextCursor) {
 				const result2 = await atlassianSearchController.search({
-					workspaceSlug: repoInfo.workspaceSlug,
-					scope: 'repositories',
+					workspace: repoInfo.workspaceSlug,
+					type: 'repositories',
 					limit: 1,
 					cursor: nextCursor,
 					query: repoInfo.repoSlug,
@@ -247,13 +226,13 @@ describe('Atlassian Search Controller', () => {
 			}
 		}, 30000);
 
-		it('should use default workspace when workspaceSlug is missing or empty', async () => {
+		it('should give an error when workspace is missing or empty', async () => {
 			if (skipIfNoCredentials()) return;
 
-			// No longer expecting an error - we should get a valid response with default workspace
+			// Empty workspace should return an error message
 			const result = await atlassianSearchController.search({
-				scope: 'repositories',
-				workspaceSlug: '', // Empty workspaceSlug should trigger default workspace lookup
+				type: 'repositories',
+				workspace: '', // Empty workspace should trigger error
 				query: 'test',
 			});
 
@@ -261,11 +240,12 @@ describe('Atlassian Search Controller', () => {
 			expect(result).toHaveProperty('content');
 			expect(typeof result.content).toBe('string');
 
-			// Content should include the Repository Search Results
-			expect(result.content).toContain('# Repository Search Results');
+			// Content should include error message
+			expect(result.content).toContain('Error:');
+			expect(result.content).toContain('workspace');
 		}, 30000);
 
-		it('should work without a repoSlug when scope=repositories', async () => {
+		it('should work without a repo when type=repositories', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -274,10 +254,10 @@ describe('Atlassian Search Controller', () => {
 				return;
 			}
 
-			// Should not throw an error when repoSlug is missing but scope is repositories
+			// Should not throw an error when repo is missing but type is repositories
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				scope: 'repositories',
+				workspace: repoInfo.workspaceSlug,
+				type: 'repositories',
 				query: repoInfo.repoSlug,
 			});
 
@@ -286,7 +266,7 @@ describe('Atlassian Search Controller', () => {
 			expect(typeof result.content).toBe('string');
 		}, 30000);
 
-		it('should require repoSlug when scope=pullrequests', async () => {
+		it('should require repo when type=pullrequests', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const repoInfo = await getRepositoryInfo();
@@ -295,19 +275,17 @@ describe('Atlassian Search Controller', () => {
 				return;
 			}
 
-			// When searching pull requests, requesting without a repoSlug should
-			// still work (not throw) but PR section will be empty
+			// When searching pull requests without a repo, should return an error message
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
-				scope: 'pullrequests',
+				workspace: repoInfo.workspaceSlug,
+				type: 'pullrequests',
 				query: 'test',
-				// Intentionally omit repoSlug
+				// Intentionally omit repo
 			});
 
-			// Content should not include PR section (since repoSlug is missing)
-			expect(result.content).not.toContain(
-				'# Pull Request Search Results',
-			);
+			// Content should include an error message
+			expect(result.content).toContain('Error:');
+			expect(result.content).toContain('required');
 		}, 30000);
 
 		it('should handle no results scenario', async () => {
@@ -323,10 +301,10 @@ describe('Atlassian Search Controller', () => {
 			const noMatchQuery = 'xzqwxtrv12345xyz987nonexistentstring';
 
 			const result = await atlassianSearchController.search({
-				workspaceSlug: repoInfo.workspaceSlug,
+				workspace: repoInfo.workspaceSlug,
 				query: noMatchQuery,
-				scope: 'all',
-				repoSlug: repoInfo.repoSlug,
+				type: 'code',
+				repo: repoInfo.repoSlug,
 			});
 
 			// Verify the response structure
@@ -334,10 +312,10 @@ describe('Atlassian Search Controller', () => {
 			expect(typeof result.content).toBe('string');
 
 			// Content should show no results
-			expect(result.content).toContain('Found 0 results');
+			expect(result.content).toContain('No code matches found');
 		}, 30000);
 
-		it('should handle errors in underlying controllers', async () => {
+		it('should handle errors for invalid workspace', async () => {
 			if (skipIfNoCredentials()) return;
 
 			const invalidWorkspace =
@@ -346,8 +324,8 @@ describe('Atlassian Search Controller', () => {
 			// Expect the controller call to reject when underlying controllers fail
 			await expect(
 				atlassianSearchController.search({
-					workspaceSlug: invalidWorkspace,
-					scope: 'repositories',
+					workspace: invalidWorkspace,
+					type: 'repositories',
 					query: 'test-query', // Add a query to avoid the query validation error
 				}),
 			).rejects.toThrow();

@@ -1,144 +1,85 @@
 import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
-import { handleCliError } from '../utils/error.util.js';
-
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
+import { handleCliError } from '../utils/error-handler.util.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
-const cliLogger = Logger.forContext('cli/atlassian.search.cli.ts');
+// Set up a logger for this module
+const logger = Logger.forContext('cli/atlassian.search.cli.ts');
 
 /**
- * Register Atlassian Search commands
- *
- * @param {Command} program - Commander program instance
+ * Register the search commands with the CLI
+ * @param program The commander program to register commands with
  */
 function register(program: Command) {
-	const methodLogger = cliLogger.forMethod('register');
-	methodLogger.debug('Registering Atlassian search commands...');
-
-	// Register the search command
 	program
 		.command('search')
-		.description(
-			'Search for content across Bitbucket repositories, pull requests, commits, and code.',
-		)
-		.requiredOption(
-			'-w, --workspace-slug <slug>',
-			'Workspace slug to search in. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+		.description('Search Bitbucket for content matching a query')
+		.requiredOption('-q, --query <query>', 'Search query')
+		.option('-w, --workspace <workspace>', 'Workspace slug')
+		.option('-r, --repo <repo>', 'Repository slug (required for PR search)')
+		.option(
+			'-t, --type <type>',
+			'Search type (code, content, repositories, pullrequests)',
+			'code',
 		)
 		.option(
-			'-r, --repo-slug <slug>',
-			'Optional repository slug to limit the search scope. If omitted, searches across all repositories in the workspace.',
-		)
-		.requiredOption(
-			'-q, --query <string>',
-			'Search query text. Will match against content based on the selected search scope.',
+			'-c, --content-type <contentType>',
+			'Content type for content search (e.g., wiki, issue)',
 		)
 		.option(
-			'-s, --scope <scope>',
-			'Search scope: "repositories", "pullrequests", "commits", "code", or "all" (default).',
-			'all',
+			'-l, --language <language>',
+			'Filter code search by programming language',
 		)
 		.option(
-			'--language <lang>',
-			'Filter code search results by programming language (e.g., "typescript", "python").',
+			'-e, --extension <extension>',
+			'Filter code search by file extension',
 		)
-		.option(
-			'--extension <ext>',
-			'Filter code search results by file extension (e.g., "ts", "py", "java").',
-		)
-		.option(
-			'-l, --limit <number>',
-			'Maximum number of items to return (1-100). Defaults to 25 if omitted.',
-		)
-		.option(
-			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results.',
-		)
-		.option(
-			'--page <number>',
-			'Page number for code search results (alternative to cursor).',
-		)
+		.option('--limit <limit>', 'Maximum number of results to return', '20')
+		.option('--cursor <cursor>', 'Pagination cursor')
 		.action(async (options) => {
-			const actionLogger = Logger.forContext(
-				'cli/atlassian.search.cli.ts',
-				'search',
-			);
+			const methodLogger = logger.forMethod('search');
 			try {
-				actionLogger.debug('Processing command options:', options);
+				methodLogger.debug('CLI search command called with:', options);
 
-				// Validate options
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
+				// Handle workspace
+				let workspace = options.workspace;
+				if (!workspace) {
+					workspace = await getDefaultWorkspace();
+					if (!workspace) {
+						console.error(
+							'Error: No workspace provided and no default workspace configured',
 						);
+						process.exit(1);
 					}
+					methodLogger.debug(`Using default workspace: ${workspace}`);
 				}
 
-				if (options.page) {
-					const page = parseInt(options.page, 10);
-					if (isNaN(page) || page <= 0) {
-						throw new Error(
-							'Invalid --page value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Validate scope
-				const validScopes = [
-					'repositories',
-					'pullrequests',
-					'commits',
-					'code',
-					'all',
-				];
-				if (options.scope && !validScopes.includes(options.scope)) {
-					throw new Error(
-						`Invalid scope: "${options.scope}". Must be one of: ${validScopes.join(', ')}`,
-					);
-				}
-
-				// Some scopes require a repository
-				if (
-					(options.scope === 'pullrequests' ||
-						options.scope === 'commits') &&
-					!options.repoSlug
-				) {
-					throw new Error(
-						`The "${options.scope}" scope requires specifying a repository with --repo-slug`,
-					);
-				}
-
-				// Map CLI options to controller params
-				const searchOptions = {
-					workspaceSlug: options.workspaceSlug,
-					repoSlug: options.repoSlug,
+				// Prepare controller options
+				const controllerOptions = {
+					workspace,
+					repo: options.repo,
 					query: options.query,
-					scope: options.scope,
+					type: options.type,
+					contentType: options.contentType,
 					language: options.language,
 					extension: options.extension,
 					limit: options.limit
 						? parseInt(options.limit, 10)
 						: undefined,
 					cursor: options.cursor,
-					page: options.page ? parseInt(options.page, 10) : undefined,
 				};
 
-				actionLogger.debug('Searching with options:', searchOptions);
+				// Call the controller
 				const result =
-					await atlassianSearchController.search(searchOptions);
-				actionLogger.debug('Search completed successfully');
+					await atlassianSearchController.search(controllerOptions);
 
-				// Display the content which now includes pagination information
+				// Output the result
 				console.log(result.content);
 			} catch (error) {
-				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
-
-	methodLogger.debug('Successfully registered Atlassian search commands');
 }
 
 export default { register };
