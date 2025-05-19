@@ -245,7 +245,7 @@ List comments on a specific pull request. Inline comments include code snippets.
 
 ---
 
-## `bb_create_pr_comment`
+## `bb_add_pr_comment`
 
 Add a comment to a pull request.
 
@@ -276,7 +276,7 @@ Add a comment to a pull request.
 
 ---
 
-## `bb_create_pr`
+## `bb_add_pr`
 
 Create a new pull request.
 
@@ -460,7 +460,7 @@ npx -y @aashari/mcp-server-atlassian-bitbucket ls-prs \
   --workspace-slug acme-corp \
   --repo-slug frontend-app \
   --state OPEN
-npx -y @aashari/mcp-server-atlassian-bitbucket create-pr-comment \
+npx -y @aashari/mcp-server-atlassian-bitbucket add-pr-comment \
   --workspace-slug acme-corp \
   --repo-slug frontend-app \
   --pr-id 42 \
@@ -529,8 +529,8 @@ mcp-atlassian-bitbucket get-repo --help
 mcp-atlassian-bitbucket ls-prs --help
 mcp-atlassian-bitbucket get-pr --help
 mcp-atlassian-bitbucket ls-pr-comments --help
-mcp-atlassian-bitbucket create-pr-comment --help
-mcp-atlassian-bitbucket create-pr --help
+mcp-atlassian-bitbucket add-pr-comment --help
+mcp-atlassian-bitbucket add-pr --help
 mcp-atlassian-bitbucket search --help
 mcp-atlassian-bitbucket get-commit-history --help
 mcp-atlassian-bitbucket add-branch --help
