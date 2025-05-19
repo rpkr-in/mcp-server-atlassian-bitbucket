@@ -1,16 +1,12 @@
+import { ContentType } from '../utils/atlassian.util.js';
+import { CodeSearchResult } from '../services/vendor.atlassian.search.service.js';
 import {
-	CodeSearchResult,
-	CommitsResponse,
-	CommitResult,
-} from '../services/vendor.atlassian.search.service.js';
-import {
-	formatDate,
-	formatHeading,
-	formatUrl,
 	formatSeparator,
+	formatDate,
+	formatUrl,
 } from '../utils/formatter.util.js';
 import path from 'path';
-import { ContentType, getContentTypeDisplay } from '../utils/atlassian.util.js';
+import { getContentTypeDisplay } from '../utils/atlassian.util.js';
 
 /**
  * Try to guess the language from the file path
@@ -137,92 +133,6 @@ export function formatCodeSearchResults(searchResponse: {
 	// Format each result
 	results.forEach((result: CodeSearchResult) => {
 		markdown += formatCodeSearchResult(result);
-	});
-
-	// Add standard footer with timestamp
-	markdown += '\n\n' + formatSeparator();
-	markdown += `\n*Information retrieved at: ${formatDate(new Date())}*`;
-
-	return markdown;
-}
-
-/**
- * Format a single commit result into markdown
- *
- * @param commit The commit result to format
- * @returns Formatted markdown string
- */
-function formatCommitResult(commit: CommitResult): string {
-	let markdown = '';
-
-	// Format commit hash and message as heading
-	const shortHash = commit.hash.substring(0, 7);
-	markdown += `### [${shortHash}: ${commit.message.split('\n')[0]}](${commit.links.html.href})\n\n`;
-
-	// Add commit details
-	markdown += `**Author**: ${commit.author.user?.display_name || commit.author.raw}\n`;
-	markdown += `**Date**: ${formatDate(commit.date)}\n`;
-
-	// Add repository info if available
-	if (commit.repository) {
-		markdown += `**Repository**: [${commit.repository.name}](${commit.repository.links.html.href})\n`;
-	}
-
-	// Add full hash
-	markdown += `**Full Hash**: \`${commit.hash}\`\n\n`;
-
-	// Add commit message if it has more than one line
-	const messageLines = commit.message.split('\n');
-	if (messageLines.length > 1) {
-		markdown += '**Full Message**:\n```\n';
-		markdown += commit.message;
-		markdown += '\n```\n\n';
-	}
-
-	return markdown;
-}
-
-/**
- * Format commits search results into markdown
- *
- * @param response The commits response from the API
- * @param repoSlug The repository slug (if applicable)
- * @param workspaceSlug The workspace slug (if applicable)
- * @returns Markdown formatted string of commits search results
- */
-export function formatCommitsResults(
-	response: CommitsResponse,
-	repoSlug?: string,
-	workspaceSlug?: string,
-): string {
-	if (!response.values || response.values.length === 0) {
-		// Add standard footer even for empty state
-		return (
-			'**No commits found matching your query.**\n\n' +
-			'\n\n' +
-			formatSeparator() +
-			'\n' +
-			`*Information retrieved at: ${formatDate(new Date())}*`
-		);
-	}
-
-	const commitCount = response.size || response.values.length;
-	let header = 'Commit Search Results';
-	if (workspaceSlug && repoSlug) {
-		header = `Commit Search Results in ${workspaceSlug}/${repoSlug}`;
-	} else if (workspaceSlug) {
-		header = `Commit Search Results in Workspace ${workspaceSlug}`;
-	}
-
-	let markdown = formatHeading(header, 1) + '\n\n';
-	markdown += `Found ${commitCount} ${commitCount === 1 ? 'commit' : 'commits'} matching your query.\n\n`;
-
-	response.values.forEach((commit, index) => {
-		markdown += formatCommitResult(commit);
-		// Add a single separator unless it's the last item
-		if (index < response.values.length - 1) {
-			markdown += '\n' + formatSeparator() + '\n\n'; // Ensure single separator and spacing
-		}
 	});
 
 	// Add standard footer with timestamp

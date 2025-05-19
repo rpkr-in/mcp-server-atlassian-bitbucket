@@ -3,15 +3,6 @@ import { Logger } from './logger.util.js';
 import { getDeepOriginalError } from './error.util.js';
 import { McpError } from './error.util.js';
 
-// Define McpContentItem type
-type McpContentItem = {
-	type: 'text' | 'image' | 'file';
-	text?: string;
-	url?: string;
-	filename?: string;
-	alt?: string;
-};
-
 /**
  * Standard error codes for consistent handling
  */
@@ -598,53 +589,4 @@ export function handleCliError(error: unknown): never {
 		console.error(`Unknown error occurred: ${String(error)}`);
 		process.exit(1);
 	}
-}
-
-/**
- * Format an error for MCP tool response
- *
- * @param error The error to format
- * @returns Formatted MCP error response
- */
-export function formatErrorForMcpTool(error: unknown): {
-	content: McpContentItem[];
-} {
-	const logger = Logger.forContext(
-		'utils/error-handler.util.ts',
-		'formatErrorForMcpTool',
-	);
-
-	logger.error('Formatting error for MCP tool:', error);
-
-	let errorMessage = 'An unknown error occurred';
-
-	if (error instanceof McpError) {
-		errorMessage = `Error: ${error.message}`;
-
-		// Add hints for specific error types
-		switch (error.errorType) {
-			case 'AUTHENTICATION_REQUIRED':
-				errorMessage +=
-					'\n\nPlease configure Atlassian credentials to proceed.';
-				break;
-			case 'NOT_FOUND':
-				errorMessage +=
-					'\n\nThe requested resource could not be found.';
-				break;
-			case 'VALIDATION_ERROR':
-				errorMessage +=
-					'\n\nPlease check the provided parameters and try again.';
-				break;
-			case 'RATE_LIMIT_EXCEEDED':
-				errorMessage +=
-					'\n\nAPI rate limit exceeded. Please try again later.';
-				break;
-		}
-	} else if (error instanceof Error) {
-		errorMessage = `Error: ${error.message}`;
-	}
-
-	return {
-		content: [{ type: 'text', text: errorMessage }],
-	};
 }
