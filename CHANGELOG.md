@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.4...v1.39.0) (2025-05-19)
+
+
+### Features
+
+* removed backward compatibility flag from diff cli and deprecated sort parameter from workspaces types ([108ef54](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/108ef549c85e7f894191a1e95ccc39319dd3c32f))
+
 ## [1.38.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.38.3...v1.38.4) (2025-05-19)
 
 
