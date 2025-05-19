@@ -498,32 +498,31 @@ Implements OAuth2 authentication flow with support for:
 
 ## Diff for src/auth/OAuthService.java
 
-```diff
-@@ -10,6 +10,25 @@ public class OAuthService {
-     private final TokenRepository tokenRepository;
-     private final HttpClient httpClient;
- 
-+    @Autowired
-+    public OAuthService(
-+            TokenRepository tokenRepository,
-+            HttpClient httpClient) {
-+        this.tokenRepository = tokenRepository;
-+        this.httpClient = httpClient;
-+    }
-+
-+    public TokenResponse refreshToken(String refreshToken) {
-+        // Validate refresh token
-+        if (StringUtils.isEmpty(refreshToken)) {
-+            throw new InvalidTokenException("Refresh token cannot be empty");
-+        }
-+        
-+        // Call OAuth server for new access token
-+        return httpClient.post("/oauth/token")
-+            .body(Map.of("grant_type", "refresh_token", "refresh_token", refreshToken))
-+            .execute()
-+            .as(TokenResponse.class);
-+    }
-```
+
+	@@ -10,6 +10,25 @@ public class OAuthService {
+		private final TokenRepository tokenRepository;
+		private final HttpClient httpClient;
+	
+	+    @Autowired
+	+    public OAuthService(
+	+            TokenRepository tokenRepository,
+	+            HttpClient httpClient) {
+	+        this.tokenRepository = tokenRepository;
+	+        this.httpClient = httpClient;
+	+    }
+	+
+	+    public TokenResponse refreshToken(String refreshToken) {
+	+        // Validate refresh token
+	+        if (StringUtils.isEmpty(refreshToken)) {
+	+            throw new InvalidTokenException("Refresh token cannot be empty");
+	+        }
+	+        
+	+        // Call OAuth server for new access token
+	+        return httpClient.post("/oauth/token")
+	+            .body(Map.of("grant_type", "refresh_token", "refresh_token", refreshToken))
+	+            .execute()
+	+            .as(TokenResponse.class);
+	+    }
 
 ## Comments (3)
 1. **John Smith** (2 days ago):
