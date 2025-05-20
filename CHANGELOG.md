@@ -1,3 +1,11 @@
+## [1.39.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.1...v1.39.2) (2025-05-20)
+
+
+### Bug Fixes
+
+* fix linter errors and unused exports in repository clone feature ([c916f53](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c916f539aa45c6ac903459258dc4f8cc30fba508))
+* improve repository clone feature with SSH support and better path handling ([f5955f3](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/f5955f3888ded00136dfc6b76e909e2d2261fbf8))
+
 ## [1.39.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.0...v1.39.1) (2025-05-20)
 
 
