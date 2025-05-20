@@ -7,6 +7,8 @@ import { getDefaultWorkspace } from '../utils/workspace.util.js';
 import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { constants } from 'fs';
+import { pathToString } from '../utils/path.util.js';
 
 // Logger instance for this module
 const logger = Logger.forContext(
@@ -50,14 +52,55 @@ export async function handleCloneRepository(
 			throw new Error('Target path is required');
 		}
 
-		// Ensure target path exists
+		// Normalize and resolve the target path
+		// If it's a relative path, convert it to absolute based on current working directory
+		const processedTargetPath = path.isAbsolute(targetPath)
+			? targetPath
+			: path.resolve(process.cwd(), targetPath);
+
+		methodLogger.debug(
+			`Normalized target path: ${processedTargetPath} (original: ${targetPath})`,
+		);
+
+		// Validate directory access and permissions before proceeding
 		try {
-			methodLogger.debug(`Checking if target path exists: ${targetPath}`);
-			await fs.mkdir(targetPath, { recursive: true });
-		} catch (dirError) {
-			throw new Error(
-				`Failed to create or access target directory: ${(dirError as Error).message}`,
-			);
+			// Check if target directory exists
+			try {
+				await fs.access(processedTargetPath, constants.F_OK);
+				methodLogger.debug(
+					`Target directory exists: ${processedTargetPath}`,
+				);
+
+				// If it exists, check if we have write permission
+				try {
+					await fs.access(processedTargetPath, constants.W_OK);
+					methodLogger.debug(
+						`Have write permission to: ${processedTargetPath}`,
+					);
+				} catch (permError) {
+					throw new Error(
+						`Permission denied: You don't have write access to the target directory: ${processedTargetPath}`,
+					);
+				}
+			} catch (notExistsError) {
+				// Directory doesn't exist, try to create it
+				methodLogger.debug(
+					`Target directory doesn't exist, creating: ${processedTargetPath}`,
+				);
+				try {
+					await fs.mkdir(processedTargetPath, { recursive: true });
+					methodLogger.debug(
+						`Successfully created directory: ${processedTargetPath}`,
+					);
+				} catch (mkdirError) {
+					throw new Error(
+						`Failed to create target directory ${processedTargetPath}: ${(mkdirError as Error).message}. Please ensure you have write permissions to the parent directory.`,
+					);
+				}
+			}
+		} catch (accessError) {
+			methodLogger.error('Path access error:', accessError);
+			throw accessError;
 		}
 
 		// Get repository details to determine clone URL
@@ -69,26 +112,43 @@ export async function handleCloneRepository(
 			repo_slug: repoSlug,
 		});
 
-		// Find HTTPS clone URL
+		// Find SSH clone URL (preferred) or fall back to HTTPS
 		let cloneUrl: string | undefined;
+		let cloneProtocol: string = 'SSH'; // Default to SSH
+
 		if (repoDetails.links?.clone) {
-			const httpsClone = repoDetails.links.clone.find(
-				(link) => link.name === 'https',
+			// First try to find SSH clone URL
+			const sshClone = repoDetails.links.clone.find(
+				(link) => link.name === 'ssh',
 			);
-			if (httpsClone) {
-				cloneUrl = httpsClone.href;
+
+			if (sshClone) {
+				cloneUrl = sshClone.href;
+			} else {
+				// Fall back to HTTPS if SSH is not available
+				const httpsClone = repoDetails.links.clone.find(
+					(link) => link.name === 'https',
+				);
+
+				if (httpsClone) {
+					cloneUrl = httpsClone.href;
+					cloneProtocol = 'HTTPS';
+					methodLogger.warn(
+						'SSH clone URL not found, falling back to HTTPS',
+					);
+				}
 			}
 		}
 
 		if (!cloneUrl) {
 			throw new Error(
-				'Could not find HTTPS clone URL for the repository',
+				'Could not find a valid clone URL for the repository',
 			);
 		}
 
 		// Determine full target directory path
 		// Clone into a subdirectory named after the repo slug
-		const targetDir = path.join(targetPath, repoSlug);
+		const targetDir = path.join(processedTargetPath, repoSlug);
 		methodLogger.debug(`Will clone to: ${targetDir}`);
 
 		// Check if directory already exists
@@ -110,21 +170,47 @@ export async function handleCloneRepository(
 		}
 
 		// Execute git clone command
-		methodLogger.debug(`Cloning from URL: ${cloneUrl}`);
+		methodLogger.debug(`Cloning from URL (${cloneProtocol}): ${cloneUrl}`);
 		const command = `git clone ${cloneUrl} "${targetDir}"`;
-		const result = await executeShellCommand(command, 'cloning repository');
 
-		if (typeof result === 'string') {
-			// Result is just the stdout as a string
+		try {
+			const result = await executeShellCommand(
+				command,
+				'cloning repository',
+			);
+
+			// Return success message with more detailed information
 			return {
-				content: `✅ Successfully cloned repository \`${workspaceSlug}/${repoSlug}\` to \`${targetDir}\`.\n\n**Output:**\n\`\`\`\n${result}\n\`\`\``,
+				content:
+					`✅ Successfully cloned repository \`${workspaceSlug}/${repoSlug}\` to \`${targetDir}\` using ${cloneProtocol}.\n\n` +
+					`**Details:**\n` +
+					`- **Repository**: ${workspaceSlug}/${repoSlug}\n` +
+					`- **Clone Protocol**: ${cloneProtocol}\n` +
+					`- **Target Location**: ${targetDir}\n\n` +
+					`**Output:**\n\`\`\`\n${result}\n\`\`\`\n\n` +
+					`**Note**: If this is your first time cloning with SSH, ensure your SSH keys are set up correctly.`,
 			};
-		} else {
-			// This code is never reached based on our util function signature,
-			// but we'll keep it for type safety
-			return {
-				content: `✅ Successfully cloned repository \`${workspaceSlug}/${repoSlug}\` to \`${targetDir}\`.`,
-			};
+		} catch (cloneError) {
+			// Enhanced error message with troubleshooting steps
+			const errorMsg = `Failed to clone repository: ${(cloneError as Error).message}`;
+			let troubleshooting = '';
+
+			if (cloneProtocol === 'SSH') {
+				troubleshooting =
+					`\n\n**Troubleshooting SSH Clone Issues:**\n` +
+					`1. Ensure you have SSH keys set up with Bitbucket\n` +
+					`2. Check if your SSH agent is running: \`eval "$(ssh-agent -s)"; ssh-add\`\n` +
+					`3. Verify connectivity: \`ssh -T git@bitbucket.org\`\n` +
+					`4. Try using HTTPS instead (modify your tool call with a different repository URL)`;
+			} else {
+				troubleshooting =
+					`\n\n**Troubleshooting HTTPS Clone Issues:**\n` +
+					`1. Check your Bitbucket credentials\n` +
+					`2. Ensure the target directory is writable\n` +
+					`3. Try running the command manually to see detailed errors`;
+			}
+
+			throw new Error(errorMsg + troubleshooting);
 		}
 	} catch (error) {
 		throw handleControllerError(error, {

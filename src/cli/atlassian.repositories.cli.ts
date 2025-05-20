@@ -299,7 +299,11 @@ function registerAddBranchCommand(program: Command): void {
 function registerCloneRepositoryCommand(program: Command): void {
 	program
 		.command('clone')
-		.description('Clone a Bitbucket repository to a specified local path.')
+		.description(
+			'Clone a Bitbucket repository to your local filesystem using SSH (preferred) or HTTPS. ' +
+				'The repository will be cloned into a subdirectory at targetPath/repoSlug. ' +
+				'Requires Bitbucket credentials and proper SSH key setup for optimal usage.',
+		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository. Example: "myteam"',
@@ -310,7 +314,7 @@ function registerCloneRepositoryCommand(program: Command): void {
 		)
 		.requiredOption(
 			'-t, --target-path <path>',
-			'Local directory path where the repository should be cloned. Example: "./cloned-repo" or "/tmp/my-clones"',
+			'Directory path where the repository will be cloned. Absolute paths are strongly recommended. Example: "/home/user/projects"',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
