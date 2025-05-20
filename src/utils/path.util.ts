@@ -26,7 +26,7 @@ export function pathToString(pathInput: string | string[] | unknown): string {
 	}
 
 	logger.warn(`Unable to convert path input to string: ${typeof pathInput}`);
-	return String(pathInput || '');
+	return ''; // Return empty string for null/undefined
 }
 
 /**
@@ -70,22 +70,4 @@ export function formatDisplayPath(
 	}
 
 	return path.resolve(inputPath);
-}
-
-/**
- * Validates if a path is writable by attempting to access it with write permissions.
- *
- * @param dirPath - Path to check for write permissions
- * @returns Promise resolving to true if writable, false otherwise
- */
-export async function isPathWritable(dirPath: string): Promise<boolean> {
-	try {
-		const fs = await import('fs/promises');
-		const { constants } = await import('fs');
-
-		await fs.access(dirPath, constants.W_OK);
-		return true;
-	} catch {
-		return false;
-	}
 }

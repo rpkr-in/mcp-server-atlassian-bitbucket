@@ -8,7 +8,6 @@ import { executeShellCommand } from '../utils/shell.util.js';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { constants } from 'fs';
-import { pathToString } from '../utils/path.util.js';
 
 // Logger instance for this module
 const logger = Logger.forContext(
@@ -77,12 +76,12 @@ export async function handleCloneRepository(
 					methodLogger.debug(
 						`Have write permission to: ${processedTargetPath}`,
 					);
-				} catch (permError) {
+				} catch {
 					throw new Error(
 						`Permission denied: You don't have write access to the target directory: ${processedTargetPath}`,
 					);
 				}
-			} catch (notExistsError) {
+			} catch {
 				// Directory doesn't exist, try to create it
 				methodLogger.debug(
 					`Target directory doesn't exist, creating: ${processedTargetPath}`,

@@ -1,4 +1,3 @@
-import * as os from 'os';
 import * as path from 'path';
 import { pathToString, isPathInHome, formatDisplayPath } from './path.util.js';
 
@@ -27,7 +26,7 @@ describe('Path Utilities', () => {
 		});
 
 		it('should convert null or undefined to empty string', () => {
-			expect(pathToString(null)).toBe('null');
+			expect(pathToString(null)).toBe('');
 			expect(pathToString(undefined)).toBe('');
 		});
 	});
