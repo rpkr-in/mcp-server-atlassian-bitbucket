@@ -78,17 +78,7 @@ function registerListPullRequestsCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
+				// Map CLI options to controller params - keep only type conversions
 				const filterOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
@@ -222,17 +212,7 @@ function registerListPullRequestCommentsCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
+				// Map CLI options to controller params - keep only type conversions
 				const params = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
@@ -300,13 +280,17 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate line number if provided
-				if (options.line && isNaN(options.line)) {
-					throw new Error('Line number must be a valid integer');
-				}
-
 				// Build parameters object
-				const params = {
+				const params: {
+					workspaceSlug?: string;
+					repoSlug: string;
+					prId: string;
+					content: string;
+					inline?: {
+						path: string;
+						line: number;
+					};
+				} = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					prId: options.prId,
@@ -315,12 +299,10 @@ function registerAddPullRequestCommentCommand(program: Command): void {
 
 				// Add inline comment details if both path and line are provided
 				if (options.path && options.line) {
-					Object.assign(params, {
-						inline: {
-							path: options.path,
-							line: options.line,
-						},
-					});
+					params.inline = {
+						path: options.path,
+						line: options.line,
+					};
 				} else if (options.path || options.line) {
 					throw new Error(
 						'Both -f/--path and -L/--line are required for inline comments',
