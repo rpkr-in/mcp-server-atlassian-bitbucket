@@ -15,6 +15,7 @@ import {
 } from './atlassian.pullrequests.types.js';
 
 import atlassianPullRequestsController from '../controllers/atlassian.pullrequests.controller.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.pullrequests.tool.ts');
@@ -40,9 +41,35 @@ async function listPullRequests(args: ListPullRequestsToolArgsType) {
 	methodLogger.debug('Listing Bitbucket pull requests with filters:', args);
 
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Validate limit if provided to match CLI implementation
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
 		// Pass the filter options to the controller
 		const result = await atlassianPullRequestsController.list({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			state: args.state,
 			query: args.query,
@@ -84,14 +111,35 @@ async function getPullRequest(args: GetPullRequestToolArgsType) {
 		'getPullRequest',
 	);
 
-	methodLogger.debug(
-		`Retrieving pull request details for ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
-		args,
-	);
-
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		methodLogger.debug(
+			`Retrieving pull request details for ${workspaceSlug}/${args.repoSlug}/${args.prId}`,
+			args,
+		);
+
 		const result = await atlassianPullRequestsController.get({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
 			includeFullDiff: args.includeFullDiff,
@@ -134,14 +182,40 @@ async function listPullRequestComments(
 		'listPullRequestComments',
 	);
 
-	methodLogger.debug(
-		`Retrieving comments for pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
-		args,
-	);
-
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Validate limit if provided
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
+		methodLogger.debug(
+			`Retrieving comments for pull request ${workspaceSlug}/${args.repoSlug}/${args.prId}`,
+			args,
+		);
+
 		const result = await atlassianPullRequestsController.listComments({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
 			limit: args.limit,
@@ -184,14 +258,35 @@ async function addPullRequestComment(
 		'addPullRequestComment',
 	);
 
-	methodLogger.debug(
-		`Adding comment on pull request ${args.workspaceSlug}/${args.repoSlug}/${args.prId}`,
-		args,
-	);
-
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		methodLogger.debug(
+			`Adding comment on pull request ${workspaceSlug}/${args.repoSlug}/${args.prId}`,
+			args,
+		);
+
 		const result = await atlassianPullRequestsController.addComment({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			prId: args.prId,
 			content: args.content,
@@ -229,14 +324,36 @@ async function addPullRequest(args: CreatePullRequestToolArgsType) {
 		'tools/atlassian.pullrequests.tool.ts',
 		'addPullRequest',
 	);
-	methodLogger.debug(
-		`Adding pull request in ${args.workspaceSlug}/${args.repoSlug} from ${args.sourceBranch}`,
-		args,
-	);
 
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		methodLogger.debug(
+			`Adding pull request in ${workspaceSlug}/${args.repoSlug} from ${args.sourceBranch}`,
+			args,
+		);
+
 		const result = await atlassianPullRequestsController.add({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			title: args.title,
 			sourceBranch: args.sourceBranch,

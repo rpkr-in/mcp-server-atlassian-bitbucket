@@ -8,6 +8,7 @@ import {
 	type BranchDiffArgsType,
 	type CommitDiffArgsType,
 } from './atlassian.diff.types.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.diff.tool.ts');
@@ -25,7 +26,32 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
 	try {
 		methodLogger.debug('Processing branch diff tool request', args);
 
-		const result = await diffController.branchDiff(args);
+		// Handle optional workspaceSlug similar to CLI implementation
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Call the controller with updated arguments
+		const result = await diffController.branchDiff({
+			...args,
+			workspaceSlug,
+		});
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
@@ -46,7 +72,32 @@ async function handleCommitDiff(args: CommitDiffArgsType) {
 	try {
 		methodLogger.debug('Processing commit diff tool request', args);
 
-		const result = await diffController.commitDiff(args);
+		// Handle optional workspaceSlug similar to CLI implementation
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Call the controller with updated arguments
+		const result = await diffController.commitDiff({
+			...args,
+			workspaceSlug,
+		});
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],

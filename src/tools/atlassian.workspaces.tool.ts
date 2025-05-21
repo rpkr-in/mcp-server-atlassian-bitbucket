@@ -34,6 +34,11 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 	methodLogger.debug('Listing Bitbucket workspaces with filters:', args);
 
 	try {
+		// Validate limit if provided to match CLI implementation
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
 		// Pass the filter options to the controller
 		const result = await atlassianWorkspacesController.list({
 			limit: args.limit,
@@ -78,6 +83,13 @@ async function getWorkspace(args: GetWorkspaceToolArgsType) {
 	);
 
 	try {
+		// Ensure we have a workspace slug - workspace slug is required for this operation
+		if (!args.workspaceSlug) {
+			throw new Error(
+				'Workspace slug is required for getting workspace details.',
+			);
+		}
+
 		const result = await atlassianWorkspacesController.get({
 			workspaceSlug: args.workspaceSlug,
 		});
