@@ -20,8 +20,8 @@ toolLogger.debug('Bitbucket diff tool initialized');
  * @param args - Arguments for the branch diff operation
  * @returns MCP tool response
  */
-async function handleBranchDiff(args: BranchDiffArgsType) {
-	const methodLogger = toolLogger.forMethod('handleBranchDiff');
+async function branchDiff(args: BranchDiffArgsType) {
+	const methodLogger = toolLogger.forMethod('branchDiff');
 	try {
 		methodLogger.debug('Processing branch diff tool request', args);
 
@@ -51,8 +51,8 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
  * @param args - Arguments for the commit diff operation
  * @returns MCP tool response
  */
-async function handleCommitDiff(args: CommitDiffArgsType) {
-	const methodLogger = toolLogger.forMethod('handleCommitDiff');
+async function commitDiff(args: CommitDiffArgsType) {
+	const methodLogger = toolLogger.forMethod('commitDiff');
 	try {
 		methodLogger.debug('Processing commit diff tool request', args);
 
@@ -92,7 +92,7 @@ function registerTools(server: McpServer) {
 		'bb_diff_branches',
 		`Shows changes between branches in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Compares changes in \`sourceBranch\` relative to \`destinationBranch\`. Limits the number of files to show with \`limit\`. Returns the diff as formatted Markdown showing file changes, additions, and deletions. Requires Bitbucket credentials to be configured.`,
 		BranchDiffArgsSchema.shape,
-		handleBranchDiff,
+		branchDiff,
 	);
 
 	// Register the commit diff tool
@@ -100,7 +100,7 @@ function registerTools(server: McpServer) {
 		'bb_diff_commits',
 		`Shows changes between commits in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Requires \`sinceCommit\` and \`untilCommit\` to identify the specific commits to compare. Returns the diff as formatted Markdown showing file changes, additions, and deletions between the commits. Requires Bitbucket credentials to be configured.`,
 		CommitDiffArgsSchema.shape,
-		handleCommitDiff,
+		commitDiff,
 	);
 
 	registerLogger.debug('Successfully registered Diff tools');

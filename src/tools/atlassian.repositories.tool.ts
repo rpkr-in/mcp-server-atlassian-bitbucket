@@ -206,22 +206,13 @@ async function getFileContent(args: GetFileContentToolArgsType) {
 	try {
 		methodLogger.debug('Getting file content:', args);
 
-		// Create properly typed parameter object that matches controller interface
-		// The controller expects workspaceSlug as string, but it handles undefined internally
-		const controllerParams: {
-			workspaceSlug: string;
-			repoSlug: string;
-			path: string;
-			ref?: string;
-		} = {
-			workspaceSlug: args.workspaceSlug || '', // Pass empty string if undefined, controller will handle it
+		// Pass args directly to controller without any transformation
+		const result = await handleGetFileContent({
+			workspaceSlug: args.workspaceSlug,
 			repoSlug: args.repoSlug,
 			path: args.filePath,
 			ref: args.revision,
-		};
-
-		// Pass properly typed args to controller
-		const result = await handleGetFileContent(controllerParams);
+		});
 
 		methodLogger.debug(
 			'Successfully retrieved file content via controller',

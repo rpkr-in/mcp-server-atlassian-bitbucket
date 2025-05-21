@@ -227,7 +227,7 @@ export async function handleCloneRepository(
  * @returns The file content as text
  */
 export async function handleGetFileContent(options: {
-	workspaceSlug: string;
+	workspaceSlug?: string;
 	repoSlug: string;
 	path: string;
 	ref?: string;
