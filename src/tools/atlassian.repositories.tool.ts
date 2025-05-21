@@ -56,9 +56,35 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 	methodLogger.debug('Listing Bitbucket repositories with filters:', args);
 
 	try {
-		// Pass the options directly to the specialized controller
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Validate limit if provided
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
+		// Pass the options directly to the specialized controller with updated workspace
 		const result = await handleRepositoriesList({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			query: args.query,
 			projectKey: args.projectKey,
 			role: args.role,
@@ -101,14 +127,35 @@ async function getRepository(args: GetRepositoryToolArgsType) {
 		'getRepository',
 	);
 
-	methodLogger.debug(
-		`Retrieving repository details for ${args.workspaceSlug}/${args.repoSlug}`,
-		args,
-	);
-
 	try {
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		methodLogger.debug(
+			`Retrieving repository details for ${workspaceSlug}/${args.repoSlug}`,
+			args,
+		);
+
 		const result = await handleRepositoryDetails({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 		});
 
@@ -147,8 +194,37 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 	methodLogger.debug('Getting commit history with args:', args);
 
 	try {
-		// Pass all parameters directly to specialized controller
-		const result = await handleCommitHistory(args);
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Validate limit if provided
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
+		// Pass all parameters directly to specialized controller with updated workspace
+		const result = await handleCommitHistory({
+			...args,
+			workspaceSlug,
+		});
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',
@@ -173,7 +249,33 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 	);
 	try {
 		methodLogger.debug('Tool bb_add_branch called', args);
-		const result = await handleCreateBranch(args);
+
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		const result = await handleCreateBranch({
+			...args,
+			workspaceSlug,
+		});
+
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
@@ -193,7 +295,33 @@ async function handleRepoClone(args: CloneRepositoryToolArgsType) {
 	);
 	try {
 		methodLogger.debug('Tool bb_clone_repo called', args);
-		const result = await handleCloneRepository(args);
+
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		const result = await handleCloneRepository({
+			...args,
+			workspaceSlug,
+		});
+
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
@@ -212,22 +340,29 @@ async function getFileContent(args: GetFileContentToolArgsType) {
 		methodLogger.debug('Tool bb_get_file called', args);
 
 		// Handle optional workspaceSlug
-		if (!args.workspaceSlug) {
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
 			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from CLI flags or config',
+				'No workspace provided, defaulting to workspaceSlug from config',
 			);
 			const defaultWorkspace = await getDefaultWorkspace();
 			if (!defaultWorkspace) {
-				throw new Error(
-					'No default workspace found. Please provide a workspace slug.',
-				);
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
 			}
-			args.workspaceSlug = defaultWorkspace;
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
 		}
 
 		// Now we can safely pass the parameters to the specialized controller
 		const result = await handleGetFileContent({
-			workspaceSlug: args.workspaceSlug as string, // Type assertion since we've handled the undefined case
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			path: args.filePath,
 			ref: args.revision,
@@ -263,9 +398,35 @@ async function listBranches(args: ListBranchesToolArgsType) {
 	);
 
 	try {
-		// Pass the options directly to the specialized controller
+		// Handle optional workspaceSlug
+		let workspaceSlug = args.workspaceSlug;
+		if (!workspaceSlug) {
+			methodLogger.debug(
+				'No workspace provided, defaulting to workspaceSlug from config',
+			);
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspaceSlug = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
+		}
+
+		// Validate limit if provided
+		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
+			throw new Error('Invalid limit value: Must be between 1 and 100.');
+		}
+
+		// Pass the options directly to the specialized controller with updated workspace
 		const result = await handleListBranches({
-			workspaceSlug: args.workspaceSlug,
+			workspaceSlug: workspaceSlug,
 			repoSlug: args.repoSlug,
 			query: args.query,
 			sort: args.sort,
