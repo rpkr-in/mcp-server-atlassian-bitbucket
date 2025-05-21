@@ -6,6 +6,7 @@ import {
 } from './atlassian.search.types.js';
 import atlassianSearchController from '../controllers/atlassian.search.controller.js';
 import { formatErrorForMcpTool } from '../utils/error.util.js';
+import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Set up logger
 const logger = Logger.forContext('tools/atlassian.search.tool.ts');
@@ -20,9 +21,27 @@ async function handleSearch(args: SearchToolArgsType) {
 	try {
 		methodLogger.debug('Search tool called with args:', args);
 
-		// Map tool args to controller options
+		// Handle workspace similar to CLI implementation
+		let workspace = args.workspaceSlug;
+		if (!workspace) {
+			const defaultWorkspace = await getDefaultWorkspace();
+			if (!defaultWorkspace) {
+				return {
+					content: [
+						{
+							type: 'text' as const,
+							text: 'Error: No workspace provided and no default workspace configured',
+						},
+					],
+				};
+			}
+			workspace = defaultWorkspace;
+			methodLogger.debug(`Using default workspace: ${workspace}`);
+		}
+
+		// Map tool args to controller options, aligning with controller parameter names
 		const controllerOptions = {
-			workspace: args.workspaceSlug,
+			workspace: workspace,
 			repo: args.repoSlug,
 			query: args.query,
 			type: args.scope,
@@ -37,7 +56,7 @@ async function handleSearch(args: SearchToolArgsType) {
 		const result =
 			await atlassianSearchController.search(controllerOptions);
 
-		// Return the result content in MCP format with required structuredContent
+		// Return the result content in MCP format
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
