@@ -94,7 +94,7 @@ function registerListRepositoriesCommand(program: Command): void {
 			try {
 				actionLogger.debug('CLI ls-repos called', options);
 
-				// Map CLI options to controller options
+				// Map CLI options to controller options - keep only type conversions
 				const controllerOptions = {
 					workspaceSlug: options.workspaceSlug,
 					query: options.query,
@@ -110,7 +110,7 @@ function registerListRepositoriesCommand(program: Command): void {
 				// Call controller directly
 				const result = await handleRepositoriesList(controllerOptions);
 
-				// Output result content (now includes pagination information)
+				// Output result content
 				console.log(result.content);
 			} catch (error) {
 				handleCliError(error);
@@ -199,17 +199,7 @@ function registerGetCommitHistoryCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate options
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
+				// Map CLI options to controller params - keep only type conversions
 				const requestOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
@@ -440,17 +430,7 @@ function registerListBranchesCommand(program: Command): void {
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate options
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
+				// Map CLI options to controller params - keep only type conversions
 				const params = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,

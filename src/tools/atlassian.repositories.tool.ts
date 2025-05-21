@@ -18,7 +18,7 @@ import {
 	ListBranchesToolArgsType,
 } from './atlassian.repositories.types.js';
 
-// Import directly from specialized controllers instead of the mediator
+// Import directly from specialized controllers
 import { handleRepositoriesList } from '../controllers/atlassian.repositories.list.controller.js';
 import { handleRepositoryDetails } from '../controllers/atlassian.repositories.details.controller.js';
 import { handleCommitHistory } from '../controllers/atlassian.repositories.commit.controller.js';
@@ -30,7 +30,6 @@ import {
 	handleCloneRepository,
 	handleGetFileContent,
 } from '../controllers/atlassian.repositories.content.controller.js';
-import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.repositories.tool.ts');
@@ -56,42 +55,8 @@ async function listRepositories(args: ListRepositoriesToolArgsType) {
 	methodLogger.debug('Listing Bitbucket repositories with filters:', args);
 
 	try {
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		// Validate limit if provided
-		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
-			throw new Error('Invalid limit value: Must be between 1 and 100.');
-		}
-
-		// Pass the options directly to the specialized controller with updated workspace
-		const result = await handleRepositoriesList({
-			workspaceSlug: workspaceSlug,
-			query: args.query,
-			projectKey: args.projectKey,
-			role: args.role,
-			sort: args.sort,
-			limit: args.limit,
-			cursor: args.cursor,
-		});
+		// Pass args directly to controller without any logic
+		const result = await handleRepositoriesList(args);
 
 		methodLogger.debug(
 			'Successfully retrieved repositories from controller',
@@ -126,38 +91,11 @@ async function getRepository(args: GetRepositoryToolArgsType) {
 		'tools/atlassian.repositories.tool.ts',
 		'getRepository',
 	);
+	methodLogger.debug('Getting repository details:', args);
 
 	try {
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		methodLogger.debug(
-			`Retrieving repository details for ${workspaceSlug}/${args.repoSlug}`,
-			args,
-		);
-
-		const result = await handleRepositoryDetails({
-			workspaceSlug: workspaceSlug,
-			repoSlug: args.repoSlug,
-		});
+		// Pass args directly to controller
+		const result = await handleRepositoryDetails(args);
 
 		methodLogger.debug(
 			'Successfully retrieved repository details from controller',
@@ -194,37 +132,8 @@ async function handleGetCommitHistory(args: GetCommitHistoryToolArgsType) {
 	methodLogger.debug('Getting commit history with args:', args);
 
 	try {
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		// Validate limit if provided
-		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
-			throw new Error('Invalid limit value: Must be between 1 and 100.');
-		}
-
-		// Pass all parameters directly to specialized controller with updated workspace
-		const result = await handleCommitHistory({
-			...args,
-			workspaceSlug,
-		});
+		// Pass args directly to controller
+		const result = await handleCommitHistory(args);
 
 		methodLogger.debug(
 			'Successfully retrieved commit history from controller',
@@ -248,39 +157,18 @@ async function handleAddBranch(args: CreateBranchToolArgsType) {
 		'handleAddBranch',
 	);
 	try {
-		methodLogger.debug('Tool bb_add_branch called', args);
+		methodLogger.debug('Creating new branch:', args);
 
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
+		// Pass args directly to controller
+		const result = await handleCreateBranch(args);
 
-		const result = await handleCreateBranch({
-			...args,
-			workspaceSlug,
-		});
+		methodLogger.debug('Successfully created branch via controller');
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
-		methodLogger.error('Tool bb_add_branch failed', error);
+		methodLogger.error('Failed to create branch', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -294,39 +182,18 @@ async function handleRepoClone(args: CloneRepositoryToolArgsType) {
 		'handleRepoClone',
 	);
 	try {
-		methodLogger.debug('Tool bb_clone_repo called', args);
+		methodLogger.debug('Cloning repository:', args);
 
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
+		// Pass args directly to controller
+		const result = await handleCloneRepository(args);
 
-		const result = await handleCloneRepository({
-			...args,
-			workspaceSlug,
-		});
+		methodLogger.debug('Successfully cloned repository via controller');
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
-		methodLogger.error('Tool bb_clone_repo failed', error);
+		methodLogger.error('Failed to clone repository', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -337,42 +204,34 @@ async function handleRepoClone(args: CloneRepositoryToolArgsType) {
 async function getFileContent(args: GetFileContentToolArgsType) {
 	const methodLogger = toolLogger.forMethod('getFileContent');
 	try {
-		methodLogger.debug('Tool bb_get_file called', args);
+		methodLogger.debug('Getting file content:', args);
 
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		// Now we can safely pass the parameters to the specialized controller
-		const result = await handleGetFileContent({
-			workspaceSlug: workspaceSlug,
+		// Create properly typed parameter object that matches controller interface
+		// The controller expects workspaceSlug as string, but it handles undefined internally
+		const controllerParams: {
+			workspaceSlug: string;
+			repoSlug: string;
+			path: string;
+			ref?: string;
+		} = {
+			workspaceSlug: args.workspaceSlug || '', // Pass empty string if undefined, controller will handle it
 			repoSlug: args.repoSlug,
 			path: args.filePath,
 			ref: args.revision,
-		});
+		};
+
+		// Pass properly typed args to controller
+		const result = await handleGetFileContent(controllerParams);
+
+		methodLogger.debug(
+			'Successfully retrieved file content via controller',
+		);
 
 		return {
 			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
-		methodLogger.error('Tool bb_get_file failed', error);
+		methodLogger.error('Failed to get file content', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -392,47 +251,11 @@ async function listBranches(args: ListBranchesToolArgsType) {
 		'tools/atlassian.repositories.tool.ts',
 		'listBranches',
 	);
-	methodLogger.debug(
-		'Listing Bitbucket repository branches with filters:',
-		args,
-	);
+	methodLogger.debug('Listing branches with filters:', args);
 
 	try {
-		// Handle optional workspaceSlug
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
-
-		// Validate limit if provided
-		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
-			throw new Error('Invalid limit value: Must be between 1 and 100.');
-		}
-
-		// Pass the options directly to the specialized controller with updated workspace
-		const result = await handleListBranches({
-			workspaceSlug: workspaceSlug,
-			repoSlug: args.repoSlug,
-			query: args.query,
-			sort: args.sort,
-			limit: args.limit,
-			cursor: args.cursor,
-		});
+		// Pass args directly to controller
+		const result = await handleListBranches(args);
 
 		methodLogger.debug('Successfully retrieved branches from controller');
 
