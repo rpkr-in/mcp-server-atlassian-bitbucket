@@ -16,7 +16,8 @@ const cliLogger = Logger.forContext('cli/atlassian.workspaces.cli.ts');
 cliLogger.debug('Bitbucket workspaces CLI module initialized');
 
 /**
- * Register Bitbucket Workspaces CLI commands with the Commander program
+ * Register Bitbucket workspaces CLI commands with the Commander program
+ *
  * @param program - The Commander program instance to register commands with
  * @throws Error if command registration fails
  */
@@ -35,59 +36,38 @@ function register(program: Command): void {
 
 /**
  * Register the command for listing Bitbucket workspaces
+ *
  * @param program - The Commander program instance
  */
 function registerListWorkspacesCommand(program: Command): void {
 	program
 		.command('ls-workspaces')
-		.description(
-			'List Bitbucket workspaces accessible to the user, with pagination support.',
-		)
-		// NOTE: Sort option has been removed as the Bitbucket API's /2.0/user/permissions/workspaces endpoint
-		// does not support sorting on any field
+		.description('List workspaces in your Bitbucket account.')
 		.option(
 			'-l, --limit <number>',
-			'Maximum number of items to return (1-100). Controls the response size. Defaults to 25 if omitted.',
+			'Maximum number of workspaces to retrieve (1-100). Default: 25.',
 		)
 		.option(
 			'-c, --cursor <string>',
-			'Pagination cursor for retrieving the next set of results. Obtained from previous response when more results are available.',
+			'Pagination cursor for retrieving the next set of results.',
 		)
 		.action(async (options) => {
-			const actionLogger = Logger.forContext(
-				'cli/atlassian.workspaces.cli.ts',
-				'ls-workspaces',
-			);
+			const actionLogger = cliLogger.forMethod('ls-workspaces');
 			try {
 				actionLogger.debug('Processing command options:', options);
 
-				// Validate limit if provided
-				if (options.limit) {
-					const limit = parseInt(options.limit, 10);
-					if (isNaN(limit) || limit <= 0) {
-						throw new Error(
-							'Invalid --limit value: Must be a positive integer.',
-						);
-					}
-				}
-
-				// Map CLI options to controller params
-				const filterOptions = {
+				// Map CLI options to controller params - keep only type conversions
+				const controllerOptions = {
 					limit: options.limit
 						? parseInt(options.limit, 10)
 						: undefined,
 					cursor: options.cursor,
 				};
 
-				actionLogger.debug(
-					'Fetching workspaces with filters:',
-					filterOptions,
-				);
+				// Call controller directly
 				const result =
-					await atlassianWorkspacesController.list(filterOptions);
-				actionLogger.debug('Successfully retrieved workspaces');
+					await atlassianWorkspacesController.list(controllerOptions);
 
-				// Display the complete content which now includes pagination information
 				console.log(result.content);
 			} catch (error) {
 				actionLogger.error('Operation failed:', error);
@@ -98,17 +78,18 @@ function registerListWorkspacesCommand(program: Command): void {
 
 /**
  * Register the command for retrieving a specific Bitbucket workspace
+ *
  * @param program - The Commander program instance
  */
 function registerGetWorkspaceCommand(program: Command): void {
 	program
 		.command('get-workspace')
 		.description(
-			'Get detailed information about a specific Bitbucket workspace using its slug.',
+			'Get detailed information about a specific Bitbucket workspace.',
 		)
 		.requiredOption(
 			'-w, --workspace-slug <slug>',
-			'Workspace slug to retrieve detailed information for. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
+			'Workspace slug to retrieve. Must be a valid workspace slug from your Bitbucket account. Example: "myteam"',
 		)
 		.action(async (options) => {
 			const actionLogger = Logger.forContext(
@@ -120,6 +101,7 @@ function registerGetWorkspaceCommand(program: Command): void {
 					`Fetching workspace: ${options.workspaceSlug}`,
 				);
 
+				// Call controller directly with passed options
 				const result = await atlassianWorkspacesController.get({
 					workspaceSlug: options.workspaceSlug,
 				});

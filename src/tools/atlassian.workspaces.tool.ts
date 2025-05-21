@@ -34,16 +34,8 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 	methodLogger.debug('Listing Bitbucket workspaces with filters:', args);
 
 	try {
-		// Validate limit if provided to match CLI implementation
-		if (args.limit && (args.limit <= 0 || args.limit > 100)) {
-			throw new Error('Invalid limit value: Must be between 1 and 100.');
-		}
-
-		// Pass the filter options to the controller
-		const result = await atlassianWorkspacesController.list({
-			limit: args.limit,
-			cursor: args.cursor,
-		});
+		// Pass args directly to controller without any logic
+		const result = await atlassianWorkspacesController.list(args);
 
 		methodLogger.debug('Successfully retrieved workspaces from controller');
 
@@ -51,7 +43,7 @@ async function listWorkspaces(args: ListWorkspacesToolArgsType) {
 			content: [
 				{
 					type: 'text' as const,
-					text: result.content, // Now contains everything including pagination info
+					text: result.content,
 				},
 			],
 		};
@@ -76,23 +68,12 @@ async function getWorkspace(args: GetWorkspaceToolArgsType) {
 		'tools/atlassian.workspaces.tool.ts',
 		'getWorkspace',
 	);
-
-	methodLogger.debug(
-		`Retrieving workspace details for ${args.workspaceSlug}`,
-		args,
-	);
+	methodLogger.debug('Getting workspace details:', args);
 
 	try {
-		// Ensure we have a workspace slug - workspace slug is required for this operation
-		if (!args.workspaceSlug) {
-			throw new Error(
-				'Workspace slug is required for getting workspace details.',
-			);
-		}
+		// Pass args directly to controller without any logic
+		const result = await atlassianWorkspacesController.get(args);
 
-		const result = await atlassianWorkspacesController.get({
-			workspaceSlug: args.workspaceSlug,
-		});
 		methodLogger.debug(
 			'Successfully retrieved workspace details from controller',
 		);
@@ -112,24 +93,19 @@ async function getWorkspace(args: GetWorkspaceToolArgsType) {
 }
 
 /**
- * Register Atlassian Workspaces MCP Tools
- *
- * Registers the list-workspaces and get-workspace tools with the MCP server.
- * Each tool is registered with its schema, description, and handler function.
- *
- * @param server - The MCP server instance to register tools with
+ * Register all Bitbucket workspace tools with the MCP server.
  */
 function registerTools(server: McpServer) {
-	const methodLogger = Logger.forContext(
+	const registerLogger = Logger.forContext(
 		'tools/atlassian.workspaces.tool.ts',
 		'registerTools',
 	);
-	methodLogger.debug('Registering Atlassian Workspaces tools...');
+	registerLogger.debug('Registering Workspace tools...');
 
 	// Register the list workspaces tool
 	server.tool(
 		'bb_ls_workspaces',
-		`Lists Bitbucket workspaces accessible to the user. Supports pagination via \`limit\` and \`cursor\` (page number). Pagination details (like next cursor or total items) are included at the end of the text content. Use this to discover available workspaces and find their \`workspaceSlug\` needed for other repository-related tools. Returns a formatted Markdown list of workspace memberships including name, slug, UUID, permission level, and dates. Requires Bitbucket credentials to be configured.`,
+		`Lists workspaces within your Bitbucket account. Returns a formatted Markdown list showing workspace slugs, names, and membership role. Requires Bitbucket credentials to be configured.`,
 		ListWorkspacesToolArgs.shape,
 		listWorkspaces,
 	);
@@ -137,12 +113,12 @@ function registerTools(server: McpServer) {
 	// Register the get workspace details tool
 	server.tool(
 		'bb_get_workspace',
-		`Retrieves detailed information about a specific Bitbucket workspace using its slug (\`workspaceSlug\`). Includes UUID, name, type, creation date, and links to related resources (repositories, projects). Use this after finding a \`workspaceSlug\` to get its full details. Returns detailed workspace information formatted as Markdown. Requires Bitbucket credentials to be configured.`,
+		`Retrieves detailed information for a workspace identified by \`workspaceSlug\`. Returns comprehensive workspace details as formatted Markdown, including membership, projects, and key metadata. Requires Bitbucket credentials to be configured.`,
 		GetWorkspaceToolArgs.shape,
 		getWorkspace,
 	);
 
-	methodLogger.debug('Successfully registered Atlassian Workspaces tools');
+	registerLogger.debug('Successfully registered Workspace tools');
 }
 
 export default { registerTools };
