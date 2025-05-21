@@ -1,3 +1,11 @@
+## [1.39.5](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.4...v1.39.5) (2025-05-21)
+
+
+### Bug Fixes
+
+* Move business logic to controllers and fix method naming to follow architectural standards ([51b1a4c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/51b1a4c666469c983393216e68ecc8d60bee17c6))
+* update dependencies ([5a3c409](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5a3c409b406b9a935c47574e446c5531ea157c82))
+
 ## [1.39.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.3...v1.39.4) (2025-05-21)
 
 
