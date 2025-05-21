@@ -8,7 +8,6 @@ import {
 	type BranchDiffArgsType,
 	type CommitDiffArgsType,
 } from './atlassian.diff.types.js';
-import { getDefaultWorkspace } from '../utils/workspace.util.js';
 
 // Create a contextualized logger for this file
 const toolLogger = Logger.forContext('tools/atlassian.diff.tool.ts');
@@ -26,38 +25,23 @@ async function handleBranchDiff(args: BranchDiffArgsType) {
 	try {
 		methodLogger.debug('Processing branch diff tool request', args);
 
-		// Handle optional workspaceSlug similar to CLI implementation
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
+		// Pass args directly to controller without any business logic
+		const result = await diffController.branchDiff(args);
 
-		// Call the controller with updated arguments
-		const result = await diffController.branchDiff({
-			...args,
-			workspaceSlug,
-		});
+		methodLogger.debug(
+			'Successfully retrieved branch diff from controller',
+		);
 
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
+			content: [
+				{
+					type: 'text' as const,
+					text: result.content,
+				},
+			],
 		};
 	} catch (error) {
-		methodLogger.error('Branch diff tool failed', error);
+		methodLogger.error('Failed to retrieve branch diff', error);
 		return formatErrorForMcpTool(error);
 	}
 }
@@ -72,80 +56,49 @@ async function handleCommitDiff(args: CommitDiffArgsType) {
 	try {
 		methodLogger.debug('Processing commit diff tool request', args);
 
-		// Handle optional workspaceSlug similar to CLI implementation
-		let workspaceSlug = args.workspaceSlug;
-		if (!workspaceSlug) {
-			methodLogger.debug(
-				'No workspace provided, defaulting to workspaceSlug from config',
-			);
-			const defaultWorkspace = await getDefaultWorkspace();
-			if (!defaultWorkspace) {
-				return {
-					content: [
-						{
-							type: 'text' as const,
-							text: 'Error: No workspace provided and no default workspace configured',
-						},
-					],
-				};
-			}
-			workspaceSlug = defaultWorkspace;
-			methodLogger.debug(`Using default workspace: ${workspaceSlug}`);
-		}
+		// Pass args directly to controller without any business logic
+		const result = await diffController.commitDiff(args);
 
-		// Call the controller with updated arguments
-		const result = await diffController.commitDiff({
-			...args,
-			workspaceSlug,
-		});
+		methodLogger.debug(
+			'Successfully retrieved commit diff from controller',
+		);
 
 		return {
-			content: [{ type: 'text' as const, text: result.content }],
+			content: [
+				{
+					type: 'text' as const,
+					text: result.content,
+				},
+			],
 		};
 	} catch (error) {
-		methodLogger.error('Commit diff tool failed', error);
+		methodLogger.error('Failed to retrieve commit diff', error);
 		return formatErrorForMcpTool(error);
 	}
 }
 
 /**
- * Register diff tools with the MCP server
- * @param server - MCP server instance
+ * Register all Bitbucket diff tools with the MCP server.
  */
 function registerTools(server: McpServer) {
-	const registerLogger = toolLogger.forMethod('registerTools');
+	const registerLogger = Logger.forContext(
+		'tools/atlassian.diff.tool.ts',
+		'registerTools',
+	);
 	registerLogger.debug('Registering Diff tools...');
 
-	// Register branch diff tool
+	// Register the branch diff tool
 	server.tool(
 		'bb_diff_branches',
-		`Displays detailed differences between two branches in a repository, including code changes by default. Requires \`repoSlug\` and \`sourceBranch\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`destinationBranch\` (defaults to "main") and \`includeFullDiff\` (defaults to true). 
-
-**IMPORTANT PARAMETER ORDER NOTE:** 
-- The output displays changes as \`destinationBranch → sourceBranch\` regardless of parameter naming
-- For complete code changes (not just summary), try reversing the branch parameters if initial results show only summary
-- When \`sourceBranch\` contains newer changes, set \`sourceBranch\` to your feature branch and \`destinationBranch\` to main
-- When comparing branches where main contains newer changes than your branch, try reversing the parameters
-
-Supports pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+		`Shows changes between branches in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Compares changes in \`sourceBranch\` relative to \`destinationBranch\`. Limits the number of files to show with \`limit\`. Returns the diff as formatted Markdown showing file changes, additions, and deletions. Requires Bitbucket credentials to be configured.`,
 		BranchDiffArgsSchema.shape,
 		handleBranchDiff,
 	);
 
-	// Register commit diff tool
+	// Register the commit diff tool
 	server.tool(
 		'bb_diff_commits',
-		`Displays detailed differences between two commits in a repository, including code changes by default. Requires \`repoSlug\`, \`sinceCommit\`, and \`untilCommit\`. If \`workspaceSlug\` is not provided, the system will use your default workspace. Optionally accepts \`includeFullDiff\` (defaults to true).
-
-**IMPORTANT PARAMETER ORDER NOTE:**
-- The parameter names are counterintuitive to their actual ordering requirements
-- For proper results with full code changes, you must specify:
-  - \`sinceCommit\`: The NEWER commit (chronologically later in time)
-  - \`untilCommit\`: The OLDER commit (chronologically earlier in time)
-- If you see "No changes detected", try reversing the commit order
-- The diff result shows changes that would be needed to transform \`sinceCommit\` into \`untilCommit\`
-
-Supports pagination via \`limit\` and \`cursor\`. Pagination details are included at the end of the text content. Requires Bitbucket credentials to be configured. Returns a rich summary of changed files and code changes as Markdown.`,
+		`Shows changes between commits in a repository identified by \`workspaceSlug\` and \`repoSlug\`. Requires \`sinceCommit\` and \`untilCommit\` to identify the specific commits to compare. Returns the diff as formatted Markdown showing file changes, additions, and deletions between the commits. Requires Bitbucket credentials to be configured.`,
 		CommitDiffArgsSchema.shape,
 		handleCommitDiff,
 	);

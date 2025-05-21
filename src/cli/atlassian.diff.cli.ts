@@ -2,7 +2,6 @@ import { Command } from 'commander';
 import { Logger } from '../utils/logger.util.js';
 import { handleCliError } from '../utils/error.util.js';
 import diffController from '../controllers/atlassian.diff.controller.js';
-import { ControllerResponse } from '../types/common.types.js';
 
 // Create a contextualized logger for this file
 const cliLogger = Logger.forContext('cli/atlassian.diff.cli.ts');
@@ -30,48 +29,70 @@ function register(program: Command) {
 		)
 		.requiredOption(
 			'-r, --repo-slug <repoSlug>',
-			'Repository slug to compare branches',
+			'Repository slug where the branches are located. Example: "my-repo"',
 		)
 		.requiredOption(
 			'-s, --source-branch <sourceBranch>',
-			"Source branch for comparison (usually the feature branch). NOTE: Parameter naming might be counterintuitive - try reversing parameters if results aren't as expected.",
+			'Name of the source branch (typically your feature branch). Example: "feature/my-feature"',
 		)
 		.option(
 			'-d, --destination-branch <destinationBranch>',
-			'Destination branch for comparison (defaults to "main"). NOTE: Parameter naming might be counterintuitive - try reversing parameters if results aren\'t as expected.',
+			'Name of the destination branch (typically the main branch). Defaults to "main" if not provided.',
 		)
 		.option(
-			'--limit <limit>',
-			'Maximum number of files to show in results',
-			(value) => parseInt(value, 10),
+			'--full-diff <boolean>',
+			'Whether to include the full diff in the response. Defaults to true.',
+			(value) => value === 'true',
 		)
 		.option(
-			'--cursor <cursor>',
-			'Pagination cursor for additional results',
-			(value) => parseInt(value, 10),
+			'-l, --limit <number>',
+			'Maximum number of files to show in the diff (1-100). Defaults to 25 if omitted.',
+		)
+		.option(
+			'-p, --page <number>',
+			'Page number for pagination. Starts at 1. Use with limit to paginate results.',
+		)
+		.option(
+			'-t, --topic <boolean>',
+			'Whether to treat the source ref as a topic branch. Defaults to false.',
+			(value) => value === 'true',
 		)
 		.action(async (options) => {
-			const methodLogger = cliLogger.forMethod('diff-branches');
+			const actionLogger = cliLogger.forMethod('diff-branches');
 			try {
-				methodLogger.debug('CLI diff-branches called', options);
+				actionLogger.debug('Processing command options:', options);
 
-				// Map CLI options to controller options
+				// Map CLI options to controller params - keep only type conversions
 				const controllerOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					sourceBranch: options.sourceBranch,
 					destinationBranch: options.destinationBranch,
-					limit: options.limit,
-					cursor: options.cursor,
+					includeFullDiff:
+						options.fullDiff !== undefined
+							? options.fullDiff
+							: true,
+					limit: options.limit
+						? parseInt(options.limit, 10)
+						: undefined,
+					cursor: options.page
+						? parseInt(options.page, 10)
+						: undefined,
+					topic: options.topic,
 				};
 
-				// Call controller
-				const result: ControllerResponse =
+				actionLogger.debug(
+					'Calling controller with parameters:',
+					controllerOptions,
+				);
+
+				// Call controller directly
+				const result =
 					await diffController.branchDiff(controllerOptions);
 
-				// Output result content, which now includes pagination information
 				console.log(result.content);
 			} catch (error) {
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
@@ -80,56 +101,72 @@ function register(program: Command) {
 	program
 		.command('diff-commits')
 		.description(
-			'Display differences between two commits in a repository.\nIMPORTANT: Parameter order is counterintuitive! For proper results, --since-commit should be the NEWER commit and --until-commit should be the OLDER commit. If you see "No changes detected", try reversing the commit order.',
+			'Display differences between two commits in a repository.\nIMPORTANT: For proper results, the parameter order can matter. If you see "No changes detected", try reversing the commit order.',
 		)
 		.option(
 			'-w, --workspace-slug <workspaceSlug>',
-			'Workspace slug containing the repository. If not provided, the system will use your default workspace.',
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account).',
 		)
 		.requiredOption(
 			'-r, --repo-slug <repoSlug>',
-			'Repository slug to compare commits',
+			'Repository slug where the commits are located. Example: "my-repo"',
 		)
 		.requiredOption(
 			'-s, --since-commit <sinceCommit>',
-			'Base commit hash or reference (IMPORTANT: Should be the NEWER commit chronologically)',
+			'Commit hash for the newer/later commit. Example: "a1b2c3d4"',
 		)
 		.requiredOption(
 			'-u, --until-commit <untilCommit>',
-			'Target commit hash or reference (IMPORTANT: Should be the OLDER commit chronologically)',
+			'Commit hash for the older/earlier commit. Example: "e5f6g7h8"',
 		)
 		.option(
-			'--limit <limit>',
-			'Maximum number of files to show in results',
-			(value) => parseInt(value, 10),
+			'--full-diff <boolean>',
+			'Whether to include the full diff in the response. Defaults to true.',
+			(value) => value === 'true',
 		)
 		.option(
-			'--cursor <cursor>',
-			'Pagination cursor for additional results',
-			(value) => parseInt(value, 10),
+			'-l, --limit <number>',
+			'Maximum number of files to show in the diff (1-100). Defaults to 25 if omitted.',
+		)
+		.option(
+			'-p, --page <number>',
+			'Page number for pagination. Starts at 1. Use with limit to paginate results.',
 		)
 		.action(async (options) => {
-			const methodLogger = cliLogger.forMethod('diff-commits');
+			const actionLogger = cliLogger.forMethod('diff-commits');
 			try {
-				methodLogger.debug('CLI diff-commits called', options);
+				actionLogger.debug('Processing command options:', options);
 
-				// Map CLI options to controller options
+				// Map CLI options to controller params - keep only type conversions
 				const controllerOptions = {
 					workspaceSlug: options.workspaceSlug,
 					repoSlug: options.repoSlug,
 					sinceCommit: options.sinceCommit,
 					untilCommit: options.untilCommit,
-					limit: options.limit,
-					cursor: options.cursor,
+					includeFullDiff:
+						options.fullDiff !== undefined
+							? options.fullDiff
+							: true,
+					limit: options.limit
+						? parseInt(options.limit, 10)
+						: undefined,
+					cursor: options.page
+						? parseInt(options.page, 10)
+						: undefined,
 				};
 
-				// Call controller
-				const result: ControllerResponse =
+				actionLogger.debug(
+					'Calling controller with parameters:',
+					controllerOptions,
+				);
+
+				// Call controller directly
+				const result =
 					await diffController.commitDiff(controllerOptions);
 
-				// Output result content, which now includes pagination information
 				console.log(result.content);
 			} catch (error) {
+				actionLogger.error('Operation failed:', error);
 				handleCliError(error);
 			}
 		});
