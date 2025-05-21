@@ -1,3 +1,13 @@
+## [1.39.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.2...v1.39.3) (2025-05-21)
+
+
+### Bug Fixes
+
+* align search tool implementation with CLI for consistent behavior ([5b81f58](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/5b81f580bb7b04366b645a5db1a7d72043a9c809))
+* ensure consistent workspace handling across all Bitbucket tool implementations ([1e78be5](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1e78be5fdde5ddb13f395cdc655ae4f0ee639555))
+* ensure consistent workspace handling and parameter validation across all Bitbucket tools ([70d5cba](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/70d5cba00c5f4ad71be28b1fa83ff03f30bbc50d))
+* rename search tool from 'atlassian_search' to 'bb_search' for consistent naming convention ([a3c467c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/a3c467c696bfe55f3f6ae519352324ced7274960))
+
 ## [1.39.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.1...v1.39.2) (2025-05-20)
 
 
