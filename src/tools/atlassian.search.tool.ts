@@ -39,7 +39,6 @@ async function handleSearch(args: SearchToolArgsType) {
 
 		// Return the result content in MCP format with required structuredContent
 		return {
-			structuredContent: {},
 			content: [{ type: 'text' as const, text: result.content }],
 		};
 	} catch (error) {
@@ -57,13 +56,13 @@ async function handleSearch(args: SearchToolArgsType) {
 function registerTools(server: McpServer) {
 	// Register the search tool using the schema shape
 	server.tool(
-		'atlassian_search',
+		'bb_search',
 		'Searches Bitbucket for content matching the provided query. Use this tool to find repositories, code, pull requests, or other content in Bitbucket. Specify `scope` to narrow your search ("code", "repositories", "pullrequests", or "content"). Filter code searches by `language` or `extension`. Filter content searches by `contentType`. Only searches within the specified `workspaceSlug` and optionally within a specific `repoSlug`. Supports pagination via `limit` and `cursor`. Requires Atlassian Bitbucket credentials configured. Returns search results as Markdown.',
 		SearchToolArgsSchema.shape,
 		handleSearch,
 	);
 
-	logger.debug('Successfully registered Atlassian search tools');
+	logger.debug('Successfully registered Bitbucket search tools');
 }
 
 export default { registerTools };
