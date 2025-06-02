@@ -1,3 +1,10 @@
+## [1.39.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.6...v1.39.7) (2025-06-02)
+
+
+### Bug Fixes
+
+* replace Unix-specific chmod with cross-platform ensure-executable script ([0140fb5](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/0140fb59a3bdc15c009a65e9384c49f9e9c7710b)), closes [#31](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/31)
+
 ## [1.39.6](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.5...v1.39.6) (2025-06-02)
 
 
