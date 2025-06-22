@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.7...v1.40.0) (2025-06-22)
+
+
+### Features
+
+* add dual transport support (HTTP + STDIO) for MCP server ([313de85](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/313de85ff2be8e37db498a197aa7d873ddb6912e))
+
 ## [1.39.7](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.6...v1.39.7) (2025-06-02)
 
 
