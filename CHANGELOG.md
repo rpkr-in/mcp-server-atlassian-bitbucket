@@ -1,3 +1,10 @@
+## [1.41.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.41.0...v1.41.1) (2025-06-22)
+
+
+### Bug Fixes
+
+* change default transport from HTTP to STDIO for proper MCP client integration ([51d9a1c](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/51d9a1c91490b47ea3498a11fdd4a3fd35940792))
+
 # [1.41.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.40.1...v1.41.0) (2025-06-22)
 
 
