@@ -1,3 +1,10 @@
+## [1.40.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.40.0...v1.40.1) (2025-06-22)
+
+
+### Bug Fixes
+
+* update dependencies ([dac5279](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/dac5279c7e5eb2c80adc33ae594c25af942c551b))
+
 # [1.40.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.39.7...v1.40.0) (2025-06-22)
 
 
