@@ -96,6 +96,55 @@ npm install -g @aashari/mcp-server-atlassian-bitbucket
 mcp-atlassian-bitbucket ls-workspaces
 ```
 
+## Transport Modes
+
+This server supports two transport modes for different integration scenarios:
+
+### STDIO Transport (Default for MCP)
+- Traditional subprocess communication via stdin/stdout
+- Ideal for local AI assistant integrations (Claude Desktop, Cursor AI)
+- Uses pipe-based communication for direct MCP protocol exchange
+
+```bash
+# Run with STDIO transport (default for AI assistants)
+TRANSPORT_MODE=stdio npx @aashari/mcp-server-atlassian-bitbucket
+
+# Using npm scripts (after installation)
+npm run mcp:stdio
+```
+
+### HTTP Transport (Default for Server Mode)
+- Modern HTTP-based transport with Server-Sent Events (SSE)
+- Supports multiple concurrent connections
+- Better for web-based integrations and development
+- Runs on port 3000 by default (configurable via PORT env var)
+- Endpoint: `http://localhost:3000/mcp`
+- Health check: `http://localhost:3000/`
+
+```bash
+# Run with HTTP transport (default when no CLI args)
+TRANSPORT_MODE=http npx @aashari/mcp-server-atlassian-bitbucket
+
+# Using npm scripts (after installation)
+npm run mcp:http
+
+# Test with MCP Inspector
+npm run mcp:inspect
+```
+
+### Environment Variables
+
+**Transport Configuration:**
+- `TRANSPORT_MODE`: Set to `stdio` or `http` (default: `http` for server mode, `stdio` for MCP clients)
+- `PORT`: HTTP server port (default: `3000`)
+- `DEBUG`: Enable debug logging (default: `false`)
+
+**Authentication:**
+- `ATLASSIAN_BITBUCKET_USERNAME`: Your Bitbucket username
+- `ATLASSIAN_BITBUCKET_APP_PASSWORD`: Your Bitbucket app password
+- `ATLASSIAN_API_TOKEN`: Alternative API token
+- `BITBUCKET_DEFAULT_WORKSPACE`: Default workspace (optional)
+
 ### Step 4: Connect to AI Assistant
 
 Configure your MCP-compatible client (e.g., Claude, Cursor AI):
