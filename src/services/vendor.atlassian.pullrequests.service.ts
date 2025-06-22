@@ -14,6 +14,10 @@ import {
 	PullRequestComment,
 	CreatePullRequestCommentParams,
 	CreatePullRequestParams,
+	UpdatePullRequestParams,
+	ApprovePullRequestParams,
+	RejectPullRequestParams,
+	PullRequestParticipant,
 	DiffstatResponse,
 } from './vendor.atlassian.pullrequests.types.js';
 
@@ -580,12 +584,176 @@ async function getDiffForUrl(url: string): Promise<string> {
 	});
 }
 
+/**
+ * Update an existing pull request
+ * @param {UpdatePullRequestParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {number} params.pull_request_id - The ID of the pull request to update
+ * @param {string} [params.title] - Updated title of the pull request
+ * @param {string} [params.description] - Updated description for the pull request
+ * @returns {Promise<PullRequestDetailed>} Updated pull request information
+ * @example
+ * ```typescript
+ * // Update a pull request's title and description
+ * const updatedPR = await update({
+ *   workspace: 'myworkspace',
+ *   repo_slug: 'myrepo',
+ *   pull_request_id: 123,
+ *   title: 'Updated Feature Implementation',
+ *   description: 'This PR now includes additional improvements...'
+ * });
+ * ```
+ */
+async function update(
+	params: UpdatePullRequestParams,
+): Promise<PullRequestDetailed> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'update',
+	);
+	methodLogger.debug(
+		'Updating Bitbucket pull request with params:',
+		params,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+	}
+
+	// At least one field to update must be provided
+	if (!params.title && !params.description) {
+		throw new Error('At least one field to update (title or description) must be provided');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}`;
+
+	// Construct request body with only the fields to update
+	const requestBody: Record<string, any> = {};
+	if (params.title !== undefined) {
+		requestBody.title = params.title;
+	}
+	if (params.description !== undefined) {
+		requestBody.description = params.description;
+	}
+
+	methodLogger.debug(`Sending PUT request to: ${path}`);
+	return fetchAtlassian<PullRequestDetailed>(credentials, path, {
+		method: 'PUT',
+		body: requestBody,
+	});
+}
+
+/**
+ * Approve a pull request
+ * @param {ApprovePullRequestParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {number} params.pull_request_id - The ID of the pull request to approve
+ * @returns {Promise<PullRequestParticipant>} Participant information showing approval status
+ * @example
+ * ```typescript
+ * // Approve a pull request
+ * const approval = await approve({
+ *   workspace: 'myworkspace',
+ *   repo_slug: 'myrepo',
+ *   pull_request_id: 123
+ * });
+ * ```
+ */
+async function approve(
+	params: ApprovePullRequestParams,
+): Promise<PullRequestParticipant> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'approve',
+	);
+	methodLogger.debug(
+		`Approving Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/approve`;
+
+	methodLogger.debug(`Sending POST request to: ${path}`);
+	return fetchAtlassian<PullRequestParticipant>(credentials, path, {
+		method: 'POST',
+	});
+}
+
+/**
+ * Request changes on a pull request (reject)
+ * @param {RejectPullRequestParams} params - Parameters for the request
+ * @param {string} params.workspace - The workspace slug or UUID
+ * @param {string} params.repo_slug - The repository slug or UUID
+ * @param {number} params.pull_request_id - The ID of the pull request to request changes on
+ * @returns {Promise<PullRequestParticipant>} Participant information showing rejection status
+ * @example
+ * ```typescript
+ * // Request changes on a pull request
+ * const rejection = await reject({
+ *   workspace: 'myworkspace',
+ *   repo_slug: 'myrepo',
+ *   pull_request_id: 123
+ * });
+ * ```
+ */
+async function reject(
+	params: RejectPullRequestParams,
+): Promise<PullRequestParticipant> {
+	const methodLogger = Logger.forContext(
+		'services/vendor.atlassian.pullrequests.service.ts',
+		'reject',
+	);
+	methodLogger.debug(
+		`Requesting changes on Bitbucket pull request: ${params.workspace}/${params.repo_slug}/${params.pull_request_id}`,
+	);
+
+	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
+		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+	}
+
+	const credentials = getAtlassianCredentials();
+	if (!credentials) {
+		throw createAuthMissingError(
+			'Atlassian credentials are required for this operation',
+		);
+	}
+
+	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}/request-changes`;
+
+	methodLogger.debug(`Sending POST request to: ${path}`);
+	return fetchAtlassian<PullRequestParticipant>(credentials, path, {
+		method: 'POST',
+	});
+}
+
 export default {
 	list,
 	get,
 	getComments,
 	createComment,
 	create,
+	update,
+	approve,
+	reject,
 	getRawDiff,
 	getDiffstat,
 	getDiffForUrl,

@@ -32,6 +32,9 @@ function register(program: Command): void {
 	registerListPullRequestCommentsCommand(program);
 	registerAddPullRequestCommentCommand(program);
 	registerAddPullRequestCommand(program);
+	registerUpdatePullRequestCommand(program);
+	registerApprovePullRequestCommand(program);
+	registerRejectPullRequestCommand(program);
 
 	methodLogger.debug('CLI commands registered successfully');
 }
@@ -390,6 +393,181 @@ function registerAddPullRequestCommand(program: Command): void {
 				const result =
 					await atlassianPullRequestsController.add(params);
 				actionLogger.debug('Successfully created pull request');
+
+				console.log(result.content);
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for updating a Bitbucket pull request
+ * @param program - The Commander program instance
+ */
+function registerUpdatePullRequestCommand(program: Command): void {
+	program
+		.command('update-pr')
+		.description(
+			'Update an existing pull request in a Bitbucket repository.',
+		)
+		.option(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository (optional, uses default workspace if not provided). Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug containing the pull request. Example: "project-api"',
+		)
+		.requiredOption(
+			'-p, --pull-request-id <id>',
+			'Pull request ID to update. Example: 123',
+			parseInt,
+		)
+		.option(
+			'-t, --title <title>',
+			'Updated title for the pull request. Example: "Updated Feature Implementation"',
+		)
+		.option(
+			'--description <text>',
+			'Updated description for the pull request.',
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'update-pr',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Validate that at least one field to update is provided
+				if (!options.title && !options.description) {
+					throw new Error(
+						'At least one field to update (title or description) must be provided',
+					);
+				}
+
+				// Map CLI options to controller params
+				const params = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					pullRequestId: options.pullRequestId,
+					title: options.title,
+					description: options.description,
+				};
+
+				actionLogger.debug('Updating pull request:', {
+					...params,
+					description: options.description
+						? '(description provided)'
+						: '(no description)',
+				});
+				const result =
+					await atlassianPullRequestsController.update(params);
+				actionLogger.debug('Successfully updated pull request');
+
+				console.log(result.content);
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for approving a Bitbucket pull request
+ * @param program - The Commander program instance
+ */
+function registerApprovePullRequestCommand(program: Command): void {
+	program
+		.command('approve-pr')
+		.description(
+			'Approve a pull request in a Bitbucket repository.',
+		)
+		.option(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository (optional, uses default workspace if not provided). Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug containing the pull request. Example: "project-api"',
+		)
+		.requiredOption(
+			'-p, --pull-request-id <id>',
+			'Pull request ID to approve. Example: 123',
+			parseInt,
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'approve-pr',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Map CLI options to controller params
+				const params = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					pullRequestId: options.pullRequestId,
+				};
+
+				actionLogger.debug('Approving pull request:', params);
+				const result =
+					await atlassianPullRequestsController.approve(params);
+				actionLogger.debug('Successfully approved pull request');
+
+				console.log(result.content);
+			} catch (error) {
+				actionLogger.error('Operation failed:', error);
+				handleCliError(error);
+			}
+		});
+}
+
+/**
+ * Register the command for requesting changes on a Bitbucket pull request
+ * @param program - The Commander program instance
+ */
+function registerRejectPullRequestCommand(program: Command): void {
+	program
+		.command('reject-pr')
+		.description(
+			'Request changes on a pull request in a Bitbucket repository.',
+		)
+		.option(
+			'-w, --workspace-slug <slug>',
+			'Workspace slug containing the repository (optional, uses default workspace if not provided). Example: "myteam"',
+		)
+		.requiredOption(
+			'-r, --repo-slug <slug>',
+			'Repository slug containing the pull request. Example: "project-api"',
+		)
+		.requiredOption(
+			'-p, --pull-request-id <id>',
+			'Pull request ID to request changes on. Example: 123',
+			parseInt,
+		)
+		.action(async (options) => {
+			const actionLogger = Logger.forContext(
+				'cli/atlassian.pullrequests.cli.ts',
+				'reject-pr',
+			);
+			try {
+				actionLogger.debug('Processing command options:', options);
+
+				// Map CLI options to controller params
+				const params = {
+					workspaceSlug: options.workspaceSlug,
+					repoSlug: options.repoSlug,
+					pullRequestId: options.pullRequestId,
+				};
+
+				actionLogger.debug('Requesting changes on pull request:', params);
+				const result =
+					await atlassianPullRequestsController.reject(params);
+				actionLogger.debug('Successfully requested changes on pull request');
 
 				console.log(result.content);
 			} catch (error) {

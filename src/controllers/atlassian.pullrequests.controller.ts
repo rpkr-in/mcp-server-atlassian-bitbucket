@@ -5,12 +5,18 @@ import {
 	ListPullRequestCommentsToolArgsType,
 	CreatePullRequestCommentToolArgsType,
 	CreatePullRequestToolArgsType,
+	UpdatePullRequestToolArgsType,
+	ApprovePullRequestToolArgsType,
+	RejectPullRequestToolArgsType,
 } from '../tools/atlassian.pullrequests.types.js';
 
 import listController from './atlassian.pullrequests.list.controller.js';
 import getController from './atlassian.pullrequests.get.controller.js';
 import commentsController from './atlassian.pullrequests.comments.controller.js';
 import createController from './atlassian.pullrequests.create.controller.js';
+import updateController from './atlassian.pullrequests.update.controller.js';
+import approveController from './atlassian.pullrequests.approve.controller.js';
+import rejectController from './atlassian.pullrequests.reject.controller.js';
 
 /**
  * Controller for managing Bitbucket pull requests.
@@ -84,5 +90,38 @@ async function add(
 	return createController.add(options);
 }
 
+/**
+ * Update an existing pull request in Bitbucket
+ * @param options - Options including workspace slug, repo slug, pull request ID, title, and description
+ * @returns Promise with formatted updated pull request details as Markdown content
+ */
+async function update(
+	options: UpdatePullRequestToolArgsType,
+): Promise<ControllerResponse> {
+	return updateController.update(options);
+}
+
+/**
+ * Approve a pull request in Bitbucket
+ * @param options - Options including workspace slug, repo slug, and pull request ID
+ * @returns Promise with formatted approval confirmation as Markdown content
+ */
+async function approve(
+	options: ApprovePullRequestToolArgsType,
+): Promise<ControllerResponse> {
+	return approveController.approve(options);
+}
+
+/**
+ * Request changes on a pull request in Bitbucket
+ * @param options - Options including workspace slug, repo slug, and pull request ID
+ * @returns Promise with formatted rejection confirmation as Markdown content
+ */
+async function reject(
+	options: RejectPullRequestToolArgsType,
+): Promise<ControllerResponse> {
+	return rejectController.reject(options);
+}
+
 // Export the controller functions
-export default { list, get, listComments, addComment, add };
+export default { list, get, listComments, addComment, add, update, approve, reject };

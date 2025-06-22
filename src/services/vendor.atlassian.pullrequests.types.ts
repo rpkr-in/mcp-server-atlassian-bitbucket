@@ -439,3 +439,108 @@ export interface DiffstatFileChange {
 	lines_added?: number;
 	lines_removed?: number;
 }
+
+/**
+ * Parameters for updating a pull request
+ */
+export interface UpdatePullRequestParams {
+	/**
+	 * The workspace slug or UUID
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug or UUID
+	 */
+	repo_slug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	pull_request_id: number;
+
+	/**
+	 * Updated title of the pull request
+	 */
+	title?: string;
+
+	/**
+	 * Updated description for the pull request
+	 */
+	description?: string;
+}
+
+/**
+ * Parameters for approving a pull request
+ */
+export interface ApprovePullRequestParams {
+	/**
+	 * The workspace slug or UUID
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug or UUID
+	 */
+	repo_slug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	pull_request_id: number;
+}
+
+/**
+ * Parameters for requesting changes on a pull request
+ */
+export interface RejectPullRequestParams {
+	/**
+	 * The workspace slug or UUID
+	 */
+	workspace: string;
+
+	/**
+	 * The repository slug or UUID
+	 */
+	repo_slug: string;
+
+	/**
+	 * The pull request ID
+	 */
+	pull_request_id: number;
+}
+
+/**
+ * Pull request participant representing approval/rejection status
+ */
+export interface PullRequestParticipant {
+	/**
+	 * Type of the object
+	 */
+	type: 'participant';
+
+	/**
+	 * User information
+	 */
+	user: PullRequestUser;
+
+	/**
+	 * Participant role
+	 */
+	role: 'PARTICIPANT' | 'REVIEWER';
+
+	/**
+	 * Whether the participant has approved the PR
+	 */
+	approved: boolean;
+
+	/**
+	 * Participant state
+	 */
+	state: 'approved' | 'changes_requested' | null;
+
+	/**
+	 * When the participant last participated
+	 */
+	participated_on: string;
+}

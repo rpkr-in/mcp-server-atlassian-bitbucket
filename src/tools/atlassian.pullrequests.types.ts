@@ -324,3 +324,135 @@ export const CreatePullRequestToolArgs = z.object({
 export type CreatePullRequestToolArgsType = z.infer<
 	typeof CreatePullRequestToolArgs
 >;
+
+/**
+ * Schema for update-pull-request tool arguments
+ */
+export const UpdatePullRequestToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.optional()
+		.describe(
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug containing the pull request
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Pull request ID
+	 */
+	pullRequestId: z
+		.number()
+		.int()
+		.positive()
+		.describe('Pull request ID to update. Example: 123'),
+
+	/**
+	 * Updated title for the pull request
+	 */
+	title: z
+		.string()
+		.optional()
+		.describe('Updated title for the pull request. Example: "Updated Feature Implementation"'),
+
+	/**
+	 * Updated description for the pull request
+	 */
+	description: z
+		.string()
+		.optional()
+		.describe(
+			'Updated description for the pull request in Markdown format. Supports standard Markdown syntax including headings, lists, code blocks, and links.',
+		),
+});
+
+export type UpdatePullRequestToolArgsType = z.infer<
+	typeof UpdatePullRequestToolArgs
+>;
+
+/**
+ * Schema for approve-pull-request tool arguments
+ */
+export const ApprovePullRequestToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.optional()
+		.describe(
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug containing the pull request
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Pull request ID
+	 */
+	pullRequestId: z
+		.number()
+		.int()
+		.positive()
+		.describe('Pull request ID to approve. Example: 123'),
+});
+
+export type ApprovePullRequestToolArgsType = z.infer<
+	typeof ApprovePullRequestToolArgs
+>;
+
+/**
+ * Schema for reject-pull-request tool arguments
+ */
+export const RejectPullRequestToolArgs = z.object({
+	/**
+	 * Workspace slug containing the repository
+	 */
+	workspaceSlug: z
+		.string()
+		.optional()
+		.describe(
+			'Workspace slug containing the repository. If not provided, the system will use your default workspace (either configured via BITBUCKET_DEFAULT_WORKSPACE or the first workspace in your account). Example: "myteam"',
+		),
+
+	/**
+	 * Repository slug containing the pull request
+	 */
+	repoSlug: z
+		.string()
+		.min(1, 'Repository slug is required')
+		.describe(
+			'Repository slug containing the pull request. This must be a valid repository in the specified workspace. Example: "project-api"',
+		),
+
+	/**
+	 * Pull request ID
+	 */
+	pullRequestId: z
+		.number()
+		.int()
+		.positive()
+		.describe('Pull request ID to request changes on. Example: 123'),
+});
+
+export type RejectPullRequestToolArgsType = z.infer<
+	typeof RejectPullRequestToolArgs
+>;
