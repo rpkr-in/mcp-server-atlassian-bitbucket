@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.40.1...v1.41.0) (2025-06-22)
+
+
+### Features
+
+* implement complete PR CRUD operations (update, approve, reject) ([de5a2a0](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/de5a2a045cab06f0ce2a2bbfdd9028bae81d2b73)), closes [#38](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/38) [#39](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/39) [#38](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/38) [#39](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/39)
+
 ## [1.40.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.40.0...v1.40.1) (2025-06-22)
 
 
