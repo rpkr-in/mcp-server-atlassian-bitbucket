@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.41.1...v1.42.0) (2025-07-15)
+
+
+### Features
+
+* add support for threaded comments in pull request comments ([#50](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/50)) ([6bcb98a](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/6bcb98ad95c7073604c6f5173e78c7339821e689)), closes [#49](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues/49)
+
 ## [1.41.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.41.0...v1.41.1) (2025-06-22)
 
 
