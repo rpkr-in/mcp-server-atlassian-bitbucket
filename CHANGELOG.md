@@ -1,3 +1,10 @@
+## [1.43.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.1...v1.43.2) (2025-08-02)
+
+
+### Bug Fixes
+
+* prevent double formatting in Bitbucket markdown (heading + bold) ([67ec325](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/67ec3253f1c3576cf8427ff6426ae3178e12f96a))
+
 ## [1.43.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.0...v1.43.1) (2025-08-02)
 
 
