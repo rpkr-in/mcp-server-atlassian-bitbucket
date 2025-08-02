@@ -1,3 +1,10 @@
+## [1.42.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.42.0...v1.42.1) (2025-08-02)
+
+
+### Bug Fixes
+
+* standardize dependencies and fix TypeScript linting issues ([4e5ab79](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/4e5ab79431f07da5bd06db0fa5835191ccb2ef08))
+
 # [1.42.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.41.1...v1.42.0) (2025-07-15)
 
 
