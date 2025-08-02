@@ -1,3 +1,10 @@
+## [1.43.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.0...v1.43.1) (2025-08-02)
+
+
+### Bug Fixes
+
+* resolve bb_get_file tool failure with dynamic default branch detection ([74ca7e0](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/74ca7e0f3f042f2f24cdf156d4a94c2e3e026cf5))
+
 # [1.43.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.42.1...v1.43.0) (2025-08-02)
 
 
