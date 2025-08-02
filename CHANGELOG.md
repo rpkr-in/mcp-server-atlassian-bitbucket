@@ -1,3 +1,15 @@
+# [1.43.0](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.42.1...v1.43.0) (2025-08-02)
+
+
+### Bug Fixes
+
+* correct logger variable name in repository list controller ([1706725](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/1706725a374826068c1d75c80e215543fb3ac4a6))
+
+
+### Features
+
+* add query logging for repository searches ([c8d776d](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/c8d776dcabf8dab4cc63724df508b3837e993cc0))
+
 ## [1.42.1](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.42.0...v1.42.1) (2025-08-02)
 
 
