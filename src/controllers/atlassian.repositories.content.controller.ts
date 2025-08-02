@@ -261,16 +261,50 @@ export async function handleGetFileContent(options: {
 			throw new Error('File path is required');
 		}
 
+		// Get repository details to determine the correct default branch
+		let commitRef = options.ref;
+		if (!commitRef) {
+			methodLogger.debug(
+				`No ref provided, fetching repository details to get default branch`,
+			);
+			try {
+				const repoDetails = await atlassianRepositoriesService.get({
+					workspace: workspaceSlug,
+					repo_slug: repoSlug,
+				});
+
+				// Use the repository's actual default branch
+				if (repoDetails.mainbranch?.name) {
+					commitRef = repoDetails.mainbranch.name;
+					methodLogger.debug(
+						`Using repository default branch: ${commitRef}`,
+					);
+				} else {
+					// Fallback to common default branches
+					commitRef = 'main';
+					methodLogger.debug(
+						`No default branch found, falling back to: ${commitRef}`,
+					);
+				}
+			} catch (repoError) {
+				methodLogger.warn(
+					'Failed to get repository details, using fallback branch',
+					repoError,
+				);
+				commitRef = 'main';
+			}
+		}
+
 		// Get file content from service
 		methodLogger.debug(
 			`Fetching file content for ${workspaceSlug}/${repoSlug}/${filePath}`,
-			{ ref: options.ref },
+			{ ref: commitRef },
 		);
 		const fileContent = await atlassianRepositoriesService.getFileContent({
 			workspace: workspaceSlug,
 			repo_slug: repoSlug,
 			path: filePath,
-			commit: options.ref || 'main', // Default to 'main' if no ref is provided
+			commit: commitRef,
 		});
 
 		// Return the file content as is
