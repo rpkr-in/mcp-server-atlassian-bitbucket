@@ -408,10 +408,33 @@ export function optimizeBitbucketMarkdown(markdown: string): string {
 		optimized = optimized.replace(`__CODE_BLOCK_${index}__`, codeBlock);
 	});
 
-	// Ensure headings have proper spacing
+	// Fix double formatting issues (heading + bold) which Bitbucket renders incorrectly
+	// Remove bold formatting from headings as headings are already emphasized
+	optimized = optimized.replace(
+		/^(#{1,6})\s+\*\*(.*?)\*\*\s*$/gm,
+		(_match, hashes, content) => {
+			return `\n${hashes} ${content.trim()}\n\n`;
+		},
+	);
+
+	// Fix bold text within headings (alternative pattern)
+	optimized = optimized.replace(
+		/^(#{1,6})\s+(.*?)\*\*(.*?)\*\*(.*?)$/gm,
+		(_match, hashes, before, boldText, after) => {
+			// Combine text without bold formatting since heading already provides emphasis
+			const cleanContent = (before + boldText + after).trim();
+			return `\n${hashes} ${cleanContent}\n\n`;
+		},
+	);
+
+	// Ensure headings have proper spacing (for headings without bold issues)
 	optimized = optimized.replace(
 		/^(#{1,6})\s+(.*?)$/gm,
 		(_match, hashes, content) => {
+			// Skip if already processed by bold removal above
+			if (content.includes('**')) {
+				return _match; // Leave as-is, will be handled by bold removal patterns
+			}
 			return `\n${hashes} ${content.trim()}\n\n`;
 		},
 	);
