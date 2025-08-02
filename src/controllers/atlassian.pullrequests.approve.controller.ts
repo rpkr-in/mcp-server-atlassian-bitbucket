@@ -58,9 +58,8 @@ async function approve(
 		};
 
 		// Call service to approve the pull request
-		const participant = await atlassianPullRequestsService.approve(
-			serviceParams,
-		);
+		const participant =
+			await atlassianPullRequestsService.approve(serviceParams);
 
 		methodLogger.debug(
 			`Successfully approved pull request ${mergedOptions.pullRequestId}`,

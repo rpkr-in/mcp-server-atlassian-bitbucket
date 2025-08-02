@@ -77,9 +77,8 @@ async function update(
 		}
 
 		// Call service to update the pull request
-		const pullRequest = await atlassianPullRequestsService.update(
-			serviceParams,
-		);
+		const pullRequest =
+			await atlassianPullRequestsService.update(serviceParams);
 
 		methodLogger.debug(
 			`Successfully updated pull request ${pullRequest.id}`,

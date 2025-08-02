@@ -58,9 +58,8 @@ async function reject(
 		};
 
 		// Call service to request changes on the pull request
-		const participant = await atlassianPullRequestsService.reject(
-			serviceParams,
-		);
+		const participant =
+			await atlassianPullRequestsService.reject(serviceParams);
 
 		methodLogger.debug(
 			`Successfully requested changes on pull request ${mergedOptions.pullRequestId}`,

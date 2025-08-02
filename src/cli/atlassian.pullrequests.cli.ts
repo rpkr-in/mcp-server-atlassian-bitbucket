@@ -492,9 +492,7 @@ function registerUpdatePullRequestCommand(program: Command): void {
 function registerApprovePullRequestCommand(program: Command): void {
 	program
 		.command('approve-pr')
-		.description(
-			'Approve a pull request in a Bitbucket repository.',
-		)
+		.description('Approve a pull request in a Bitbucket repository.')
 		.option(
 			'-w, --workspace-slug <slug>',
 			'Workspace slug containing the repository (optional, uses default workspace if not provided). Example: "myteam"',
@@ -574,10 +572,15 @@ function registerRejectPullRequestCommand(program: Command): void {
 					pullRequestId: options.pullRequestId,
 				};
 
-				actionLogger.debug('Requesting changes on pull request:', params);
+				actionLogger.debug(
+					'Requesting changes on pull request:',
+					params,
+				);
 				const result =
 					await atlassianPullRequestsController.reject(params);
-				actionLogger.debug('Successfully requested changes on pull request');
+				actionLogger.debug(
+					'Successfully requested changes on pull request',
+				);
 
 				console.log(result.content);
 			} catch (error) {

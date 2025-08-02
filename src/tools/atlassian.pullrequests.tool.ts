@@ -332,7 +332,9 @@ async function rejectPullRequest(args: RejectPullRequestToolArgsType) {
 		// Pass args directly to controller
 		const result = await atlassianPullRequestsController.reject(args);
 
-		methodLogger.debug('Successfully requested changes on pull request via controller');
+		methodLogger.debug(
+			'Successfully requested changes on pull request via controller',
+		);
 
 		return {
 			content: [

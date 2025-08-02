@@ -9,14 +9,17 @@ describe('Atlassian Pull Requests Tool Types', () => {
 				content: 'This is a reply to another comment',
 				parentId: '456',
 			};
-			
-			const result = CreatePullRequestCommentToolArgs.safeParse(validArgs);
+
+			const result =
+				CreatePullRequestCommentToolArgs.safeParse(validArgs);
 			expect(result.success).toBe(true);
 			if (result.success) {
 				expect(result.data.parentId).toBe('456');
 				expect(result.data.repoSlug).toBe('test-repo');
 				expect(result.data.prId).toBe('123');
-				expect(result.data.content).toBe('This is a reply to another comment');
+				expect(result.data.content).toBe(
+					'This is a reply to another comment',
+				);
 			}
 		});
 
@@ -26,8 +29,9 @@ describe('Atlassian Pull Requests Tool Types', () => {
 				prId: '123',
 				content: 'This is a top-level comment',
 			};
-			
-			const result = CreatePullRequestCommentToolArgs.safeParse(validArgs);
+
+			const result =
+				CreatePullRequestCommentToolArgs.safeParse(validArgs);
 			expect(result.success).toBe(true);
 			if (result.success) {
 				expect(result.data.parentId).toBeUndefined();
@@ -48,8 +52,9 @@ describe('Atlassian Pull Requests Tool Types', () => {
 					line: 42,
 				},
 			};
-			
-			const result = CreatePullRequestCommentToolArgs.safeParse(validArgs);
+
+			const result =
+				CreatePullRequestCommentToolArgs.safeParse(validArgs);
 			expect(result.success).toBe(true);
 			if (result.success) {
 				expect(result.data.parentId).toBe('456');
@@ -62,8 +67,9 @@ describe('Atlassian Pull Requests Tool Types', () => {
 			const invalidArgs = {
 				parentId: '456', // parentId alone is not enough
 			};
-			
-			const result = CreatePullRequestCommentToolArgs.safeParse(invalidArgs);
+
+			const result =
+				CreatePullRequestCommentToolArgs.safeParse(invalidArgs);
 			expect(result.success).toBe(false);
 		});
 
@@ -75,8 +81,9 @@ describe('Atlassian Pull Requests Tool Types', () => {
 				content: 'Reply comment',
 				parentId: '456',
 			};
-			
-			const result = CreatePullRequestCommentToolArgs.safeParse(validArgs);
+
+			const result =
+				CreatePullRequestCommentToolArgs.safeParse(validArgs);
 			expect(result.success).toBe(true);
 			if (result.success) {
 				expect(result.data.workspaceSlug).toBe('my-workspace');
@@ -84,4 +91,4 @@ describe('Atlassian Pull Requests Tool Types', () => {
 			}
 		});
 	});
-}); 
+});

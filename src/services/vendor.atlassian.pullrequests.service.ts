@@ -613,18 +613,19 @@ async function update(
 		'services/vendor.atlassian.pullrequests.service.ts',
 		'update',
 	);
-	methodLogger.debug(
-		'Updating Bitbucket pull request with params:',
-		params,
-	);
+	methodLogger.debug('Updating Bitbucket pull request with params:', params);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
-		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
 	}
 
 	// At least one field to update must be provided
 	if (!params.title && !params.description) {
-		throw new Error('At least one field to update (title or description) must be provided');
+		throw new Error(
+			'At least one field to update (title or description) must be provided',
+		);
 	}
 
 	const credentials = getAtlassianCredentials();
@@ -637,7 +638,7 @@ async function update(
 	const path = `${API_PATH}/repositories/${params.workspace}/${params.repo_slug}/pullrequests/${params.pull_request_id}`;
 
 	// Construct request body with only the fields to update
-	const requestBody: Record<string, any> = {};
+	const requestBody: Record<string, unknown> = {};
 	if (params.title !== undefined) {
 		requestBody.title = params.title;
 	}
@@ -681,7 +682,9 @@ async function approve(
 	);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
-		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
 	}
 
 	const credentials = getAtlassianCredentials();
@@ -728,7 +731,9 @@ async function reject(
 	);
 
 	if (!params.workspace || !params.repo_slug || !params.pull_request_id) {
-		throw new Error('workspace, repo_slug, and pull_request_id parameters are all required');
+		throw new Error(
+			'workspace, repo_slug, and pull_request_id parameters are all required',
+		);
 	}
 
 	const credentials = getAtlassianCredentials();

@@ -374,7 +374,9 @@ export const UpdatePullRequestToolArgs = z.object({
 	title: z
 		.string()
 		.optional()
-		.describe('Updated title for the pull request. Example: "Updated Feature Implementation"'),
+		.describe(
+			'Updated title for the pull request. Example: "Updated Feature Implementation"',
+		),
 
 	/**
 	 * Updated description for the pull request

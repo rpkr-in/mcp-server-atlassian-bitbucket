@@ -124,4 +124,13 @@ async function reject(
 }
 
 // Export the controller functions
-export default { list, get, listComments, addComment, add, update, approve, reject };
+export default {
+	list,
+	get,
+	listComments,
+	addComment,
+	add,
+	update,
+	approve,
+	reject,
+};
