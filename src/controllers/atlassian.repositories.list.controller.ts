@@ -72,9 +72,9 @@ export async function handleRepositoriesList(
 			queryParts.push(`project.key = "${mergedOptions.projectKey}"`);
 		}
 		const combinedQuery = queryParts.join(' AND '); // Combine with AND
-		
+
 		if (combinedQuery) {
-			controllerLogger.info(`Searching repositories with query: ${combinedQuery}`);
+			logger.info(`Searching repositories with query: ${combinedQuery}`);
 		}
 
 		// Map controller options to service parameters
