@@ -1,621 +1,239 @@
-# Atlassian Bitbucket MCP Server
+# Connect AI to Your Bitbucket Repositories
 
-A Node.js/TypeScript Model Context Protocol (MCP) server for Atlassian Bitbucket Cloud. Enables AI systems (e.g., LLMs like Claude or Cursor AI) to securely interact with your repositories, pull requests, workspaces, and code in real time.
+Transform how you work with Bitbucket by connecting Claude, Cursor AI, and other AI assistants directly to your repositories, pull requests, and code. Get instant insights, automate code reviews, and streamline your development workflow.
 
 [![NPM Version](https://img.shields.io/npm/v/@aashari/mcp-server-atlassian-bitbucket)](https://www.npmjs.com/package/@aashari/mcp-server-atlassian-bitbucket)
-[![Build Status](https://img.shields.io/github/workflow/status/aashari/mcp-server-atlassian-bitbucket/CI)](https://github.com/aashari/mcp-server-atlassian-bitbucket/actions)
 
-## Why Use This Server?
+## What You Can Do
 
-- **Minimal Input, Maximum Output**: Simple identifiers provide comprehensive details without requiring extra flags.
-- **Rich Code Visualization**: Get detailed insights into code changes with file statistics, diff views, and smart context.
-- **Secure Local Authentication**: Run locally with your credentials, never storing tokens on remote servers.
-- **Intuitive Markdown Responses**: Well-structured, consistent Markdown formatting for all outputs.
-- **Full Bitbucket Integration**: Access workspaces, repositories, pull requests, comments, code search, and more.
+✅ **Ask AI about your code**: "What's the latest commit in my main repository?"  
+✅ **Get PR insights**: "Show me all open pull requests that need review"  
+✅ **Search your codebase**: "Find all JavaScript files that use the authentication function"  
+✅ **Review code changes**: "Compare the differences between my feature branch and main"  
+✅ **Manage pull requests**: "Create a PR for my new-feature branch"  
+✅ **Automate workflows**: "Add a comment to PR #123 with the test results"  
 
-## What is MCP?
+## Perfect For
 
-Model Context Protocol (MCP) is an open standard for securely connecting AI systems to external tools and data sources. This server implements MCP for Bitbucket Cloud, enabling AI assistants to interact with your Bitbucket data programmatically.
+- **Developers** who want AI assistance with code reviews and repository management
+- **Team Leads** needing quick insights into project status and pull request activity  
+- **DevOps Engineers** automating repository workflows and branch management
+- **Anyone** who wants to interact with Bitbucket using natural language
 
-## Prerequisites
+## Quick Start
 
-- **Node.js** (>=18.x): [Download](https://nodejs.org/)
-- **Bitbucket Cloud Account**
+Get up and running in 2 minutes:
 
-## Setup
+### 1. Get Your Bitbucket Credentials
 
-### Step 1: Authenticate
+Generate a Bitbucket App Password:
+1. Go to [Bitbucket App Passwords](https://bitbucket.org/account/settings/app-passwords/)
+2. Click "Create app password"
+3. Give it a name like "AI Assistant"
+4. Select these permissions:
+   - **Workspaces**: Read
+   - **Repositories**: Read (and Write if you want AI to create PRs/comments)
+   - **Pull Requests**: Read (and Write for PR management)
 
-Choose one of the following authentication methods:
-
-#### Option A: Bitbucket App Password (Recommended)
-
-Generate one from [Bitbucket App Passwords](https://bitbucket.org/account/settings/app-passwords/). Minimum permissions:
-- Workspaces: Read
-- Repositories: Read
-- Pull Requests: Read
-
-You can also set `BITBUCKET_DEFAULT_WORKSPACE` to specify a default workspace when not explicitly provided.
-
-#### Option B: Atlassian API Token
-
-Generate one from [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
-
-**Note:** Bitbucket App Passwords are strongly recommended as they provide more granular, Bitbucket-specific permissions.
-
-### Step 2: Configure Credentials
-
-#### Option A: MCP Config File (Recommended)
-
-Edit or create `~/.mcp/configs.json`:
-
-**Using Bitbucket App Password:**
-```json
-{
-	"bitbucket": {
-		"environments": {
-			"ATLASSIAN_BITBUCKET_USERNAME": "<your_username>",
-			"ATLASSIAN_BITBUCKET_APP_PASSWORD": "<your_app_password>"
-		}
-	}
-}
-```
-
-**Using Atlassian API Token:**
-```json
-{
-	"bitbucket": {
-		"environments": {
-			"ATLASSIAN_SITE_NAME": "bitbucket",
-			"ATLASSIAN_USER_EMAIL": "<your_email>",
-			"ATLASSIAN_API_TOKEN": "<your_api_token>"
-		}
-	}
-}
-```
-
-#### Option B: Environment Variables
+### 2. Try It Instantly
 
 ```bash
-export ATLASSIAN_BITBUCKET_USERNAME="<your_username>"
-export ATLASSIAN_BITBUCKET_APP_PASSWORD="<your_app_password>"
-```
+# Set your credentials
+export ATLASSIAN_BITBUCKET_USERNAME="your_username"
+export ATLASSIAN_BITBUCKET_APP_PASSWORD="your_app_password"
 
-### Step 3: Install and Run
-
-#### Quick Start with `npx`
-
-```bash
+# List your workspaces
 npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+
+# List repositories in your workspace
+npx -y @aashari/mcp-server-atlassian-bitbucket ls-repos --workspace-slug your-workspace
+
+# Get details about a specific repository  
+npx -y @aashari/mcp-server-atlassian-bitbucket get-repo --workspace-slug your-workspace --repo-slug your-repo
 ```
 
-#### Global Installation
+## Connect to AI Assistants
+
+### For Claude Desktop Users
+
+Add this to your Claude configuration file (`~/.claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "bitbucket": {
+      "command": "npx",
+      "args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"],
+      "env": {
+        "ATLASSIAN_BITBUCKET_USERNAME": "your_username",
+        "ATLASSIAN_BITBUCKET_APP_PASSWORD": "your_app_password"
+      }
+    }
+  }
+}
+```
+
+Restart Claude Desktop, and you'll see "🔗 bitbucket" in the status bar.
+
+### For Other AI Assistants
+
+Most AI assistants support MCP. Install the server globally:
 
 ```bash
 npm install -g @aashari/mcp-server-atlassian-bitbucket
-mcp-atlassian-bitbucket ls-workspaces
 ```
 
-## Transport Modes
+Then configure your AI assistant to use the MCP server with STDIO transport.
 
-This server supports two transport modes for different integration scenarios:
+### Alternative: Configuration File
 
-### STDIO Transport (Default for MCP)
-- Traditional subprocess communication via stdin/stdout
-- Ideal for local AI assistant integrations (Claude Desktop, Cursor AI)
-- Uses pipe-based communication for direct MCP protocol exchange
+Create `~/.mcp/configs.json` for system-wide configuration:
 
+```json
+{
+  "bitbucket": {
+    "environments": {
+      "ATLASSIAN_BITBUCKET_USERNAME": "your_username",
+      "ATLASSIAN_BITBUCKET_APP_PASSWORD": "your_app_password",
+      "BITBUCKET_DEFAULT_WORKSPACE": "your_main_workspace"
+    }
+  }
+}
+```
+
+## Real-World Examples
+
+### 🔍 Explore Your Repositories
+
+Ask your AI assistant:
+- *"List all repositories in my main workspace"*
+- *"Show me details about the backend-api repository"*
+- *"What's the commit history for the feature-auth branch?"*
+- *"Get the content of src/config.js from the main branch"*
+
+### 📋 Manage Pull Requests
+
+Ask your AI assistant:
+- *"Show me all open pull requests that need review"*
+- *"Get details about pull request #42 including the code changes"*
+- *"Create a pull request from feature-login to main branch"*
+- *"Add a comment to PR #15 saying the tests passed"*
+- *"Approve pull request #33"*
+
+### 🔧 Work with Branches and Code
+
+Ask your AI assistant:
+- *"Compare my feature branch with the main branch"*
+- *"Create a new branch called hotfix-login from the main branch"*
+- *"List all branches in the user-service repository"*
+- *"Show me the differences between commits abc123 and def456"*
+
+### 🔎 Search and Discovery
+
+Ask your AI assistant:
+- *"Search for JavaScript files that contain 'authentication'"*
+- *"Find all pull requests related to the login feature"*
+- *"Search for repositories in the mobile project"*
+- *"Show me code files that use the React framework"*
+
+## Troubleshooting
+
+### "Authentication failed" or "403 Forbidden"
+
+1. **Check your App Password permissions**:
+   - Go to [Bitbucket App Passwords](https://bitbucket.org/account/settings/app-passwords/)
+   - Make sure your app password has the right permissions (Workspaces: Read, Repositories: Read, Pull Requests: Read)
+
+2. **Verify your credentials**:
+   ```bash
+   # Test your credentials work
+   npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+   ```
+
+### "Workspace not found" or "Repository not found"
+
+1. **Check your workspace slug**:
+   ```bash
+   # List your workspaces to see the correct slugs
+   npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+   ```
+
+2. **Use the exact slug from Bitbucket URL**:
+   - If your repo URL is `https://bitbucket.org/myteam/my-repo`
+   - Workspace slug is `myteam`
+   - Repository slug is `my-repo`
+
+### "No default workspace configured"
+
+Set a default workspace to avoid specifying it every time:
 ```bash
-# Run with STDIO transport (default for AI assistants)
-TRANSPORT_MODE=stdio npx @aashari/mcp-server-atlassian-bitbucket
-
-# Using npm scripts (after installation)
-npm run mcp:stdio
+export BITBUCKET_DEFAULT_WORKSPACE="your-main-workspace-slug"
 ```
 
-### HTTP Transport (Default for Server Mode)
-- Modern HTTP-based transport with Server-Sent Events (SSE)
-- Supports multiple concurrent connections
-- Better for web-based integrations and development
-- Runs on port 3000 by default (configurable via PORT env var)
-- Endpoint: `http://localhost:3000/mcp`
-- Health check: `http://localhost:3000/`
-
-```bash
-# Run with HTTP transport (default when no CLI args)
-TRANSPORT_MODE=http npx @aashari/mcp-server-atlassian-bitbucket
-
-# Using npm scripts (after installation)
-npm run mcp:http
-
-# Test with MCP Inspector
-npm run mcp:inspect
-```
-
-### Environment Variables
-
-**Transport Configuration:**
-- `TRANSPORT_MODE`: Set to `stdio` or `http` (default: `http` for server mode, `stdio` for MCP clients)
-- `PORT`: HTTP server port (default: `3000`)
-- `DEBUG`: Enable debug logging (default: `false`)
-
-**Authentication:**
-- `ATLASSIAN_BITBUCKET_USERNAME`: Your Bitbucket username
-- `ATLASSIAN_BITBUCKET_APP_PASSWORD`: Your Bitbucket app password
-- `ATLASSIAN_API_TOKEN`: Alternative API token
-- `BITBUCKET_DEFAULT_WORKSPACE`: Default workspace (optional)
-
-### Step 4: Connect to AI Assistant
-
-Configure your MCP-compatible client (e.g., Claude, Cursor AI):
-
-```json
-{
-	"mcpServers": {
-		"bitbucket": {
-			"command": "npx",
-			"args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"]
-		}
-	}
-}
-```
-
-## MCP Tools
-
-MCP tools use `snake_case` names, `camelCase` parameters, and return Markdown-formatted responses.
-
-- **bb_ls_workspaces**: Lists available workspaces (`query`: str opt). Use: View accessible workspaces.
-- **bb_get_workspace**: Gets workspace details (`workspaceSlug`: str req). Use: View workspace information.
-- **bb_ls_repos**: Lists repositories (`workspaceSlug`: str opt, `projectKey`: str opt, `query`: str opt, `role`: str opt). Use: Find repositories.
-- **bb_get_repo**: Gets repository details (`workspaceSlug`: str req, `repoSlug`: str req). Use: Access repo information.
-- **bb_search**: Searches Bitbucket content (`workspaceSlug`: str req, `query`: str req, `scope`: str opt, `language`: str opt, `extension`: str opt). Use: Find code or PRs.
-- **bb_ls_prs**: Lists pull requests (`workspaceSlug`: str req, `repoSlug`: str req, `state`: str opt). Use: View open or merged PRs.
-- **bb_get_pr**: Gets PR details (`workspaceSlug`: str req, `repoSlug`: str req, `prId`: str req). Use: View PR details with diffs.
-- **bb_ls_pr_comments**: Lists PR comments (`workspaceSlug`: str req, `repoSlug`: str req, `prId`: str req). Use: View PR discussions.
-- **bb_add_pr_comment**: Adds comment to PR (`workspaceSlug`: str req, `repoSlug`: str req, `prId`: str req, `content`: str req, `inline`: obj opt). Use: Add feedback to PRs.
-- **bb_add_pr**: Creates a PR (`workspaceSlug`: str req, `repoSlug`: str req, `title`: str req, `sourceBranch`: str req, `targetBranch`: str opt). Use: Create new PRs.
-- **bb_add_branch**: Creates a branch (`workspaceSlug`: str req, `repoSlug`: str req, `newBranchName`: str req, `sourceBranchOrCommit`: str opt). Use: Create a feature branch.
-- **bb_clone_repo**: Clones a repository (`workspaceSlug`: str req, `repoSlug`: str req, `targetPath`: str req). Use: Clone code locally.
-- **bb_get_commit_history**: Gets commit history (`workspaceSlug`: str req, `repoSlug`: str req, `revision`: str opt, `path`: str opt). Use: View code history.
-- **bb_get_file**: Gets file content (`workspaceSlug`: str req, `repoSlug`: str req, `filePath`: str req, `revision`: str opt). Use: View specific file.
-- **bb_diff_branches**: Shows diff between branches (`workspaceSlug`: str req, `repoSlug`: str req, `sourceBranch`: str req, `targetBranch`: str req). Use: Compare branches.
-- **bb_diff_commits**: Shows diff between commits (`workspaceSlug`: str req, `repoSlug`: str req, `sourceCommit`: str req, `targetCommit`: str req). Use: Compare commits.
-- **bb_list_branches**: Lists branches (`workspaceSlug`: str req, `repoSlug`: str req, `query`: str opt, `sort`: str opt). Use: View all branches.
-
-<details>
-<summary><b>MCP Tool Examples (Click to expand)</b></summary>
-
-### `bb_ls_workspaces`
-
-**List All Workspaces:**
-```json
-{}
-```
-
-**Search Workspaces:**
-```json
-{ "query": "devteam" }
-```
-
-### `bb_get_workspace`
-
-**Get Workspace Details:**
-```json
-{ "workspaceSlug": "acme-corp" }
-```
-
-### `bb_ls_repos`
-
-**List Repos in Workspace:**
-```json
-{ "workspaceSlug": "acme-corp", "projectKey": "PROJ" }
-```
-
-**List Repos Using Default Workspace:**
-```json
-{ "projectKey": "PROJ" }
-```
-
-### `bb_get_repo`
-
-**Get Repository Details:**
-```json
-{ "workspaceSlug": "acme-corp", "repoSlug": "backend-api" }
-```
-
-### `bb_search`
-
-**Search Code:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"query": "Logger",
-	"scope": "code",
-	"language": "typescript"
-}
-```
-
-### `bb_ls_prs`
-
-**List Open PRs:**
-```json
-{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "state": "OPEN" }
-```
-
-### `bb_get_pr`
-
-**Get PR Details:**
-```json
-{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
-```
-
-### `bb_ls_pr_comments`
-
-**List PR Comments:**
-```json
-{ "workspaceSlug": "acme-corp", "repoSlug": "frontend-app", "prId": "42" }
-```
-
-### `bb_add_pr_comment`
-
-**Add General Comment:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app",
-	"prId": "42",
-	"content": "Looks good."
-}
-```
-
-**Add Inline Comment:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app",
-	"prId": "42",
-	"content": "Consider refactoring.",
-	"inline": { "path": "src/utils.js", "line": 42 }
-}
-```
-
-### `bb_add_pr`
-
-**Create Pull Request:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app",
-	"title": "Add login screen",
-	"sourceBranch": "feature/login"
-}
-```
-
-### `bb_add_branch`
-
-**Create New Branch:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app",
-	"newBranchName": "feature/new-feature",
-	"sourceBranchOrCommit": "main"
-}
-```
-
-### `bb_clone_repo`
-
-**Clone Repository:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api",
-	"targetPath": "/Users/me/projects"
-}
-```
-
-### `bb_get_commit_history`
-
-**View Commit History:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api"
-}
-```
-
-**Filtered Commit History:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api",
-	"revision": "develop",
-	"path": "src/main/java/com/acme/service/UserService.java"
-}
-```
-
-### `bb_get_file`
-
-**Get File Content:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "backend-api",
-	"filePath": "src/main/java/com/acme/service/Application.java",
-	"revision": "main"
-}
-```
-
-### `bb_diff_branches`
-
-**Compare Branches:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "web-app",
-	"sourceBranch": "develop",
-	"targetBranch": "main"
-}
-```
-
-### `bb_diff_commits`
-
-**Compare Commits:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "web-app",
-	"sourceCommit": "a1b2c3d",
-	"targetCommit": "e4f5g6h"
-}
-```
-
-### `bb_list_branches`
-
-**List All Branches:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app"
-}
-```
-
-**Filtered Branches:**
-```json
-{
-	"workspaceSlug": "acme-corp",
-	"repoSlug": "frontend-app",
-	"query": "feature/",
-	"sort": "name"
-}
-```
-
-</details>
-
-## CLI Commands
-
-CLI commands use `kebab-case`. Run `--help` for details (e.g., `mcp-atlassian-bitbucket ls-workspaces --help`).
-
-- **ls-workspaces**: Lists workspaces (`--query`). Ex: `mcp-atlassian-bitbucket ls-workspaces`.
-- **get-workspace**: Gets workspace details (`--workspace-slug`). Ex: `mcp-atlassian-bitbucket get-workspace --workspace-slug acme-corp`.
-- **ls-repos**: Lists repos (`--workspace-slug`, `--project-key`, `--query`). Ex: `mcp-atlassian-bitbucket ls-repos --workspace-slug acme-corp`.
-- **get-repo**: Gets repo details (`--workspace-slug`, `--repo-slug`). Ex: `mcp-atlassian-bitbucket get-repo --workspace-slug acme-corp --repo-slug backend-api`.
-- **search**: Searches code (`--workspace-slug`, `--query`, `--scope`, `--language`). Ex: `mcp-atlassian-bitbucket search --workspace-slug acme-corp --query "auth"`.
-- **ls-prs**: Lists PRs (`--workspace-slug`, `--repo-slug`, `--state`). Ex: `mcp-atlassian-bitbucket ls-prs --workspace-slug acme-corp --repo-slug backend-api`.
-- **get-pr**: Gets PR details (`--workspace-slug`, `--repo-slug`, `--pr-id`). Ex: `mcp-atlassian-bitbucket get-pr --workspace-slug acme-corp --repo-slug backend-api --pr-id 42`.
-- **ls-pr-comments**: Lists PR comments (`--workspace-slug`, `--repo-slug`, `--pr-id`). Ex: `mcp-atlassian-bitbucket ls-pr-comments --workspace-slug acme-corp --repo-slug backend-api --pr-id 42`.
-- **add-pr-comment**: Adds PR comment (`--workspace-slug`, `--repo-slug`, `--pr-id`, `--content`). Ex: `mcp-atlassian-bitbucket add-pr-comment --workspace-slug acme-corp --repo-slug backend-api --pr-id 42 --content "Looks good"`.
-- **add-pr**: Creates PR (`--workspace-slug`, `--repo-slug`, `--title`, `--source-branch`). Ex: `mcp-atlassian-bitbucket add-pr --workspace-slug acme-corp --repo-slug backend-api --title "New feature" --source-branch feature/login`.
-- **get-file**: Gets file content (`--workspace-slug`, `--repo-slug`, `--file-path`). Ex: `mcp-atlassian-bitbucket get-file --workspace-slug acme-corp --repo-slug backend-api --file-path src/main.js`.
-- **add-branch**: Creates branch (`--workspace-slug`, `--repo-slug`, `--new-branch-name`). Ex: `mcp-atlassian-bitbucket add-branch --workspace-slug acme-corp --repo-slug backend-api --new-branch-name feature/new`.
-
-<details>
-<summary><b>CLI Command Examples (Click to expand)</b></summary>
-
-### List and View Workspaces/Repos
-
-```bash
-# List all workspaces
-mcp-atlassian-bitbucket ls-workspaces
-
-# Get details of a specific workspace
-mcp-atlassian-bitbucket get-workspace --workspace-slug acme-corp
-
-# List repositories in a workspace
-mcp-atlassian-bitbucket ls-repos --workspace-slug acme-corp --project-key PROJ
-
-# Get details of a specific repository
-mcp-atlassian-bitbucket get-repo --workspace-slug acme-corp --repo-slug backend-api
-```
-
-### Working with Pull Requests
-
-```bash
-# List open pull requests in a repository
-mcp-atlassian-bitbucket ls-prs --workspace-slug acme-corp --repo-slug frontend-app --state OPEN
-
-# Get details of a specific pull request with code changes
-mcp-atlassian-bitbucket get-pr --workspace-slug acme-corp --repo-slug frontend-app --pr-id 42
-
-# List comments on a pull request
-mcp-atlassian-bitbucket ls-pr-comments --workspace-slug acme-corp --repo-slug frontend-app --pr-id 42
-
-# Add a comment to a pull request
-mcp-atlassian-bitbucket add-pr-comment --workspace-slug acme-corp --repo-slug frontend-app --pr-id 42 --content "Looks good to merge."
-
-# Create a new pull request
-mcp-atlassian-bitbucket add-pr --workspace-slug acme-corp --repo-slug frontend-app --title "Add login screen" --source-branch feature/login
-```
-
-### Code and Commits
-
-```bash
-# Search for code
-mcp-atlassian-bitbucket search --workspace-slug acme-corp --query "Logger" --scope code --language typescript
-
-# View commit history
-mcp-atlassian-bitbucket get-commit-history --workspace-slug acme-corp --repo-slug backend-api --revision develop
-
-# Get file content
-mcp-atlassian-bitbucket get-file --workspace-slug acme-corp --repo-slug backend-api --file-path "src/Application.java" --revision main
-
-# Compare branches
-mcp-atlassian-bitbucket diff-branches --workspace-slug acme-corp --repo-slug web-app --source-branch develop --target-branch main
-
-# Compare commits
-mcp-atlassian-bitbucket diff-commits --workspace-slug acme-corp --repo-slug web-app --source-commit a1b2c3d --target-commit e4f5g6h
-```
-
-### Branch Management
-
-```bash
-# List branches
-mcp-atlassian-bitbucket list-branches --workspace-slug acme-corp --repo-slug frontend-app --query "feature/" --sort name
-
-# Create a new branch
-mcp-atlassian-bitbucket add-branch --workspace-slug acme-corp --repo-slug frontend-app --new-branch-name feature/new-feature --source-branch-or-commit main
-
-# Clone a repository
-mcp-atlassian-bitbucket clone --workspace-slug acme-corp --repo-slug backend-api --target-path ./cloned-projects
-```
-
-</details>
-
-## Response Format
-
-All responses are Markdown-formatted, including:
-
-- **Title**: Operation performed or entity viewed.
-- **Context**: Workspace, repository, pull request, or branch information.
-- **Content**: Primary data such as file content, PR details, or search results.
-- **Metadata**: Timestamps, authors, and statistics.
-- **Diffs**: Code changes with syntax highlighting for diffs between branches/commits.
-
-<details>
-<summary><b>Response Format Examples (Click to expand)</b></summary>
-
-### Repository Details
-
-```markdown
-# Repository: backend-api
-
-**Workspace:** acme-corp
-**Full Name:** acme-corp/backend-api
-**Language:** Java
-**Created:** 2024-01-15 by John Smith
-**Updated:** 2025-05-10 (2 days ago)
-
-## Overview
-Spring Boot backend API for the ACME product suite.
-
-## Statistics
-- **Default Branch:** main
-- **Size:** 24.5 MB
-- **Commits:** 358
-- **Open PRs:** 4
-- **Forks:** 3
-
-## Recent Activity
-- PR #42: "Add OAuth2 support" by Jane Doe (Open)
-- PR #41: "Fix pagination bug" by Alex Kim (Merged)
-- PR #40: "Update dependencies" by John Smith (Merged)
-
-*Repository URL: https://bitbucket.org/acme-corp/backend-api*
-```
-
-### Pull Request Review
-
-```markdown
-# Pull Request #42: Add OAuth2 support
-
-**Repository:** acme-corp/backend-api
-**Author:** Jane Doe
-**State:** OPEN
-**Created:** 2025-05-15 (4 days ago)
-**Updated:** 2025-05-18 (yesterday)
-
-## Description
-Implements OAuth2 authentication flow with support for:
-- Authorization code grant
-- Refresh tokens
-- Token caching
-
-## Changes
-- **Files changed:** 7
-- **Additions:** 245 lines
-- **Deletions:** 32 lines
-
-## Diff for src/auth/OAuthService.java
-
-
-	@@ -10,6 +10,25 @@ public class OAuthService {
-		private final TokenRepository tokenRepository;
-		private final HttpClient httpClient;
-	
-	+    @Autowired
-	+    public OAuthService(
-	+            TokenRepository tokenRepository,
-	+            HttpClient httpClient) {
-	+        this.tokenRepository = tokenRepository;
-	+        this.httpClient = httpClient;
-	+    }
-	+
-	+    public TokenResponse refreshToken(String refreshToken) {
-	+        // Validate refresh token
-	+        if (StringUtils.isEmpty(refreshToken)) {
-	+            throw new InvalidTokenException("Refresh token cannot be empty");
-	+        }
-	+        
-	+        // Call OAuth server for new access token
-	+        return httpClient.post("/oauth/token")
-	+            .body(Map.of("grant_type", "refresh_token", "refresh_token", refreshToken))
-	+            .execute()
-	+            .as(TokenResponse.class);
-	+    }
-
-## Comments (3)
-1. **John Smith** (2 days ago):
-   > Please add unit tests for the refresh token flow
-
-2. **Jane Doe** (yesterday):
-   > Added tests in the latest commit
-
-3. **Approval by:** Alex Kim (yesterday)
-
-*Pull Request URL: https://bitbucket.org/acme-corp/backend-api/pull-requests/42*
-```
-
-</details>
-
-## Development
-
-```bash
-# Clone repository
-git clone https://github.com/aashari/mcp-server-atlassian-bitbucket.git
-cd mcp-server-atlassian-bitbucket
-
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev:server
-
-# Run tests
-npm test
-```
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/xyz`).
-3. Commit changes (`git commit -m "Add xyz feature"`).
-4. Push to the branch (`git push origin feature/xyz`).
-5. Open a pull request.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## License
-
-[ISC License](LICENSE)
+### Claude Desktop Integration Issues
+
+1. **Restart Claude Desktop** after updating the config file
+2. **Check the status bar** for the "🔗 bitbucket" indicator
+3. **Verify config file location**:
+   - macOS: `~/.claude/claude_desktop_config.json`
+   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+
+### Getting Help
+
+If you're still having issues:
+1. Run a simple test command to verify everything works
+2. Check the [GitHub Issues](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues) for similar problems
+3. Create a new issue with your error message and setup details
+
+## Frequently Asked Questions
+
+### What permissions do I need?
+
+For **read-only access** (viewing repos, PRs, commits):
+- Workspaces: Read
+- Repositories: Read  
+- Pull Requests: Read
+
+For **full functionality** (creating PRs, commenting):
+- Add "Write" permissions for Repositories and Pull Requests
+
+### Can I use this with private repositories?
+
+Yes! This works with both public and private repositories. You just need the appropriate permissions through your Bitbucket App Password.
+
+### Do I need to specify workspace every time?
+
+No! Set `BITBUCKET_DEFAULT_WORKSPACE` in your environment or config file, and it will be used automatically when you don't specify one.
+
+### What AI assistants does this work with?
+
+Any AI assistant that supports the Model Context Protocol (MCP):
+- Claude Desktop (most popular)
+- Cursor AI
+- Continue.dev
+- Many others
+
+### Is my data secure?
+
+Yes! This tool:
+- Runs entirely on your local machine
+- Uses your own Bitbucket credentials
+- Never sends your data to third parties
+- Only accesses what you give it permission to access
+
+### Can I use this for multiple Bitbucket accounts?
+
+Currently, each installation supports one set of credentials. For multiple accounts, you'd need separate configurations.
+
+## Support
+
+Need help? Here's how to get assistance:
+
+1. **Check the troubleshooting section above** - most common issues are covered there
+2. **Visit our GitHub repository** for documentation and examples: [github.com/aashari/mcp-server-atlassian-bitbucket](https://github.com/aashari/mcp-server-atlassian-bitbucket)
+3. **Report issues** at [GitHub Issues](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues)
+4. **Start a discussion** for feature requests or general questions
+
+---
+
+*Made with ❤️ for developers who want to bring AI into their Bitbucket workflow.*
