@@ -1,3 +1,10 @@
+## [1.43.4](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.3...v1.43.4) (2025-08-07)
+
+
+### Bug Fixes
+
+* update .env.example with complete authentication options ([52da9a1](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/52da9a1b37f71cfe6af16fe2322b8d040285718b))
+
 ## [1.43.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.2...v1.43.3) (2025-08-07)
 
 
