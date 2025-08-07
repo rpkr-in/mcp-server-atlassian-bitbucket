@@ -38,7 +38,14 @@ Generate a Bitbucket App Password:
 ### 2. Try It Instantly
 
 ```bash
-# Set your credentials
+# Set your credentials (choose one method)
+
+# Method 1: Standard Atlassian credentials (recommended)
+export ATLASSIAN_SITE_NAME="your-company"  # for your-company.atlassian.net
+export ATLASSIAN_USER_EMAIL="your.email@company.com"
+export ATLASSIAN_API_TOKEN="your_api_token"
+
+# OR Method 2: Bitbucket-specific credentials
 export ATLASSIAN_BITBUCKET_USERNAME="your_username"
 export ATLASSIAN_BITBUCKET_APP_PASSWORD="your_app_password"
 
@@ -58,6 +65,24 @@ npx -y @aashari/mcp-server-atlassian-bitbucket get-repo --workspace-slug your-wo
 
 Add this to your Claude configuration file (`~/.claude/claude_desktop_config.json`):
 
+**Option 1: Standard Atlassian credentials (recommended)**
+```json
+{
+  "mcpServers": {
+    "bitbucket": {
+      "command": "npx",
+      "args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"],
+      "env": {
+        "ATLASSIAN_SITE_NAME": "your-company",
+        "ATLASSIAN_USER_EMAIL": "your.email@company.com",
+        "ATLASSIAN_API_TOKEN": "your_api_token"
+      }
+    }
+  }
+}
+```
+
+**Option 2: Bitbucket-specific credentials**
 ```json
 {
   "mcpServers": {
@@ -89,6 +114,21 @@ Then configure your AI assistant to use the MCP server with STDIO transport.
 
 Create `~/.mcp/configs.json` for system-wide configuration:
 
+**Option 1: Standard Atlassian credentials (recommended)**
+```json
+{
+  "bitbucket": {
+    "environments": {
+      "ATLASSIAN_SITE_NAME": "your-company",
+      "ATLASSIAN_USER_EMAIL": "your.email@company.com",
+      "ATLASSIAN_API_TOKEN": "your_api_token",
+      "BITBUCKET_DEFAULT_WORKSPACE": "your_main_workspace"
+    }
+  }
+}
+```
+
+**Option 2: Bitbucket-specific credentials**
 ```json
 {
   "bitbucket": {
@@ -100,6 +140,8 @@ Create `~/.mcp/configs.json` for system-wide configuration:
   }
 }
 ```
+
+**Alternative config keys:** The system also accepts `"atlassian-bitbucket"`, `"@aashari/mcp-server-atlassian-bitbucket"`, or `"mcp-server-atlassian-bitbucket"` instead of `"bitbucket"`.
 
 ## Real-World Examples
 
@@ -140,11 +182,19 @@ Ask your AI assistant:
 
 ### "Authentication failed" or "403 Forbidden"
 
-1. **Check your App Password permissions**:
+1. **Choose the right authentication method**:
+   - **Standard Atlassian method**: Use your Atlassian account email + API token (works with any Atlassian service)
+   - **Bitbucket-specific method**: Use your Bitbucket username + App password (Bitbucket only)
+
+2. **For Bitbucket App Passwords** (if using Option 2):
    - Go to [Bitbucket App Passwords](https://bitbucket.org/account/settings/app-passwords/)
    - Make sure your app password has the right permissions (Workspaces: Read, Repositories: Read, Pull Requests: Read)
 
-2. **Verify your credentials**:
+3. **For Atlassian API Tokens** (if using Option 1):
+   - Go to [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+   - Make sure your token is still active
+
+4. **Verify your credentials**:
    ```bash
    # Test your credentials work
    npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
@@ -189,13 +239,17 @@ If you're still having issues:
 
 ### What permissions do I need?
 
-For **read-only access** (viewing repos, PRs, commits):
-- Workspaces: Read
-- Repositories: Read  
-- Pull Requests: Read
+**For Standard Atlassian credentials** (Option 1):
+- Your regular Atlassian account with access to Bitbucket
+- API token with default permissions
 
-For **full functionality** (creating PRs, commenting):
-- Add "Write" permissions for Repositories and Pull Requests
+**For Bitbucket App Passwords** (Option 2):
+- For **read-only access** (viewing repos, PRs, commits):
+  - Workspaces: Read
+  - Repositories: Read  
+  - Pull Requests: Read
+- For **full functionality** (creating PRs, commenting):
+  - Add "Write" permissions for Repositories and Pull Requests
 
 ### Can I use this with private repositories?
 
