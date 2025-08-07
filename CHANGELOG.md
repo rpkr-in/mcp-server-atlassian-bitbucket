@@ -1,3 +1,10 @@
+## [1.43.3](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.2...v1.43.3) (2025-08-07)
+
+
+### Bug Fixes
+
+* correct authentication credentials and config structure ([b53b5d5](https://github.com/aashari/mcp-server-atlassian-bitbucket/commit/b53b5d569c97efb9b91ee34063b669210a2e3be5))
+
 ## [1.43.2](https://github.com/aashari/mcp-server-atlassian-bitbucket/compare/v1.43.1...v1.43.2) (2025-08-02)
 
 
