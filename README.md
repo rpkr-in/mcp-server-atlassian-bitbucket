@@ -2,7 +2,7 @@
 
 Transform how you work with Bitbucket by connecting Claude, Cursor AI, and other AI assistants directly to your repositories, pull requests, and code. Get instant insights, automate code reviews, and streamline your development workflow.
 
-[![NPM Version](https://img.shields.io/npm/v/@aashari/mcp-server-atlassian-bitbucket)](https://www.npmjs.com/package/@aashari/mcp-server-atlassian-bitbucket)
+[![NPM Version](https://img.shields.io/npm/v/@rpkr-in/mcp-server-atlassian-bitbucket)](https://www.npmjs.com/package/@rpkr-in/mcp-server-atlassian-bitbucket)
 
 ## What You Can Do
 
@@ -50,13 +50,13 @@ export ATLASSIAN_BITBUCKET_USERNAME="your_username"
 export ATLASSIAN_BITBUCKET_APP_PASSWORD="your_app_password"
 
 # List your workspaces
-npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+npx -y @rpkr-in/mcp-server-atlassian-bitbucket ls-workspaces
 
 # List repositories in your workspace
-npx -y @aashari/mcp-server-atlassian-bitbucket ls-repos --workspace-slug your-workspace
+npx -y @rpkr-in/mcp-server-atlassian-bitbucket ls-repos --workspace-slug your-workspace
 
 # Get details about a specific repository  
-npx -y @aashari/mcp-server-atlassian-bitbucket get-repo --workspace-slug your-workspace --repo-slug your-repo
+npx -y @rpkr-in/mcp-server-atlassian-bitbucket get-repo --workspace-slug your-workspace --repo-slug your-repo
 ```
 
 ## Connect to AI Assistants
@@ -71,7 +71,7 @@ Add this to your Claude configuration file (`~/.claude/claude_desktop_config.jso
   "mcpServers": {
     "bitbucket": {
       "command": "npx",
-      "args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"],
+      "args": ["-y", "@rpkr-in/mcp-server-atlassian-bitbucket"],
       "env": {
         "ATLASSIAN_SITE_NAME": "your-company",
         "ATLASSIAN_USER_EMAIL": "your.email@company.com",
@@ -88,7 +88,7 @@ Add this to your Claude configuration file (`~/.claude/claude_desktop_config.jso
   "mcpServers": {
     "bitbucket": {
       "command": "npx",
-      "args": ["-y", "@aashari/mcp-server-atlassian-bitbucket"],
+      "args": ["-y", "@rpkr-in/mcp-server-atlassian-bitbucket"],
       "env": {
         "ATLASSIAN_BITBUCKET_USERNAME": "your_username",
         "ATLASSIAN_BITBUCKET_APP_PASSWORD": "your_app_password"
@@ -105,7 +105,7 @@ Restart Claude Desktop, and you'll see "🔗 bitbucket" in the status bar.
 Most AI assistants support MCP. Install the server globally:
 
 ```bash
-npm install -g @aashari/mcp-server-atlassian-bitbucket
+npm install -g @rpkr-in/mcp-server-atlassian-bitbucket
 ```
 
 Then configure your AI assistant to use the MCP server with STDIO transport.
@@ -141,7 +141,7 @@ Create `~/.mcp/configs.json` for system-wide configuration:
 }
 ```
 
-**Alternative config keys:** The system also accepts `"atlassian-bitbucket"`, `"@aashari/mcp-server-atlassian-bitbucket"`, or `"mcp-server-atlassian-bitbucket"` instead of `"bitbucket"`.
+**Alternative config keys:** The system also accepts `"atlassian-bitbucket"`, `"@rpkr-in/mcp-server-atlassian-bitbucket"`, or `"mcp-server-atlassian-bitbucket"` instead of `"bitbucket"`.
 
 ## Real-World Examples
 
@@ -197,7 +197,7 @@ Ask your AI assistant:
 4. **Verify your credentials**:
    ```bash
    # Test your credentials work
-   npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+   npx -y @rpkr-in/mcp-server-atlassian-bitbucket ls-workspaces
    ```
 
 ### "Workspace not found" or "Repository not found"
@@ -205,7 +205,7 @@ Ask your AI assistant:
 1. **Check your workspace slug**:
    ```bash
    # List your workspaces to see the correct slugs
-   npx -y @aashari/mcp-server-atlassian-bitbucket ls-workspaces
+   npx -y @rpkr-in/mcp-server-atlassian-bitbucket ls-workspaces
    ```
 
 2. **Use the exact slug from Bitbucket URL**:
@@ -232,7 +232,7 @@ export BITBUCKET_DEFAULT_WORKSPACE="your-main-workspace-slug"
 
 If you're still having issues:
 1. Run a simple test command to verify everything works
-2. Check the [GitHub Issues](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues) for similar problems
+2. Check the [GitHub Issues](https://github.com/rpkr-in/mcp-server-atlassian-bitbucket/issues) for similar problems
 3. Create a new issue with your error message and setup details
 
 ## Frequently Asked Questions
@@ -284,8 +284,8 @@ Currently, each installation supports one set of credentials. For multiple accou
 Need help? Here's how to get assistance:
 
 1. **Check the troubleshooting section above** - most common issues are covered there
-2. **Visit our GitHub repository** for documentation and examples: [github.com/aashari/mcp-server-atlassian-bitbucket](https://github.com/aashari/mcp-server-atlassian-bitbucket)
-3. **Report issues** at [GitHub Issues](https://github.com/aashari/mcp-server-atlassian-bitbucket/issues)
+2. **Visit our GitHub repository** for documentation and examples: [github.com/rpkr-in/mcp-server-atlassian-bitbucket](https://github.com/rpkr-in/mcp-server-atlassian-bitbucket)
+3. **Report issues** at [GitHub Issues](https://github.com/rpkr-in/mcp-server-atlassian-bitbucket/issues)
 4. **Start a discussion** for feature requests or general questions
 
 ---
